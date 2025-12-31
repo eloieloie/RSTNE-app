@@ -16,6 +16,7 @@ try {
       book_id INT AUTO_INCREMENT PRIMARY KEY,
       book_name VARCHAR(255) NOT NULL,
       book_description TEXT,
+      book_index INT,
       dt_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);

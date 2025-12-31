@@ -9,17 +9,20 @@ export interface Book {
   book_id: number;
   book_name: string;
   book_description: string | null;
+  book_index: number | null;
   dt_added: Date;
 }
 
 export interface BookInsert {
   book_name: string;
   book_description?: string;
+  book_index?: number;
 }
 
 export interface BookUpdate {
   book_name?: string;
   book_description?: string;
+  book_index?: number;
 }
 
 export interface Chapter {
@@ -50,6 +53,7 @@ export const BOOK_COLUMNS = {
   ID: 'book_id',
   NAME: 'book_name',
   DESCRIPTION: 'book_description',
+  INDEX: 'book_index',
   DATE_ADDED: 'dt_added',
 } as const;
 

@@ -49,10 +49,10 @@ app.get('/api/books/:id', async (req, res) => {
 // Create book
 app.post('/api/books', async (req, res) => {
   try {
-    const { book_name, book_description } = req.body;
+    const { book_name, book_description, book_index } = req.body;
     const [result] = await pool.execute(
-      'INSERT INTO books_tbl (book_name, book_description) VALUES (?, ?)',
-      [book_name, book_description || null]
+      'INSERT INTO books_tbl (book_name, book_description, book_index) VALUES (?, ?, ?)',
+      [book_name, book_description || null, book_index || null]
     );
     res.status(201).json({ id: result.insertId, message: 'Book created successfully' });
   } catch (error) {
@@ -63,10 +63,10 @@ app.post('/api/books', async (req, res) => {
 // Update book
 app.put('/api/books/:id', async (req, res) => {
   try {
-    const { book_name, book_description } = req.body;
+    const { book_name, book_description, book_index } = req.body;
     await pool.execute(
-      'UPDATE books_tbl SET book_name = ?, book_description = ? WHERE book_id = ?',
-      [book_name, book_description || null, req.params.id]
+      'UPDATE books_tbl SET book_name = ?, book_description = ?, book_index = ? WHERE book_id = ?',
+      [book_name, book_description || null, book_index || null, req.params.id]
     );
     res.json({ message: 'Book updated successfully' });
   } catch (error) {

@@ -31,6 +31,16 @@
             ></textarea>
           </div>
 
+          <div class="form-group">
+            <label for="bookIndex">Book Index</label>
+            <input
+              id="bookIndex"
+              v-model.number="formData.book_index"
+              type="number"
+              placeholder="Enter book index (optional)"
+            />
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">
               {{ editMode ? 'Update Book' : 'Add Book' }}
@@ -57,6 +67,7 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
+                <th>Index</th>
                 <th>Added</th>
                 <th>Actions</th>
               </tr>
@@ -66,6 +77,7 @@
                 <td>{{ book.book_id }}</td>
                 <td>{{ book.book_name }}</td>
                 <td>{{ book.book_description || 'N/A' }}</td>
+                <td>{{ book.book_index || 'N/A' }}</td>
                 <td>{{ formatDate(book.dt_added) }}</td>
                 <td class="actions">
                   <button @click="editBook(book)" class="btn-icon btn-edit" title="Edit">
@@ -97,7 +109,8 @@ const editingId = ref<number | null>(null);
 
 const formData = ref<BookInsert>({
   book_name: '',
-  book_description: ''
+  book_description: '',
+  book_index: undefined
 });
 
 onMounted(() => {
@@ -135,7 +148,8 @@ function editBook(book: Book) {
   editingId.value = book.book_id;
   formData.value = {
     book_name: book.book_name,
-    book_description: book.book_description || ''
+    book_description: book.book_description || '',
+    book_index: book.book_index || undefined
   };
 }
 
@@ -161,7 +175,8 @@ function resetForm() {
   editingId.value = null;
   formData.value = {
     book_name: '',
-    book_description: ''
+    book_description: '',
+    book_index: undefined
   };
 }
 

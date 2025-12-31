@@ -20,6 +20,7 @@
         class="book-card"
       >
         <h2>{{ book.book_name }}</h2>
+        <p v-if="book.book_index" class="index">Index: {{ book.book_index }}</p>
         <p class="description">{{ book.book_description || 'No description available' }}</p>
         <p class="date">Added: {{ formatDate(book.dt_added) }}</p>
         <router-link 
@@ -129,6 +130,13 @@ h1 {
   color: #2c3e50;
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
+}
+
+.index {
+  font-size: 0.875rem;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 .description {
