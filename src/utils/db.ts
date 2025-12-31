@@ -16,7 +16,7 @@ export async function getConnection(): Promise<Connection> {
 export async function query<T>(sql: string, params?: any[]): Promise<T> {
   const connection = await getConnection();
   try {
-    const [results] = await connection.execute(sql, params);
+    const [results] = await (connection as any).execute(sql, params);
     return results as T;
   } finally {
     await connection.end();
