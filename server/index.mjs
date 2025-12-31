@@ -109,13 +109,29 @@ app.get('/api/books/:id/chapters', async (req, res) => {
   }
 });
 
+// Get chapter by ID
+app.get('/api/chapters/:id', async (req, res) => {
+  try {
+    const [chapters] = await pool.execute(
+      'SELECT * FROM chapters_tbl WHERE chapter_id = ?',
+      [req.params.id]
+    );
+    if (chapters.length === 0) {
+      return res.status(404).json({ error: 'Chapter not found' });
+    }
+    res.json(chapters[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create chapter
 app.post('/api/chapters', async (req, res) => {
   try {
-    const { book_id, chapter_name, chapter_description, chapter_notes } = req.body;
+    const { book_id, chapter_number, chapter_description, chapter_notes } = req.body;
     const [result] = await pool.execute(
-      'INSERT INTO chapters_tbl (book_id, chapter_name, chapter_description, chapter_notes) VALUES (?, ?, ?, ?)',
-      [book_id, chapter_name, chapter_description || null, chapter_notes || null]
+      'INSERT INTO chapters_tbl (book_id, chapter_number, chapter_description, chapter_notes) VALUES (?, ?, ?, ?)',
+      [book_id, chapter_number, chapter_description || null, chapter_notes || null]
     );
     res.status(201).json({ id: result.insertId, message: 'Chapter created successfully' });
   } catch (error) {
@@ -126,10 +142,10 @@ app.post('/api/chapters', async (req, res) => {
 // Update chapter
 app.put('/api/chapters/:id', async (req, res) => {
   try {
-    const { book_id, chapter_name, chapter_description, chapter_notes } = req.body;
+    const { book_id, chapter_number, chapter_description, chapter_notes } = req.body;
     await pool.execute(
-      'UPDATE chapters_tbl SET book_id = ?, chapter_name = ?, chapter_description = ?, chapter_notes = ? WHERE chapter_id = ?',
-      [book_id, chapter_name, chapter_description || null, chapter_notes || null, req.params.id]
+      'UPDATE chapters_tbl SET book_id = ?, chapter_number = ?, chapter_description = ?, chapter_notes = ? WHERE chapter_id = ?',
+      [book_id, chapter_number, chapter_description || null, chapter_notes || null, req.params.id]
     );
     res.json({ message: 'Chapter updated successfully' });
   } catch (error) {

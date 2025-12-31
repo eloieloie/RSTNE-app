@@ -4,6 +4,7 @@ import ChaptersView from '@/views/ChaptersView.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ManageBooks from '@/views/admin/ManageBooks.vue';
 import ManageChapters from '@/views/admin/ManageChapters.vue';
+import ChapterEditor from '@/views/admin/ChapterEditor.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,11 @@ const router = createRouter({
       path: '/admin/chapters',
       name: 'admin-chapters',
       component: ManageChapters
+    },
+    {
+      path: '/admin/chapters/:id',
+      name: 'chapter-editor',
+      component: ChapterEditor
     }
   ]
 });

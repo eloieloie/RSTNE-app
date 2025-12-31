@@ -28,7 +28,7 @@ try {
     CREATE TABLE IF NOT EXISTS chapters_tbl (
       chapter_id INT AUTO_INCREMENT PRIMARY KEY,
       book_id INT,
-      chapter_name VARCHAR(255) NOT NULL,
+      chapter_number VARCHAR(255) NOT NULL,
       chapter_description TEXT,
       chapter_notes TEXT,
       dt_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -28,7 +28,7 @@ export interface BookUpdate {
 export interface Chapter {
   chapter_id: number;
   book_id: number;
-  chapter_name: string;
+  chapter_number: string;
   chapter_description: string | null;
   chapter_notes: string | null;
   dt_added: Date;
@@ -37,13 +37,13 @@ export interface Chapter {
 
 export interface ChapterInsert {
   book_id: number;
-  chapter_name: string;
+  chapter_number: string;
   chapter_description?: string;
   chapter_notes?: string;
 }
 
 export interface ChapterUpdate {
-  chapter_name?: string;
+  chapter_number?: string;
   chapter_description?: string;
   chapter_notes?: string;
 }
@@ -60,7 +60,7 @@ export const BOOK_COLUMNS = {
 export const CHAPTER_COLUMNS = {
   ID: 'chapter_id',
   BOOK_ID: 'book_id',
-  NAME: 'chapter_name',
+  NUMBER: 'chapter_number',
   DESCRIPTION: 'chapter_description',
   NOTES: 'chapter_notes',
   DATE_ADDED: 'dt_added',

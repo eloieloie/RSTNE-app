@@ -14,7 +14,7 @@ export async function getAllChapters(): Promise<Chapter[]> {
   return await response.json();
 }
 
-export async function createChapter(chapter: { book_id: number; chapter_name: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
+export async function createChapter(chapter: { book_id: number; chapter_number: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
   const response = await fetch(`${API_URL}/chapters`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ export async function createChapter(chapter: { book_id: number; chapter_name: st
   if (!response.ok) throw new Error('Failed to create chapter');
 }
 
-export async function updateChapter(chapterId: number, chapter: { book_id?: number; chapter_name?: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
+export async function updateChapter(chapterId: number, chapter: { book_id?: number; chapter_number?: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
   const response = await fetch(`${API_URL}/chapters/${chapterId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
