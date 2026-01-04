@@ -17,7 +17,7 @@
             :key="chapter.chapter_id" 
             :value="chapter.chapter_id"
           >
-            Chapter {{ chapter.chapter_number }}
+            {{ chapter.chapter_number }}
           </option>
         </select>
       </div>
@@ -329,7 +329,7 @@ function formatVerseWithPaleoBora(verseText: string | null): string {
   border-radius: 6px;
   background-color: white;
   cursor: pointer;
-  min-width: 180px;
+  width: 80px;
   transition: all 0.2s ease;
 }
 

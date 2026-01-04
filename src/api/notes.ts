@@ -1,4 +1,4 @@
-import type { Note, NoteInsert, NoteUpdate, VerseNote, VerseNoteInsert } from '@/utils/collectionReferences';
+import type { Note, NoteInsert, NoteUpdate, VerseNoteInsert } from '@/utils/collectionReferences';
 
 const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
