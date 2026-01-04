@@ -14,6 +14,12 @@ export async function getAllChapters(): Promise<Chapter[]> {
   return await response.json();
 }
 
+export async function getChapterById(chapterId: number): Promise<Chapter | null> {
+  const response = await fetch(`${API_URL}/chapters/${chapterId}`);
+  if (!response.ok) return null;
+  return await response.json();
+}
+
 export async function createChapter(chapter: { book_id: number; chapter_number: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
   const response = await fetch(`${API_URL}/chapters`, {
     method: 'POST',

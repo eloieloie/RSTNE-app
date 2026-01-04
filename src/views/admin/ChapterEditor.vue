@@ -79,7 +79,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { getAllBooks } from '@/api/books';
-import { createChapter, updateChapter } from '@/api/chapters';
+import { createChapter, updateChapter, getChapterById } from '@/api/chapters';
 import type { Book, ChapterInsert } from '@/utils/collectionReferences';
 
 const route = useRoute();
@@ -101,15 +101,20 @@ const formData = ref<ChapterInsert>({
 });
 
 onMounted(async () => {
+  console.log('ChapterEditor mounted');
   // Load books
   try {
+    console.log('Loading books...');
     books.value = await getAllBooks();
+    console.log('Books loaded:', books.value);
   } catch (e) {
+    console.error('Failed to load books:', e);
     alert('Failed to load books');
   }
 
   // Initialize Quill editor
   if (editorContainer.value) {
+    console.log('Initializing Quill editor');
     quillEditor = new Quill(editorContainer.value, {
       theme: 'snow',
       modules: {
@@ -129,9 +134,11 @@ onMounted(async () => {
 
   // Check if editing existing chapter
   const id = route.params.id;
+  console.log('Route params id:', id);
   if (id && id !== 'new') {
     isEditMode.value = true;
     chapterId.value = Number(id);
+    console.log('Loading chapter with id:', chapterId.value);
     await loadChapter(chapterId.value);
   }
 });
@@ -142,10 +149,14 @@ onBeforeUnmount(() => {
 
 async function loadChapter(id: number) {
   try {
-    const response = await fetch(`/api/chapters/${id}`);
-    if (!response.ok) throw new Error('Failed to load chapter');
+    console.log('Fetching chapter from API, id:', id);
+    const chapter = await getChapterById(id);
+    console.log('Chapter loaded:', chapter);
     
-    const chapter = await response.json();
+    if (!chapter) {
+      throw new Error('Chapter not found');
+    }
+    
     formData.value = {
       book_id: chapter.book_id,
       chapter_number: chapter.chapter_number,
@@ -155,10 +166,12 @@ async function loadChapter(id: number) {
 
     // Set editor content
     if (quillEditor && chapter.chapter_description) {
+      console.log('Setting editor content');
       quillEditor.root.innerHTML = chapter.chapter_description;
       htmlCode.value = chapter.chapter_description;
     }
   } catch (e) {
+    console.error('Error loading chapter:', e);
     alert('Failed to load chapter');
     router.push('/admin/chapters');
   }
