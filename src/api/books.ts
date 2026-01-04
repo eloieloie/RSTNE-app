@@ -14,7 +14,7 @@ export async function getBookById(bookId: number): Promise<Book | null> {
   return await response.json();
 }
 
-export async function createBook(book: { book_name: string; book_description?: string; book_index?: number }): Promise<void> {
+export async function createBook(book: { book_name: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_index?: number }): Promise<void> {
   const response = await fetch(`${API_URL}/books`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ export async function createBook(book: { book_name: string; book_description?: s
   if (!response.ok) throw new Error('Failed to create book');
 }
 
-export async function updateBook(bookId: number, book: { book_name?: string; book_description?: string; book_index?: number }): Promise<void> {
+export async function updateBook(bookId: number, book: { book_name?: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_index?: number }): Promise<void> {
   const response = await fetch(`${API_URL}/books/${bookId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

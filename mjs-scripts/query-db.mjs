@@ -15,6 +15,8 @@ try {
     CREATE TABLE IF NOT EXISTS books_tbl (
       book_id INT AUTO_INCREMENT PRIMARY KEY,
       book_name VARCHAR(255) NOT NULL,
+      hebrew_book_name VARCHAR(255),
+      telugu_book_name VARCHAR(255),
       book_description TEXT,
       book_index INT,
       dt_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP

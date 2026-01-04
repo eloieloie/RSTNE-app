@@ -8,6 +8,8 @@ export const TABLES = {
 export interface Book {
   book_id: number;
   book_name: string;
+  hebrew_book_name: string | null;
+  telugu_book_name: string | null;
   book_description: string | null;
   book_index: number | null;
   dt_added: Date;
@@ -15,12 +17,16 @@ export interface Book {
 
 export interface BookInsert {
   book_name: string;
+  hebrew_book_name?: string;
+  telugu_book_name?: string;
   book_description?: string;
   book_index?: number;
 }
 
 export interface BookUpdate {
   book_name?: string;
+  hebrew_book_name?: string;
+  telugu_book_name?: string;
   book_description?: string;
   book_index?: number;
 }
@@ -52,6 +58,8 @@ export interface ChapterUpdate {
 export const BOOK_COLUMNS = {
   ID: 'book_id',
   NAME: 'book_name',
+  HEBREW_NAME: 'hebrew_book_name',
+  TELUGU_NAME: 'telugu_book_name',
   DESCRIPTION: 'book_description',
   INDEX: 'book_index',
   DATE_ADDED: 'dt_added',
