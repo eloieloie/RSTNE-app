@@ -46,11 +46,29 @@
             </div>
             
             <div v-else class="verses-list">
-              <div v-for="verse in verses" :key="verse.verse_id" class="verse-item">
+              <div 
+                v-for="verse in verses" 
+                :key="verse.verse_id" 
+                :data-verse-id="verse.verse_id"
+                class="verse-item"
+              >
                 <span class="verse-number">{{ verse.verse_index }}</span>
                 <div class="verse-content">
                   <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
                   <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  
+                  <div v-if="verse.links && verse.links.length > 0" class="verse-links">
+                    <a 
+                      v-for="link in verse.links" 
+                      :key="link.target_verse_id"
+                      href="#"
+                      class="link-badge"
+                      :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
+                      @click.prevent="(e) => { console.log('Link clicked:', link); navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id); }"
+                    >
+                      {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -62,22 +80,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById } from '@/api/books';
-import { getVersesByChapterId } from '@/api/verses';
-import type { Chapter, Verse } from '@/utils/collectionReferences';
+import { getVersesByChapterId, type VerseWithLinks } from '@/api/verses';
+import type { Chapter } from '@/utils/collectionReferences';
 import '@/assets/fonts/fonts.css';
 
 const route = useRoute();
+const router = useRouter();
 const chapters = ref<Chapter[]>([]);
 const selectedChapter = ref<Chapter | null>(null);
-const verses = ref<Verse[]>([]);
+const verses = ref<VerseWithLinks[]>([]);
 const loadingVerses = ref(false);
 const bookName = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
+  console.log('navigateToVerse called:', { bookId, chapterId, verseId });
+  console.log('Current route.params.id:', route.params.id, 'Type:', typeof route.params.id);
+  console.log('Comparison:', Number(route.params.id), '===', bookId, '=', Number(route.params.id) === bookId);
+  
+  // If same book, just select the chapter and scroll
+  if (Number(route.params.id) === bookId) {
+    console.log('Same book - finding chapter', chapterId);
+    const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
+    console.log('Found chapter:', chapter);
+    if (chapter) {
+      console.log('Selecting chapter and scrolling to verse', verseId);
+      await selectChapter(chapter);
+      await nextTick();
+      scrollToVerse(verseId);
+    } else {
+      console.error('Chapter not found:', chapterId);
+    }
+  }
+  // Otherwise navigate to the other book's chapter page with query params
+  else {
+    console.log('Different book - navigating to', bookId, 'with query params');
+    router.push({
+      path: `/chapters/${bookId}`,
+      query: { chapterId: String(chapterId), verseId: String(verseId) }
+    });
+  }
+}
+
+function scrollToVerse(verseId: number) {
+  console.log('scrollToVerse called for verseId:', verseId);
+  setTimeout(() => {
+    const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+    console.log('Found verse element:', verseElement);
+    if (verseElement) {
+      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the verse briefly
+      verseElement.classList.add('highlight-verse');
+      setTimeout(() => verseElement.classList.remove('highlight-verse'), 2000);
+    } else {
+      console.error('Verse element not found for verseId:', verseId);
+    }
+  }, 300);
+}
 
 onMounted(async () => {
   const bookId = Number(route.params.id);
@@ -105,14 +169,67 @@ onMounted(async () => {
       return numA - numB;
     });
     
-    // Auto-select first chapter if available
-    if (chapters.value.length > 0) {
+    // Check if we have a target chapter and verse from query params
+    const targetChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
+    const targetVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+    
+    if (targetChapterId && targetVerseId) {
+      // Find and select the target chapter
+      const targetChapter = chapters.value.find(ch => ch.chapter_id === targetChapterId);
+      if (targetChapter) {
+        await selectChapter(targetChapter);
+        await nextTick();
+        scrollToVerse(targetVerseId);
+      }
+    } else if (chapters.value.length > 0) {
+      // Auto-select first chapter if no target specified
       await selectChapter(chapters.value[0]);
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load chapters';
   } finally {
     loading.value = false;
+  }
+});
+
+// Watch for route changes (when navigating from verse links)
+watch(() => route.params.id, async (newBookId, oldBookId) => {
+  if (newBookId && newBookId !== oldBookId) {
+    console.log('Book changed from', oldBookId, 'to', newBookId);
+    loading.value = true;
+    try {
+      const bookId = Number(newBookId);
+      const book = await getBookById(bookId);
+      if (book) {
+        bookName.value = book.book_name;
+        const chaptersData = await getChaptersByBookId(bookId);
+        chapters.value = chaptersData.sort((a, b) => {
+          const numA = parseInt(String(a.chapter_number)) || 0;
+          const numB = parseInt(String(b.chapter_number)) || 0;
+          return numA - numB;
+        });
+        
+        // Check for target chapter/verse from query params
+        const targetChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
+        const targetVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+        
+        if (targetChapterId && targetVerseId) {
+          console.log('Loading target chapter:', targetChapterId, 'and verse:', targetVerseId);
+          const targetChapter = chapters.value.find(ch => ch.chapter_id === targetChapterId);
+          if (targetChapter) {
+            await selectChapter(targetChapter);
+            await nextTick();
+            scrollToVerse(targetVerseId);
+          }
+        } else if (chapters.value.length > 0) {
+          await selectChapter(chapters.value[0]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load new book:', e);
+    } finally {
+      loading.value = false;
+    }
   }
 });
 
@@ -125,6 +242,8 @@ async function loadVerses(chapterId: number) {
   try {
     loadingVerses.value = true;
     verses.value = await getVersesByChapterId(chapterId);
+    console.log('Loaded verses:', verses.value.length);
+    console.log('First verse with links:', verses.value.find(v => v.links && v.links.length > 0));
   } catch (e) {
     console.error('Failed to load verses:', e);
     verses.value = [];
@@ -266,6 +385,13 @@ h1 {
   gap: 1rem;
   line-height: 1.8;
   padding: 0.5rem 0;
+  transition: background-color 0.3s;
+}
+
+.verse-item.highlight-verse {
+  background-color: #fff3cd;
+  padding: 0.5rem;
+  border-radius: 4px;
 }
 
 .verse-number {
@@ -288,6 +414,31 @@ h1 {
 .verse-telugu {
   color: #666;
   font-size: 0.95rem;
+}
+
+.verse-links {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.link-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #e7f3ff;
+  color: #0366d6;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.link-badge:hover {
+  background: #0366d6;
+  color: white;
+  transform: translateY(-1px);
 }
 
 .paleobora-text {

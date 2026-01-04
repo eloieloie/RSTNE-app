@@ -2,7 +2,19 @@ import type { Verse, VerseInsert, VerseUpdate } from '@/utils/collectionReferenc
 
 const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
-export async function getVersesByChapterId(chapterId: number): Promise<Verse[]> {
+export interface VerseWithLinks extends Verse {
+  links?: Array<{
+    source_verse_id: number;
+    target_verse_id: number;
+    target_verse_index: number;
+    target_chapter_number: string;
+    target_book_name: string;
+    target_book_id: number;
+    target_chapter_id: number;
+  }>;
+}
+
+export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
   const response = await fetch(`${API_BASE_URL}/chapters/${chapterId}/verses`);
   if (!response.ok) {
     throw new Error('Failed to fetch verses');
