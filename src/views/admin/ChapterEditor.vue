@@ -1,256 +1,264 @@
 <template>
   <div class="chapter-editor">
     <header class="page-header">
-      <h1>{{ isEditMode ? 'Edit Chapter' : 'Add New Chapter' }}</h1>
+      <div>
+        <h1>{{ chapterTitle }}</h1>
+        <p v-if="chapter" class="chapter-subtitle">{{ getBookName(chapter.book_id) }} - Chapter {{ chapter.chapter_number }}</p>
+      </div>
       <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
     </header>
 
     <div class="editor-container">
-      <form @submit.prevent="saveChapter" class="chapter-form">
-        <div class="form-group">
-          <label for="bookId">Book *</label>
-          <select id="bookId" v-model="formData.book_id" required :disabled="isEditMode">
-            <option value="">Select a book</option>
-            <option v-for="book in books" :key="book.book_id" :value="book.book_id">
-              {{ book.book_name }}
-            </option>
-          </select>
+      <div v-if="loading" class="loading">Loading verses...</div>
+      <div v-else-if="error" class="error">{{ error }}</div>
+      
+      <div v-else class="verses-list">
+        <div v-if="verses.length === 0" class="empty">
+          No verses found for this chapter.
         </div>
-
-        <div class="form-group">
-          <label for="chapterNumber">Chapter Number *</label>
-          <input
-            id="chapterNumber"
-            v-model="formData.chapter_number"
-            type="text"
-            required
-            placeholder="e.g., 1, 2a, 3.1"
-          />
-        </div>
-
-        <div class="form-group">
-          <div class="description-header">
-            <label>Chapter Description *</label>
+        
+        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item">
+          <div class="verse-header">
+            <span class="verse-number">{{ verse.verse_index }}</span>
             <button 
-              type="button" 
-              @click="toggleEditorMode" 
-              class="toggle-mode-btn"
-              :title="isHtmlMode ? 'Switch to Rich Text Editor' : 'Switch to HTML Code View'"
+              v-if="editingVerseId !== verse.verse_id"
+              @click="startEditVerse(verse)" 
+              class="btn-edit"
+              title="Edit verse"
             >
-              {{ isHtmlMode ? '📝 Rich Text' : '&lt;/&gt; HTML' }}
+              ✏️ Edit
             </button>
+            <div v-else class="edit-actions">
+              <button @click="saveVerse(verse.verse_id)" class="btn-save">💾 Save</button>
+              <button @click="cancelEdit" class="btn-cancel">❌ Cancel</button>
+            </div>
           </div>
-          <div v-show="!isHtmlMode" ref="editorContainer" class="quill-editor"></div>
-          <textarea
-            v-show="isHtmlMode"
-            v-model="htmlCode"
-            class="html-code-editor"
-            placeholder="Enter HTML code..."
-            @blur="syncHtmlToEditor"
-          ></textarea>
+          
+          <div v-if="editingVerseId !== verse.verse_id" class="verse-content">
+            <div class="verse-text" v-html="verse.verse"></div>
+            <div v-if="verse.telugu_verse" class="verse-telugu" v-html="verse.telugu_verse"></div>
+          </div>
+          
+          <div v-else class="verse-editor">
+            <div class="editor-group">
+              <label>English Verse:</label>
+              <div id="english-editor" class="quill-editor"></div>
+            </div>
+            <div class="editor-group">
+              <label>Telugu Verse (Optional):</label>
+              <div id="telugu-editor" class="quill-editor"></div>
+            </div>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="chapterNotes">Chapter Notes</label>
-          <textarea
-            id="chapterNotes"
-            v-model="formData.chapter_notes"
-            rows="4"
-            placeholder="Enter additional notes"
-          ></textarea>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-            {{ isEditMode ? 'Update Chapter' : 'Create Chapter' }}
-          </button>
-          <router-link to="/admin/chapters" class="btn btn-secondary">
-            Cancel
-          </router-link>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, computed, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
+import { getAllBooks } from '@/api/books';
+import { getChapterById } from '@/api/chapters';
+import { getVersesByChapterId, updateVerse } from '@/api/verses';
+import type { Book, Chapter, Verse, VerseUpdate } from '@/utils/collectionReferences';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
-import { getAllBooks } from '@/api/books';
-import { createChapter, updateChapter, getChapterById } from '@/api/chapters';
-import type { Book, ChapterInsert } from '@/utils/collectionReferences';
 
 const route = useRoute();
-const router = useRouter();
 const books = ref<Book[]>([]);
-const editorContainer = ref<HTMLElement | null>(null);
-let quillEditor: Quill | null = null;
+const chapter = ref<Chapter | null>(null);
+const verses = ref<Verse[]>([]);
+const loading = ref(true);
+const error = ref<string | null>(null);
 
-const isEditMode = ref(false);
-const chapterId = ref<number | null>(null);
-const isHtmlMode = ref(false);
-const htmlCode = ref('');
+const editingVerseId = ref<number | null>(null);
+const editFormData = ref<VerseUpdate>({
+  verse: '',
+  telugu_verse: ''
+});
 
-const formData = ref<ChapterInsert>({
-  book_id: 0,
-  chapter_number: '',
-  chapter_description: '',
-  chapter_notes: ''
+const englishEditor = ref<Quill | null>(null);
+const teluguEditor = ref<Quill | null>(null);
+
+const chapterTitle = computed(() => {
+  if (!chapter.value) return 'Chapter Editor';
+  return `Edit Chapter Verses`;
+});
+
+const sortedVerses = computed(() => {
+  return [...verses.value].sort((a, b) => {
+    const indexA = a.verse_index ?? 0;
+    const indexB = b.verse_index ?? 0;
+    return indexA - indexB;
+  });
 });
 
 onMounted(async () => {
-  console.log('ChapterEditor mounted');
-  // Load books
-  try {
-    console.log('Loading books...');
-    books.value = await getAllBooks();
-    console.log('Books loaded:', books.value);
-  } catch (e) {
-    console.error('Failed to load books:', e);
-    alert('Failed to load books');
+  const chapterId = Number(route.params.id);
+  if (!chapterId || isNaN(chapterId)) {
+    error.value = 'Invalid chapter ID';
+    loading.value = false;
+    return;
   }
 
-  // Initialize Quill editor
-  if (editorContainer.value) {
-    console.log('Initializing Quill editor');
-    quillEditor = new Quill(editorContainer.value, {
+  await loadData(chapterId);
+});
+
+async function loadData(chapterId: number) {
+  try {
+    loading.value = true;
+    const [booksData, chapterData, versesData] = await Promise.all([
+      getAllBooks(),
+      getChapterById(chapterId),
+      getVersesByChapterId(chapterId)
+    ]);
+    
+    books.value = booksData;
+    chapter.value = chapterData;
+    verses.value = versesData;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load data';
+  } finally {
+    loading.value = false;
+  }
+}
+
+function getBookName(bookId: number): string {
+  const book = books.value.find(b => b.book_id === bookId);
+  return book?.book_name || 'Unknown Book';
+}
+
+async function startEditVerse(verse: Verse) {
+  editingVerseId.value = verse.verse_id;
+  editFormData.value = {
+    verse: verse.verse || '',
+    telugu_verse: verse.telugu_verse || ''
+  };
+  
+  await nextTick();
+  initializeEditors();
+}
+
+function initializeEditors() {
+  const englishContainer = document.getElementById('english-editor');
+  const teluguContainer = document.getElementById('telugu-editor');
+  
+  if (englishContainer) {
+    englishEditor.value = new Quill(englishContainer, {
       theme: 'snow',
       modules: {
         toolbar: [
-          [{ header: [1, 2, 3, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          [{ indent: '-1' }, { indent: '+1' }],
-          [{ align: [] }],
-          ['link', 'image'],
+          ['bold', 'italic', 'underline'],
+          [{ 'color': [] }, { 'background': [] }],
           ['clean']
         ]
-      },
-      placeholder: 'Enter chapter description...'
+      }
     });
+    englishEditor.value.root.innerHTML = editFormData.value.verse || '';
   }
-
-  // Check if editing existing chapter
-  const id = route.params.id;
-  console.log('Route params id:', id);
-  if (id && id !== 'new') {
-    isEditMode.value = true;
-    chapterId.value = Number(id);
-    console.log('Loading chapter with id:', chapterId.value);
-    await loadChapter(chapterId.value);
-  }
-});
-
-onBeforeUnmount(() => {
-  quillEditor = null;
-});
-
-async function loadChapter(id: number) {
-  try {
-    console.log('Fetching chapter from API, id:', id);
-    const chapter = await getChapterById(id);
-    console.log('Chapter loaded:', chapter);
-    
-    if (!chapter) {
-      throw new Error('Chapter not found');
-    }
-    
-    formData.value = {
-      book_id: chapter.book_id,
-      chapter_number: chapter.chapter_number,
-      chapter_description: chapter.chapter_description || '',
-      chapter_notes: chapter.chapter_notes || ''
-    };
-
-    // Set editor content
-    if (quillEditor && chapter.chapter_description) {
-      console.log('Setting editor content');
-      quillEditor.root.innerHTML = chapter.chapter_description;
-      htmlCode.value = chapter.chapter_description;
-    }
-  } catch (e) {
-    console.error('Error loading chapter:', e);
-    alert('Failed to load chapter');
-    router.push('/admin/chapters');
+  
+  if (teluguContainer) {
+    teluguEditor.value = new Quill(teluguContainer, {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline'],
+          [{ 'color': [] }, { 'background': [] }],
+          ['clean']
+        ]
+      }
+    });
+    teluguEditor.value.root.innerHTML = editFormData.value.telugu_verse || '';
   }
 }
 
-function toggleEditorMode() {
-  if (isHtmlMode.value) {
-    // Switching from HTML to Rich Text
-    syncHtmlToEditor();
-  } else {
-    // Switching from Rich Text to HTML
-    syncEditorToHtml();
-  }
-  isHtmlMode.value = !isHtmlMode.value;
+function cancelEdit() {
+  cleanupEditors();
+  editingVerseId.value = null;
+  editFormData.value = {
+    verse: '',
+    telugu_verse: ''
+  };
 }
 
-function syncEditorToHtml() {
-  if (quillEditor) {
-    htmlCode.value = quillEditor.root.innerHTML;
+function cleanupEditors() {
+  if (englishEditor.value) {
+    englishEditor.value = null;
   }
-}
-
-function syncHtmlToEditor() {
-  if (quillEditor && htmlCode.value) {
-    quillEditor.root.innerHTML = htmlCode.value;
+  if (teluguEditor.value) {
+    teluguEditor.value = null;
   }
 }
 
-async function saveChapter() {
-  // Get content from the appropriate source
-  if (isHtmlMode.value) {
-    formData.value.chapter_description = htmlCode.value;
-  } else if (quillEditor) {
-    formData.value.chapter_description = quillEditor.root.innerHTML;
+async function saveVerse(verseId: number) {
+  // Get HTML content from editors
+  if (englishEditor.value) {
+    editFormData.value.verse = englishEditor.value.root.innerHTML;
   }
-
-  // Validate
-  if (!formData.value.book_id || !formData.value.chapter_number || !formData.value.chapter_description) {
-    alert('Please fill in all required fields');
+  if (teluguEditor.value) {
+    editFormData.value.telugu_verse = teluguEditor.value.root.innerHTML;
+  }
+  
+  if (!editFormData.value.verse.trim()) {
+    alert('Verse text cannot be empty');
     return;
   }
 
   try {
-    if (isEditMode.value && chapterId.value) {
-      await updateChapter(chapterId.value, formData.value);
-    } else {
-      await createChapter(formData.value);
+    await updateVerse(verseId, editFormData.value);
+    
+    // Update local data
+    const index = verses.value.findIndex(v => v.verse_id === verseId);
+    if (index !== -1) {
+      verses.value[index] = {
+        ...verses.value[index],
+        verse: editFormData.value.verse,
+        telugu_verse: editFormData.value.telugu_verse || null
+      };
     }
     
-    router.push('/admin/chapters');
+    cancelEdit();
   } catch (e) {
-    alert('Failed to save chapter: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    alert('Failed to save verse: ' + (e instanceof Error ? e.message : 'Unknown error'));
   }
 }
 </script>
 
 <style scoped>
 .chapter-editor {
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
 }
 
 .page-header h1 {
-  color: #2c3e50;
+  color: #333;
   margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.chapter-subtitle {
+  color: #666;
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
 }
 
 .back-link {
   color: #667eea;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .back-link:hover {
@@ -259,138 +267,147 @@ async function saveChapter() {
 
 .editor-container {
   background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.chapter-form {
+.loading, .error, .empty {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.verses-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
-.form-group {
+.verse-item {
+  border: 1px solid #e0e0e0;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.verse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.verse-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #667eea;
+  min-width: 40px;
+}
+
+.btn-edit {
+  padding: 0.375rem 0.75rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-edit:hover {
+  background: #5568d3;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-save {
+  padding: 0.375rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-save:hover {
+  background: #218838;
+}
+
+.btn-cancel {
+  padding: 0.375rem 0.75rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+}
+
+.verse-content {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-group label {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.description-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toggle-mode-btn {
-  padding: 0.5rem 1rem;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #667eea;
-}
-
-.toggle-mode-btn:hover {
-  background: #e8e8e8;
-  border-color: #667eea;
-}
-
-.html-code-editor {
-  min-height: 350px;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-family: 'Courier New', Consolas, Monaco, monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  resize: vertical;
-  background: #f8f9fa;
-}
-
-.html-code-editor:focus {
-  outline: none;
-  border-color: #667eea;
-  background: white;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+.verse-text {
   font-size: 1rem;
-  font-family: inherit;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #667eea;
+.verse-telugu {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.verse-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.editor-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.editor-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.75rem;
 }
 
 .quill-editor {
-  min-height: 300px;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  min-height: 150px;
 }
 
-:deep(.ql-toolbar) {
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-}
-
-:deep(.ql-container) {
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  min-height: 300px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
+.quill-editor :deep(.ql-editor) {
   font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
+  line-height: 1.6;
+  min-height: 120px;
 }
 
-.btn-primary {
-  background: #667eea;
-  color: white;
+.quill-editor :deep(.ql-toolbar) {
+  border: 1px solid #ddd;
+  background: #f9f9f9;
 }
 
-.btn-primary:hover {
-  background: #5568d3;
-}
-
-.btn-secondary {
-  background: #e0e0e0;
-  color: #2c3e50;
-}
-
-.btn-secondary:hover {
-  background: #d0d0d0;
+.quill-editor :deep(.ql-container) {
+  border: 1px solid #ddd;
+  border-top: none;
 }
 </style>
+

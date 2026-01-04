@@ -170,6 +170,75 @@ app.delete("/api/chapters/:id", async (req, res) => {
   }
 });
 
+// ============= VERSES ENDPOINTS =============
+
+// Get verses by chapter ID
+app.get("/api/chapters/:id/verses", async (req, res) => {
+  try {
+    const [verses] = await pool.execute(
+        "SELECT * FROM verses_tbl WHERE chapter_id = ? ORDER BY verse_index ASC",
+        [req.params.id],
+    );
+    res.json(verses);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Get verse by ID
+app.get("/api/verses/:id", async (req, res) => {
+  try {
+    const [verses] = await pool.execute(
+        "SELECT * FROM verses_tbl WHERE verse_id = ?",
+        [req.params.id],
+    );
+    if (verses.length === 0) {
+      return res.status(404).json({error: "Verse not found"});
+    }
+    res.json(verses[0]);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Create verse
+app.post("/api/verses", async (req, res) => {
+  try {
+    const {chapter_id, verse_index, verse, telugu_verse} = req.body;
+    const [result] = await pool.execute(
+        "INSERT INTO verses_tbl (chapter_id, verse_index, verse, telugu_verse) VALUES (?, ?, ?, ?)",
+        [chapter_id, verse_index || null, verse, telugu_verse || null],
+    );
+    res.status(201).json({id: result.insertId, message: "Verse created successfully"});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Update verse
+app.put("/api/verses/:id", async (req, res) => {
+  try {
+    const {verse_index, verse, telugu_verse} = req.body;
+    await pool.execute(
+        "UPDATE verses_tbl SET verse_index = ?, verse = ?, telugu_verse = ? WHERE verse_id = ?",
+        [verse_index || null, verse, telugu_verse || null, req.params.id],
+    );
+    res.json({message: "Verse updated successfully"});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Delete verse
+app.delete("/api/verses/:id", async (req, res) => {
+  try {
+    await pool.execute("DELETE FROM verses_tbl WHERE verse_id = ?", [req.params.id]);
+    res.json({message: "Verse deleted successfully"});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
 // ============= STATS ENDPOINT =============
 
 app.get("/api/stats", async (req, res) => {
