@@ -36,9 +36,23 @@
           </div>
           <div v-else>
             <h2>Chapter {{ selectedChapter.chapter_number }}</h2>
-            <div class="description-content" v-html="selectedChapter.chapter_description"></div>
-            <div v-if="selectedChapter.chapter_notes" class="notes">
-              <strong>Notes:</strong> {{ selectedChapter.chapter_notes }}
+            
+            <div v-if="loadingVerses" class="loading-verses">
+              Loading verses...
+            </div>
+            
+            <div v-else-if="verses.length === 0" class="no-verses">
+              No verses found for this chapter.
+            </div>
+            
+            <div v-else class="verses-list">
+              <div v-for="verse in verses" :key="verse.verse_id" class="verse-item">
+                <span class="verse-number">{{ verse.verse_index }}</span>
+                <div class="verse-content">
+                  <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
+                  <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -52,11 +66,15 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById } from '@/api/books';
-import type { Chapter } from '@/utils/collectionReferences';
+import { getVersesByChapterId } from '@/api/verses';
+import type { Chapter, Verse } from '@/utils/collectionReferences';
+import '@/assets/fonts/fonts.css';
 
 const route = useRoute();
 const chapters = ref<Chapter[]>([]);
 const selectedChapter = ref<Chapter | null>(null);
+const verses = ref<Verse[]>([]);
+const loadingVerses = ref(false);
 const bookName = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -78,11 +96,18 @@ onMounted(async () => {
     }
     
     bookName.value = book.book_name;
-    chapters.value = await getChaptersByBookId(bookId);
+    const chaptersData = await getChaptersByBookId(bookId);
+    
+    // Sort chapters by chapter_number
+    chapters.value = chaptersData.sort((a, b) => {
+      const numA = parseInt(String(a.chapter_number)) || 0;
+      const numB = parseInt(String(b.chapter_number)) || 0;
+      return numA - numB;
+    });
     
     // Auto-select first chapter if available
     if (chapters.value.length > 0) {
-      selectedChapter.value = chapters.value[0];
+      await selectChapter(chapters.value[0]);
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load chapters';
@@ -91,8 +116,27 @@ onMounted(async () => {
   }
 });
 
-function selectChapter(chapter: Chapter) {
+async function selectChapter(chapter: Chapter) {
   selectedChapter.value = chapter;
+  await loadVerses(chapter.chapter_id);
+}
+
+async function loadVerses(chapterId: number) {
+  try {
+    loadingVerses.value = true;
+    verses.value = await getVersesByChapterId(chapterId);
+  } catch (e) {
+    console.error('Failed to load verses:', e);
+    verses.value = [];
+  } finally {
+    loadingVerses.value = false;
+  }
+}
+
+function formatVerseWithPaleoBora(verseText: string | null): string {
+  if (!verseText) return '';
+  // Replace Myhla or myhla with span that uses PaleoBora font
+  return verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
 }
 </script>
 
@@ -188,6 +232,7 @@ h1 {
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-height: 400px;
+  text-align: left;
 }
 
 .select-prompt {
@@ -202,6 +247,60 @@ h1 {
   margin: 0 0 1.5rem 0;
   padding-bottom: 0.75rem;
   border-bottom: 2px solid #e0e0e0;
+}
+
+.loading-verses, .no-verses {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+.verses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.verse-item {
+  display: flex;
+  gap: 1rem;
+  line-height: 1.8;
+  padding: 0.5rem 0;
+}
+
+.verse-number {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #42b983;
+  font-size: 0.9rem;
+  min-width: 30px;
+}
+
+.verse-content {
+  flex: 1;
+}
+
+.verse-text {
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.verse-telugu {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.paleobora-text {
+  font-family: 'PaleoBora', serif !important;
+  font-size: 1.1rem;
+}
+
+.verse-text :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.verse-telugu :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
 }
 
 .description-content {
@@ -247,20 +346,6 @@ h1 {
 
 .description-content :deep(a:hover) {
   text-decoration: underline;
-}
-
-.notes {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #42b983;
-  color: #555;
-}
-
-.notes strong {
-  color: #333;
-  display: block;
-  margin-bottom: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -318,16 +403,19 @@ h1 {
     padding-bottom: 0.5rem;
   }
   
-  .description-content {
+  .verse-item {
+    gap: 0.5rem;
+    padding: 0.5rem 0;
     font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 1rem;
   }
   
-  .notes {
-    padding: 0.75rem;
-    margin: 0;
-    border-radius: 4px;
+  .verse-number {
+    min-width: 25px;
+    font-size: 0.85rem;
+  }
+  
+  .verse-telugu {
+    font-size: 0.9rem;
   }
   
   .select-prompt {

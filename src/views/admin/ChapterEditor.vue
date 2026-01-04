@@ -35,8 +35,8 @@
           </div>
           
           <div v-if="editingVerseId !== verse.verse_id" class="verse-content">
-            <div class="verse-text" v-html="verse.verse"></div>
-            <div v-if="verse.telugu_verse" class="verse-telugu" v-html="verse.telugu_verse"></div>
+            <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
+            <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
           </div>
           
           <div v-else class="verse-editor">
@@ -64,6 +64,7 @@ import { getVersesByChapterId, updateVerse } from '@/api/verses';
 import type { Book, Chapter, Verse, VerseUpdate } from '@/utils/collectionReferences';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import '@/assets/fonts/fonts.css';
 
 const route = useRoute();
 const books = ref<Book[]>([]);
@@ -74,6 +75,7 @@ const error = ref<string | null>(null);
 
 const editingVerseId = ref<number | null>(null);
 const editFormData = ref<VerseUpdate>({
+  verse_index: undefined,
   verse: '',
   telugu_verse: ''
 });
@@ -93,6 +95,12 @@ const sortedVerses = computed(() => {
     return indexA - indexB;
   });
 });
+
+function formatVerseWithPaleoBora(verseText: string | null): string {
+  if (!verseText) return '';
+  // Replace Myhla or myhla with span that uses PaleoBora font
+  return verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
+}
 
 onMounted(async () => {
   const chapterId = Number(route.params.id);
@@ -132,6 +140,7 @@ function getBookName(bookId: number): string {
 async function startEditVerse(verse: Verse) {
   editingVerseId.value = verse.verse_id;
   editFormData.value = {
+    verse_index: verse.verse_index ?? undefined,
     verse: verse.verse || '',
     telugu_verse: verse.telugu_verse || ''
   };
@@ -177,6 +186,7 @@ function cancelEdit() {
   cleanupEditors();
   editingVerseId.value = null;
   editFormData.value = {
+    verse_index: undefined,
     verse: '',
     telugu_verse: ''
   };
@@ -192,6 +202,11 @@ function cleanupEditors() {
 }
 
 async function saveVerse(verseId: number) {
+  if (!verseId || isNaN(verseId)) {
+    alert('Invalid verse ID');
+    return;
+  }
+  
   // Get HTML content from editors
   if (englishEditor.value) {
     editFormData.value.verse = englishEditor.value.root.innerHTML;
@@ -200,12 +215,13 @@ async function saveVerse(verseId: number) {
     editFormData.value.telugu_verse = teluguEditor.value.root.innerHTML;
   }
   
-  if (!editFormData.value.verse.trim()) {
+  if (!editFormData.value.verse || !editFormData.value.verse.trim()) {
     alert('Verse text cannot be empty');
     return;
   }
 
   try {
+    console.log('Saving verse:', verseId, editFormData.value);
     await updateVerse(verseId, editFormData.value);
     
     // Update local data
@@ -213,8 +229,9 @@ async function saveVerse(verseId: number) {
     if (index !== -1) {
       verses.value[index] = {
         ...verses.value[index],
-        verse: editFormData.value.verse,
+        verse: editFormData.value.verse || verses.value[index].verse,
         telugu_verse: editFormData.value.telugu_verse || null
+        // verse_index is preserved from the spread operator
       };
     }
     
@@ -354,6 +371,7 @@ async function saveVerse(verseId: number) {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  text-align: left;
 }
 
 .verse-text {
@@ -361,6 +379,7 @@ async function saveVerse(verseId: number) {
   line-height: 1.6;
   color: #333;
   margin: 0;
+  text-align: left;
 }
 
 .verse-telugu {
@@ -368,7 +387,19 @@ async function saveVerse(verseId: number) {
   line-height: 1.6;
   color: #666;
   margin: 0;
-  font-style: italic;
+}
+
+.paleobora-text {
+  font-family: 'PaleoBora', serif !important;
+  font-size: 1.1rem;
+}
+
+.verse-text :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.verse-telugu :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
 }
 
 .verse-editor {
