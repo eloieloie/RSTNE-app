@@ -43,6 +43,15 @@ const chapters = ref<Chapter[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+// Sort books by book_index
+const sortedBooks = computed(() => {
+  return [...books.value].sort((a, b) => {
+    const indexA = a.book_index ?? Number.MAX_SAFE_INTEGER;
+    const indexB = b.book_index ?? Number.MAX_SAFE_INTEGER;
+    return indexA - indexB;
+  });
+});
+
 // Group chapters by book_id and sort by chapter_number
 const groupedChapters = computed(() => {
   const grouped: Record<number, Chapter[]> = {};
@@ -63,7 +72,15 @@ const groupedChapters = computed(() => {
     });
   });
   
-  return grouped;
+  // Create ordered object based on sortedBooks
+  const orderedGrouped: Record<number, Chapter[]> = {};
+  sortedBooks.value.forEach(book => {
+    if (grouped[book.book_id]) {
+      orderedGrouped[book.book_id] = grouped[book.book_id];
+    }
+  });
+  
+  return orderedGrouped;
 });
 
 onMounted(() => {

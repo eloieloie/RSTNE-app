@@ -2,6 +2,7 @@
 export const TABLES = {
   BOOKS: 'books_tbl',
   CHAPTERS: 'chapters_tbl',
+  VERSES: 'verses_tbl',
 } as const;
 
 // Type Definitions
@@ -54,6 +55,29 @@ export interface ChapterUpdate {
   chapter_notes?: string;
 }
 
+export interface Verse {
+  verse_id: number;
+  chapter_id: number;
+  verse_index: number | null;
+  verse: string;
+  telugu_verse: string | null;
+  dt_added: Date;
+  dt_modified: Date;
+}
+
+export interface VerseInsert {
+  chapter_id: number;
+  verse_index?: number;
+  verse: string;
+  telugu_verse?: string;
+}
+
+export interface VerseUpdate {
+  verse_index?: number;
+  verse?: string;
+  telugu_verse?: string;
+}
+
 // Column Names
 export const BOOK_COLUMNS = {
   ID: 'book_id',
@@ -71,6 +95,16 @@ export const CHAPTER_COLUMNS = {
   NUMBER: 'chapter_number',
   DESCRIPTION: 'chapter_description',
   NOTES: 'chapter_notes',
+  DATE_ADDED: 'dt_added',
+  DATE_MODIFIED: 'dt_modified',
+} as const;
+
+export const VERSE_COLUMNS = {
+  ID: 'verse_id',
+  CHAPTER_ID: 'chapter_id',
+  INDEX: 'verse_index',
+  VERSE: 'verse',
+  TELUGU_VERSE: 'telugu_verse',
   DATE_ADDED: 'dt_added',
   DATE_MODIFIED: 'dt_modified',
 } as const;

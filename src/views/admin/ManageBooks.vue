@@ -121,15 +121,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { getAllBooks, createBook, updateBook, deleteBook as apiDeleteBook } from '@/api/books';
 import type { Book, BookInsert } from '@/utils/collectionReferences';
 
-const books = ref<Book[]>([]);
+const booksData = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const editMode = ref(false);
 const editingId = ref<number | null>(null);
+
+const books = computed(() => {
+  return [...booksData.value].sort((a, b) => {
+    const indexA = a.book_index ?? Number.MAX_SAFE_INTEGER;
+    const indexB = b.book_index ?? Number.MAX_SAFE_INTEGER;
+    return indexA - indexB;
+  });
+});
 
 const formData = ref<BookInsert>({
   book_name: '',
@@ -146,7 +154,7 @@ onMounted(() => {
 async function loadBooks() {
   try {
     loading.value = true;
-    books.value = await getAllBooks();
+    booksData.value = await getAllBooks();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load books';
   } finally {

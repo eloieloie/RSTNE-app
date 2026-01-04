@@ -2,7 +2,7 @@
   <div class="books-page">
     <div class="page-header">
       <h1>Books Library</h1>
-      <router-link to="/admin" class="admin-link">Admin Dashboard →</router-link>
+      <router-link to="/admin" class="admin-link">Admin →</router-link>
     </div>
     
     <div v-if="loading" class="loading">Loading books...</div>
@@ -13,35 +13,37 @@
       No books found. Add some books to get started!
     </div>
     
-    <div v-else class="books-list">
-      <div 
-        v-for="book in books" 
-        :key="book.book_id" 
-        class="book-card"
+    <div v-else class="books-grid">
+      <router-link 
+        v-for="book in sortedBooks" 
+        :key="book.book_id"
+        :to="`/chapters/${book.book_id}`" 
+        class="book-button"
       >
-        <h2>{{ book.book_name }}</h2>
-        <p v-if="book.book_index" class="index">Index: {{ book.book_index }}</p>
-        <p class="description">{{ book.book_description || 'No description available' }}</p>
-        <p class="date">Added: {{ formatDate(book.dt_added) }}</p>
-        <router-link 
-          :to="`/chapters/${book.book_id}`" 
-          class="view-chapters-btn"
-        >
-          View Chapters
-        </router-link>
-      </div>
+        <div class="book-name">{{ book.book_name }}</div>
+        <div class="book-name-hebrew">{{ book.hebrew_book_name }}</div>
+        <div class="book-name-telugu">{{ book.telugu_book_name }}</div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { getAllBooks } from '@/api/books';
 import type { Book } from '@/utils/collectionReferences';
 
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const sortedBooks = computed(() => {
+  return [...books.value].sort((a, b) => {
+    const indexA = a.book_index ?? Number.MAX_SAFE_INTEGER;
+    const indexB = b.book_index ?? Number.MAX_SAFE_INTEGER;
+    return indexA - indexB;
+  });
+});
 
 onMounted(async () => {
   try {
@@ -53,14 +55,12 @@ onMounted(async () => {
   }
 });
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString();
-}
 </script>
 
 <style scoped>
 .books-page {
-  max-width: 1200px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -70,11 +70,17 @@ function formatDate(date: Date): string {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .page-header h1 {
   color: #2c3e50;
   margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .admin-link {
@@ -85,6 +91,7 @@ function formatDate(date: Date): string {
   border: 2px solid #667eea;
   border-radius: 6px;
   transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
 .admin-link:hover {
@@ -92,76 +99,144 @@ function formatDate(date: Date): string {
   color: white;
 }
 
-h1 {
-  color: #2c3e50;
-  margin-bottom: 2rem;
-}
-
 .loading, .error, .empty {
   text-align: center;
-  padding: 2rem;
-  font-size: 1.2rem;
+  padding: 3rem 1rem;
+  font-size: 1.1rem;
 }
 
 .error {
   color: #e74c3c;
 }
 
-.books-list {
+.books-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
+  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.book-card {
+.book-button {
   background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.book-card h2 {
   color: #2c3e50;
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
-}
-
-.index {
-  font-size: 0.875rem;
-  color: #667eea;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.description {
-  color: #666;
-  margin-bottom: 1rem;
-  line-height: 1.5;
-}
-
-.date {
-  font-size: 0.875rem;
-  color: #999;
-  margin-bottom: 1rem;
-}
-
-.view-chapters-btn {
-  display: inline-block;
-  background: #42b983;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 1.25rem 1rem;
+  border-radius: 8px;
   text-decoration: none;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 100px;
 }
 
-.view-chapters-btn:hover {
-  background: #369970;
+.book-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.book-name-hebrew {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.95;
+  font-style: italic;
+}
+
+.book-name-telugu {
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.book-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: #2c3e50;
+}
+
+.book-button:active {
+  transform: translateY(0);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .books-page {
+    padding: 1rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 0;
+  }
+
+  .book-button {
+    padding: 1rem 0.75rem;
+    min-height: 95px;
+  }
+
+  .book-name {
+    font-size: 0.9rem;
+  }
+
+  .book-name-hebrew {
+    font-size: 0.75rem;
+  }
+
+  .book-name-telugu {
+    font-size: 0.8rem;
+  }
+}
+/* Very small screens */
+@media (max-width: 480px) {
+  .books-page {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 0;
+  }
+
+  .book-button {
+    padding: 1rem 0.5rem;
+    min-height: 90px;
+    gap: 0.4rem;
+  }
+
+  .book-name {
+    font-size: 0.85rem;
+  }
+
+  .book-name-hebrew {
+    font-size: 0.72rem;
+  }
+
+  .book-name-telugu {
+    font-size: 0.78rem;
+  }
+
+  .admin-link {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
 }
 </style>
