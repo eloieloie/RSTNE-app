@@ -1,6 +1,27 @@
 <template>
   <div class="chapters-page">
-    <router-link to="/" class="back-link">← Back to Books</router-link>
+    <div class="top-nav">
+      <router-link to="/" class="back-link">← Back to Books</router-link>
+      
+      <div v-if="!loading && !error && chapters.length > 0" class="chapter-dropdown-container">
+        <label for="chapter-select" class="chapter-label">Chapter:</label>
+        <select 
+          id="chapter-select"
+          v-model="selectedChapterId" 
+          @change="onChapterChange"
+          class="chapter-select"
+        >
+          <option :value="null" disabled>Select a chapter...</option>
+          <option 
+            v-for="chapter in chapters" 
+            :key="chapter.chapter_id" 
+            :value="chapter.chapter_id"
+          >
+            Chapter {{ chapter.chapter_number }}
+          </option>
+        </select>
+      </div>
+    </div>
     
     <div v-if="loading" class="loading">Loading chapters...</div>
     
@@ -14,25 +35,9 @@
       </div>
       
       <div v-else class="content-layout">
-        <aside class="chapters-sidebar">
-          <h2>Chapters</h2>
-          <nav class="chapters-nav">
-            <a
-              v-for="chapter in chapters"
-              :key="chapter.chapter_id"
-              href="#"
-              @click.prevent="selectChapter(chapter)"
-              :class="{ active: selectedChapter?.chapter_id === chapter.chapter_id }"
-              class="chapter-link"
-            >
-              Chapter {{ chapter.chapter_number }}
-            </a>
-          </nav>
-        </aside>
-        
         <main class="chapter-content">
           <div v-if="!selectedChapter" class="select-prompt">
-            ← Select a chapter to view its content
+            ↑ Select a chapter from the dropdown to view its content
           </div>
           <div v-else>
             <h2>Chapter {{ selectedChapter.chapter_number }}</h2>
@@ -64,7 +69,7 @@
                       href="#"
                       class="link-badge"
                       :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
-                      @click.prevent="(e) => { console.log('Link clicked:', link); navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id); }"
+                      @click.prevent="() => { console.log('Link clicked:', link); navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id); }"
                     >
                       {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
                     </a>
@@ -99,6 +104,7 @@ const route = useRoute();
 const router = useRouter();
 const chapters = ref<Chapter[]>([]);
 const selectedChapter = ref<Chapter | null>(null);
+const selectedChapterId = ref<number | null>(null);
 const verses = ref<VerseWithLinks[]>([]);
 const loadingVerses = ref(false);
 const bookName = ref<string>('');
@@ -242,7 +248,15 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
 
 async function selectChapter(chapter: Chapter) {
   selectedChapter.value = chapter;
+  selectedChapterId.value = chapter.chapter_id;
   await loadVerses(chapter.chapter_id);
+}
+
+function onChapterChange() {
+  const chapter = chapters.value.find(ch => ch.chapter_id === selectedChapterId.value);
+  if (chapter) {
+    selectChapter(chapter);
+  }
 }
 
 async function loadVerses(chapterId: number) {
@@ -274,16 +288,59 @@ function formatVerseWithPaleoBora(verseText: string | null): string {
   min-height: 100vh;
 }
 
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .back-link {
-  display: inline-block;
   color: #42b983;
   text-decoration: none;
-  margin-bottom: 1rem;
   font-size: 1rem;
+  font-weight: 500;
 }
 
 .back-link:hover {
   text-decoration: underline;
+}
+
+.chapter-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chapter-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.chapter-select {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  min-width: 180px;
+  transition: all 0.2s ease;
+}
+
+.chapter-select:hover {
+  border-color: #42b983;
+}
+
+.chapter-select:focus {
+  outline: none;
+  border-color: #42b983;
+  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
 }
 
 h1 {
@@ -302,54 +359,8 @@ h1 {
 }
 
 .content-layout {
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 2rem;
-  align-items: start;
-}
-
-.chapters-sidebar {
-  position: sticky;
-  top: 2rem;
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.chapters-sidebar h2 {
-  color: #2c3e50;
-  font-size: 1.25rem;
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #42b983;
-}
-
-.chapters-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.chapter-link {
   display: block;
-  padding: 0.75rem 1rem;
-  color: #2c3e50;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.chapter-link:hover {
-  background: #f0f0f0;
-  color: #42b983;
-  transform: translateX(4px);
-}
-
-.chapter-link.active {
-  background: #42b983;
-  color: white;
+  width: 100%;
 }
 
 .chapter-content {
