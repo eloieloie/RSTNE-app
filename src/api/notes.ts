@@ -2,6 +2,11 @@ import type { Note, NoteInsert, NoteUpdate, VerseNote, VerseNoteInsert } from '@
 
 const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
+// Extended Note type with verse_note_id for deletion
+export interface NoteWithVerseNoteId extends Note {
+  verse_note_id: number;
+}
+
 // Notes API
 export async function getAllNotes(): Promise<Note[]> {
   const response = await fetch(`${API_BASE_URL}/notes`);
@@ -56,7 +61,7 @@ export async function deleteNote(noteId: number): Promise<void> {
 }
 
 // Verse Notes API (linking notes to verses)
-export async function getNotesByVerseId(verseId: number): Promise<Note[]> {
+export async function getNotesByVerseId(verseId: number): Promise<NoteWithVerseNoteId[]> {
   const response = await fetch(`${API_BASE_URL}/verses/${verseId}/notes`);
   if (!response.ok) {
     throw new Error('Failed to fetch notes for verse');

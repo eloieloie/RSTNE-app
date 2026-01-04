@@ -2,16 +2,30 @@ import type { Verse, VerseInsert, VerseUpdate } from '@/utils/collectionReferenc
 
 const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
+// Types for data returned in verses endpoint
+export interface VerseLinkData {
+  link_id: number;
+  source_verse_id: number;
+  target_verse_id: number;
+  target_verse_index: number;
+  target_chapter_number: string;
+  target_book_name: string;
+  target_book_id: number;
+  target_chapter_id: number;
+}
+
+export interface VerseNoteData {
+  verse_note_id: number;
+  verse_id: number;
+  note_id: number;
+  note_title: string | null;
+  note_content: string;
+  dt_modified: Date;
+}
+
 export interface VerseWithLinks extends Verse {
-  links?: Array<{
-    source_verse_id: number;
-    target_verse_id: number;
-    target_verse_index: number;
-    target_chapter_number: string;
-    target_book_name: string;
-    target_book_id: number;
-    target_chapter_id: number;
-  }>;
+  links?: VerseLinkData[];
+  notes?: VerseNoteData[];
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {

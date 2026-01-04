@@ -224,6 +224,7 @@ app.get("/api/chapters/:id/verses", async (req, res) => {
     // Get all linked verses for this chapter in one query
     const [links] = await pool.execute(
         `SELECT 
+          vl.link_id,
           vl.source_verse_id,
           vl.target_verse_id,
           tv.verse_index as target_verse_index,
@@ -240,6 +241,7 @@ app.get("/api/chapters/:id/verses", async (req, res) => {
         )
         UNION
         SELECT 
+          vl.link_id,
           vl.target_verse_id as source_verse_id,
           vl.source_verse_id as target_verse_id,
           sv.verse_index as target_verse_index,
@@ -257,13 +259,26 @@ app.get("/api/chapters/:id/verses", async (req, res) => {
         [req.params.id, req.params.id],
     );
 
-    // Group links by source verse
-    const versesWithLinks = verses.map((verse) => ({
+    // Get all notes for verses in this chapter
+    const [notes] = await pool.execute(
+        `SELECT vn.verse_note_id, vn.verse_id, n.note_id, n.note_title, n.note_content, n.dt_modified
+        FROM verse_notes_tbl vn
+        INNER JOIN notes_tbl n ON vn.note_id = n.note_id
+        WHERE vn.verse_id IN (
+          SELECT verse_id FROM verses_tbl WHERE chapter_id = ?
+        )
+        ORDER BY n.dt_modified DESC`,
+        [req.params.id],
+    );
+
+    // Group links and notes by source verse
+    const versesWithData = verses.map((verse) => ({
       ...verse,
       links: links.filter((link) => link.source_verse_id === verse.verse_id),
+      notes: notes.filter((note) => note.verse_id === verse.verse_id),
     }));
 
-    res.json(versesWithLinks);
+    res.json(versesWithData);
   } catch (error) {
     res.status(500).json({error: error.message});
   }
@@ -427,7 +442,7 @@ app.get("/api/notes/:id/verses", async (req, res) => {
 app.get("/api/verses/:id/notes", async (req, res) => {
   try {
     const [notes] = await pool.execute(
-        `SELECT n.* FROM notes_tbl n
+        `SELECT vn.verse_note_id, n.* FROM notes_tbl n
          INNER JOIN verse_notes_tbl vn ON n.note_id = vn.note_id
          WHERE vn.verse_id = ?
          ORDER BY n.dt_modified DESC`,

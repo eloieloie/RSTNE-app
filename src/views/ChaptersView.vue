@@ -69,6 +69,13 @@
                       {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
                     </a>
                   </div>
+                  
+                  <div v-if="verse.notes && verse.notes.length > 0" class="verse-notes">
+                    <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
+                      <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
+                      <div class="note-content" v-html="note.note_content"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -439,6 +446,35 @@ h1 {
   background: #0366d6;
   color: white;
   transform: translateY(-1px);
+}
+
+.verse-notes {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+}
+
+.note-item {
+  margin-bottom: 0.5rem;
+}
+
+.note-item:last-child {
+  margin-bottom: 0;
+}
+
+.note-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.note-content {
+  color: #78350f;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .paleobora-text {

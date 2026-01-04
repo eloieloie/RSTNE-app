@@ -5,7 +5,24 @@
         <h1>{{ chapterTitle }}</h1>
         <p v-if="chapter" class="chapter-subtitle">{{ getBookName(chapter.book_id) }} - Chapter {{ chapter.chapter_number }}</p>
       </div>
-      <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
+      <div class="header-actions">
+        <button 
+          v-if="!selectingVerseRange" 
+          @click="startRangeSelection" 
+          class="btn btn-sm btn-success"
+          title="Add note to multiple verses"
+        >
+          📝 Add Note to Range
+        </button>
+        <button 
+          v-if="selectingVerseRange" 
+          @click="cancelRangeSelection" 
+          class="btn btn-sm btn-secondary"
+        >
+          ❌ Cancel Range Selection
+        </button>
+        <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
+      </div>
     </header>
 
     <div class="editor-container">
@@ -17,9 +34,18 @@
           No verses found for this chapter.
         </div>
         
-        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item">
+        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item" :class="{ 'selected-for-range': selectedVerseIds && selectedVerseIds.includes(verse.verse_id) }">
           <div class="verse-header">
-            <span class="verse-number">{{ verse.verse_index }}</span>
+            <div class="verse-number-section">
+              <input 
+                v-if="selectingVerseRange" 
+                type="checkbox" 
+                :checked="selectedVerseIds && selectedVerseIds.includes(verse.verse_id)"
+                @change="toggleVerseSelection(verse.verse_id)"
+                class="verse-checkbox"
+              />
+              <span class="verse-number">{{ verse.verse_index }}</span>
+            </div>
             <div class="verse-actions">
               <button 
                 v-if="editingVerseId !== verse.verse_id"
@@ -64,6 +90,22 @@
             <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
             <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
             
+            <!-- Always visible notes -->
+            <div v-if="verseNotes[verse.verse_id]?.length > 0" class="verse-notes-display">
+              <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-display-item">
+                <div v-if="note.note_title" class="note-display-title">{{ note.note_title }}</div>
+                <div class="note-display-content" v-html="note.note_content"></div>
+              </div>
+            </div>
+            
+            <!-- Always visible links -->
+            <div v-if="verseLinks[verse.verse_id]?.length > 0" class="verse-links-display">
+              <span class="links-label">Related verses:</span>
+              <span v-for="link in verseLinks[verse.verse_id]" :key="link.link_id" class="link-display-badge">
+                Verse #{{ link.target_verse_id }}
+              </span>
+            </div>
+            
             <!-- Notes Display -->
             <div v-if="showNotesForVerse === verse.verse_id" class="notes-section">
               <div class="notes-header">
@@ -75,9 +117,18 @@
               
               <div v-else-if="verseNotes[verse.verse_id]?.length > 0" class="notes-list">
                 <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-item">
-                  <h5 v-if="note.note_title">{{ note.note_title }}</h5>
-                  <div class="note-content" v-html="note.note_content"></div>
-                  <div class="note-meta">{{ new Date(note.dt_modified).toLocaleDateString() }}</div>
+                  <div class="note-content-wrapper">
+                    <h5 v-if="note.note_title">{{ note.note_title }}</h5>
+                    <div class="note-content" v-html="note.note_content"></div>
+                    <div class="note-meta">{{ new Date(note.dt_modified).toLocaleDateString() }}</div>
+                  </div>
+                  <button 
+                    @click="deleteNoteFromVerse(verse.verse_id, note.verse_note_id)" 
+                    class="btn btn-sm btn-danger btn-delete-note"
+                    title="Delete note"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
               
@@ -114,8 +165,15 @@
               <div v-if="loadingLinks" class="loading-links">Loading links...</div>
               
               <div v-else-if="verseLinks[verse.verse_id]?.length > 0" class="links-list">
-                <div v-for="linkId in verseLinks[verse.verse_id]" :key="linkId" class="link-item">
-                  Verse #{{ linkId }}
+                <div v-for="link in verseLinks[verse.verse_id]" :key="link.link_id" class="link-item">
+                  <span>Verse #{{ link.target_verse_id }}</span>
+                  <button 
+                    @click="deleteVerseLinkHandler(verse.verse_id, link.link_id)" 
+                    class="btn btn-sm btn-danger btn-delete-link"
+                    title="Delete link"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
               
@@ -202,6 +260,30 @@
             </div>
           </div>
         </div>
+        
+        <!-- Range Note Form -->
+        <div v-if="selectingVerseRange && selectedVerseIds.length > 0" class="range-note-form">
+          <div class="range-note-header">
+            <h3>Add Note to {{ selectedVerseIds.length }} Selected Verse(s)</h3>
+            <p class="selected-verses-info">Verses: {{ getSelectedVerseNumbers() }}</p>
+          </div>
+          <input 
+            v-model="rangeNote.title" 
+            type="text" 
+            placeholder="Note title (optional)"
+            class="form-control mb-2"
+          />
+          <textarea 
+            v-model="rangeNote.content" 
+            placeholder="Note content..."
+            rows="4"
+            class="form-control mb-2"
+          ></textarea>
+          <div class="range-note-actions">
+            <button @click="saveRangeNote" class="btn btn-primary" :disabled="!rangeNote.content">Save Note for Selected Verses</button>
+            <button @click="cancelRangeSelection" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -212,10 +294,10 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import { getChapterById } from '@/api/chapters';
-import { getVersesByChapterId, updateVerse } from '@/api/verses';
-import { getNotesByVerseId, createNote, linkNoteToVerse } from '@/api/notes';
-import { getLinkedVerses, createVerseLink, getTagsByVerseId, getAllTags, createTag, linkTagToVerse, searchVerses } from '@/api/links-tags';
-import type { Book, Chapter, Verse, VerseUpdate, Note, Tag } from '@/utils/collectionReferences';
+import { getVersesByChapterId, updateVerse, type VerseWithLinks, type VerseLinkData, type VerseNoteData } from '@/api/verses';
+import { getNotesByVerseId, createNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
+import { createVerseLink, getTagsByVerseId, getAllTags, createTag, linkTagToVerse, searchVerses, deleteVerseLink as deleteLink } from '@/api/links-tags';
+import type { Book, Chapter, Verse, VerseUpdate, Tag } from '@/utils/collectionReferences';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '@/assets/fonts/fonts.css';
@@ -223,7 +305,7 @@ import '@/assets/fonts/fonts.css';
 const route = useRoute();
 const books = ref<Book[]>([]);
 const chapter = ref<Chapter | null>(null);
-const verses = ref<Verse[]>([]);
+const verses = ref<VerseWithLinks[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -239,14 +321,17 @@ const teluguEditor = ref<Quill | null>(null);
 
 // Notes management
 const showNotesForVerse = ref<number | null>(null);
-const verseNotes = ref<Record<number, Note[]>>({});
+const verseNotes = ref<Record<number, VerseNoteData[]>>({});
 const loadingNotes = ref(false);
 const addingNoteToVerse = ref<number | null>(null);
 const newNote = ref({ title: '', content: '' });
+const selectingVerseRange = ref<boolean>(false);
+const selectedVerseIds = ref<number[]>([]);
+const rangeNote = ref<{ title: string; content: string }>({ title: '', content: '' });
 
 // Links management
 const showLinksForVerse = ref<number | null>(null);
-const verseLinks = ref<Record<number, number[]>>({});
+const verseLinks = ref<Record<number, VerseLinkData[]>>({});
 const loadingLinks = ref(false);
 const addingLinkToVerse = ref<number | null>(null);
 const linkSearch = ref('');
@@ -310,6 +395,12 @@ async function loadData(chapterId: number) {
     books.value = booksData;
     chapter.value = chapterData;
     verses.value = versesData;
+    
+    // Load notes and links for all verses
+    await Promise.all([
+      loadAllNotesForVerses(),
+      loadAllLinksForVerses()
+    ]);
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load data';
   } finally {
@@ -441,7 +532,8 @@ async function loadNotesForVerse(verseId: number) {
   try {
     loadingNotes.value = true;
     const notes = await getNotesByVerseId(verseId);
-    verseNotes.value[verseId] = notes;
+    // Cast to VerseNoteData since the backend includes verse_note_id
+    verseNotes.value[verseId] = notes as unknown as VerseNoteData[];
   } catch (e) {
     console.error('Failed to load notes:', e);
   } finally {
@@ -457,6 +549,97 @@ function startAddNote(verseId: number) {
 function cancelAddNote() {
   addingNoteToVerse.value = null;
   newNote.value = { title: '', content: '' };
+}
+
+async function loadAllNotesForVerses() {
+  // Extract notes from verses data (already loaded from backend)
+  for (const verse of verses.value) {
+    if (verse.notes && verse.notes.length > 0) {
+      verseNotes.value[verse.verse_id] = verse.notes;
+    }
+  }
+}
+
+async function deleteNoteFromVerse(_verseId: number, verseNoteId: number) {
+  if (!confirm('Are you sure you want to delete this note?')) {
+    return;
+  }
+  
+  try {
+    await unlinkNoteFromVerse(verseNoteId);
+    // Reload all verse data to get updated notes/links
+    if (chapter.value) {
+      const versesData = await getVersesByChapterId(chapter.value.chapter_id);
+      verses.value = versesData;
+      await loadAllNotesForVerses();
+    }
+  } catch (e) {
+    alert('Failed to delete note: ' + (e instanceof Error ? e.message : 'Unknown error'));
+  }
+}
+
+// Range Note Functions
+function startRangeSelection() {
+  selectingVerseRange.value = true;
+  selectedVerseIds.value = [];
+  rangeNote.value = { title: '', content: '' };
+}
+
+function cancelRangeSelection() {
+  selectingVerseRange.value = false;
+  selectedVerseIds.value = [];
+  rangeNote.value = { title: '', content: '' };
+}
+
+function toggleVerseSelection(verseId: number) {
+  const index = selectedVerseIds.value.indexOf(verseId);
+  if (index > -1) {
+    selectedVerseIds.value.splice(index, 1);
+  } else {
+    selectedVerseIds.value.push(verseId);
+  }
+}
+
+function getSelectedVerseNumbers(): string {
+  const verseNumbers = selectedVerseIds.value
+    .map(id => {
+      const verse = verses.value.find(v => v.verse_id === id);
+      return verse?.verse_index;
+    })
+    .filter(Boolean)
+    .sort((a, b) => Number(a) - Number(b));
+  return verseNumbers.join(', ');
+}
+
+async function saveRangeNote() {
+  if (!rangeNote.value.content || selectedVerseIds.value.length === 0) {
+    alert('Please enter note content and select at least one verse');
+    return;
+  }
+
+  try {
+    // Create the note
+    const noteData = await createNote({
+      note_title: rangeNote.value.title || undefined,
+      note_content: rangeNote.value.content
+    });
+
+    // Link the note to all selected verses
+    for (const verseId of selectedVerseIds.value) {
+      await linkNoteToVerse({ verse_id: verseId, note_id: noteData.note_id });
+    }
+
+    alert(`Note added to ${selectedVerseIds.value.length} verse(s) successfully!`);
+    cancelRangeSelection();
+    
+    // Reload verses to show new notes
+    if (chapter.value) {
+      await loadData(chapter.value.chapter_id);
+    }
+  } catch (error) {
+    console.error('Failed to save range note:', error);
+    alert('Failed to save note. Please try again.');
+  }
 }
 
 async function saveNote(verseId: number) {
@@ -500,14 +683,35 @@ async function toggleLinks(verseId: number) {
 }
 
 async function loadLinksForVerse(verseId: number) {
+  // This function is no longer used - we reload all verse data after changes
+  // Keep for compatibility but don't modify verseLinks here
+  console.log('Loading links for verse', verseId);
+}
+
+async function loadAllLinksForVerses() {
+  // Extract links from verses data (already loaded from backend)
+  for (const verse of verses.value) {
+    if (verse.links && verse.links.length > 0) {
+      verseLinks.value[verse.verse_id] = verse.links;
+    }
+  }
+}
+
+async function deleteVerseLinkHandler(_sourceVerseId: number, linkId: number) {
+  if (!confirm('Are you sure you want to delete this link?')) {
+    return;
+  }
+  
   try {
-    loadingLinks.value = true;
-    const links = await getLinkedVerses(verseId);
-    verseLinks.value[verseId] = [...links.source, ...links.target];
+    await deleteLink(linkId);
+    // Reload all verse data to get updated notes/links
+    if (chapter.value) {
+      const versesData = await getVersesByChapterId(chapter.value.chapter_id);
+      verses.value = versesData;
+      await loadAllLinksForVerses();
+    }
   } catch (e) {
-    console.error('Failed to load links:', e);
-  } finally {
-    loadingLinks.value = false;
+    alert('Failed to delete link: ' + (e instanceof Error ? e.message : 'Unknown error'));
   }
 }
 
@@ -696,6 +900,57 @@ async function saveTag(verseId: number) {
   border: 1px solid #e0e0e0;
   padding: 1rem;
   background: #fafafa;
+  transition: all 0.2s;
+}
+
+.verse-item.selected-for-range {
+  background: #e7f3ff;
+  border-color: #0366d6;
+}
+
+.verse-number-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verse-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.range-note-form {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 1.5rem;
+  border-top: 2px solid #0366d6;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.range-note-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.selected-verses-info {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.range-note-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .verse-header {
