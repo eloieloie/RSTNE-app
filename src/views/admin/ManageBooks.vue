@@ -22,6 +22,17 @@
           </div>
 
           <div class="form-group">
+            <label for="bookAbbr">Book Abbreviation</label>
+            <input
+              id="bookAbbr"
+              v-model="formData.book_abbr"
+              type="text"
+              maxlength="10"
+              placeholder="e.g., gene, exod, prov"
+            />
+          </div>
+
+          <div class="form-group">
             <label for="hebrewBookName">Hebrew Book Name</label>
             <input
               id="hebrewBookName"
@@ -86,6 +97,7 @@
               <tr>
                 <th>ID</th>
                 <th>Name</th>
+                <th>Abbr</th>
                 <th>Hebrew Name</th>
                 <th>Telugu Name</th>
                 <th>Description</th>
@@ -98,6 +110,7 @@
               <tr v-for="book in books" :key="book.book_id">
                 <td>{{ book.book_id }}</td>
                 <td>{{ book.book_name }}</td>
+                <td>{{ book.book_abbr || 'N/A' }}</td>
                 <td>{{ book.hebrew_book_name || 'N/A' }}</td>
                 <td>{{ book.telugu_book_name || 'N/A' }}</td>
                 <td>{{ book.book_description || 'N/A' }}</td>
@@ -141,6 +154,7 @@ const books = computed(() => {
 
 const formData = ref<BookInsert>({
   book_name: '',
+  book_abbr: '',
   hebrew_book_name: '',
   telugu_book_name: '',
   book_description: '',
@@ -182,6 +196,7 @@ function editBook(book: Book) {
   editingId.value = book.book_id;
   formData.value = {
     book_name: book.book_name,
+    book_abbr: book.book_abbr || '',
     hebrew_book_name: book.hebrew_book_name || '',
     telugu_book_name: book.telugu_book_name || '',
     book_description: book.book_description || '',
@@ -211,6 +226,7 @@ function resetForm() {
   editingId.value = null;
   formData.value = {
     book_name: '',
+    book_abbr: '',
     hebrew_book_name: '',
     telugu_book_name: '',
     book_description: '',

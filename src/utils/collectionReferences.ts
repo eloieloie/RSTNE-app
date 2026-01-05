@@ -14,6 +14,7 @@ export const TABLES = {
 export interface Book {
   book_id: number;
   book_name: string;
+  book_abbr: string | null;
   hebrew_book_name: string | null;
   telugu_book_name: string | null;
   book_description: string | null;
@@ -23,6 +24,7 @@ export interface Book {
 
 export interface BookInsert {
   book_name: string;
+  book_abbr?: string;
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;
@@ -31,6 +33,7 @@ export interface BookInsert {
 
 export interface BookUpdate {
   book_name?: string;
+  book_abbr?: string;
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;

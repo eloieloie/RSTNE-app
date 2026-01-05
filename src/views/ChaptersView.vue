@@ -28,7 +28,14 @@
     <div v-else-if="error" class="error">{{ error }}</div>
     
     <div v-else>
-      <h1>{{ bookName }}</h1>
+      <div class="book-header">
+        <h1>
+          {{ hebrewBookName || bookName }}
+          <span v-if="selectedChapter" class="chapter-indicator">
+            {{ selectedChapter.chapter_number }}
+          </span>
+        </h1>
+      </div>
       
       <div v-if="chapters.length === 0" class="empty">
         No chapters found for this book.
@@ -40,8 +47,6 @@
             ↑ Select a chapter from the dropdown to view its content
           </div>
           <div v-else>
-            <h2>Chapter {{ selectedChapter.chapter_number }}</h2>
-            
             <div v-if="loadingVerses" class="loading-verses">
               Loading verses...
             </div>
@@ -95,19 +100,22 @@
 import { ref, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
-import { getBookById } from '@/api/books';
+import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId, type VerseWithLinks } from '@/api/verses';
 import type { Chapter } from '@/utils/collectionReferences';
 import '@/assets/fonts/fonts.css';
 
 const route = useRoute();
 const router = useRouter();
+const allBooks = ref<any[]>([]);
+const bookAbbreviations = ref<Record<string, number>>({});
 const chapters = ref<Chapter[]>([]);
 const selectedChapter = ref<Chapter | null>(null);
 const selectedChapterId = ref<number | null>(null);
 const verses = ref<VerseWithLinks[]>([]);
 const loadingVerses = ref(false);
 const bookName = ref<string>('');
+const hebrewBookName = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
 
@@ -166,6 +174,16 @@ onMounted(async () => {
   }
   
   try {
+    // Load all books for abbreviation mapping
+    allBooks.value = await getAllBooks();
+    
+    // Create abbreviation mapping using book_abbr from database
+    allBooks.value.forEach(book => {
+      if (book.book_abbr) {
+        bookAbbreviations.value[book.book_abbr.toLowerCase()] = book.book_id;
+      }
+    });
+    
     const book = await getBookById(bookId);
     if (!book) {
       error.value = 'Book not found';
@@ -173,6 +191,7 @@ onMounted(async () => {
     }
     
     bookName.value = book.book_name;
+    hebrewBookName.value = book.hebrew_book_name || book.book_name;
     const chaptersData = await getChaptersByBookId(bookId);
     
     // Sort chapters by chapter_number
@@ -215,6 +234,7 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
       const book = await getBookById(bookId);
       if (book) {
         bookName.value = book.book_name;
+        hebrewBookName.value = book.hebrew_book_name || book.book_name;
         const chaptersData = await getChaptersByBookId(bookId);
         chapters.value = chaptersData.sort((a, b) => {
           const numA = parseInt(String(a.chapter_number)) || 0;
@@ -265,6 +285,10 @@ async function loadVerses(chapterId: number) {
     verses.value = await getVersesByChapterId(chapterId);
     console.log('Loaded verses:', verses.value.length);
     console.log('First verse with links:', verses.value.find(v => v.links && v.links.length > 0));
+    
+    // Setup click handlers for verse references after DOM updates
+    await nextTick();
+    setupVerseRefClickHandlers();
   } catch (e) {
     console.error('Failed to load verses:', e);
     verses.value = [];
@@ -275,8 +299,54 @@ async function loadVerses(chapterId: number) {
 
 function formatVerseWithPaleoBora(verseText: string | null): string {
   if (!verseText) return '';
+  
   // Replace Myhla or myhla with span that uses PaleoBora font
-  return verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
+  let formatted = verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
+  
+  // Replace verse references like #prov1:10 with clickable links
+  // Now using book_abbr from database
+  formatted = formatted.replace(/#([a-z]+)(\d+):(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+    const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
+    if (bookId) {
+      return `<a href="#" class="verse-ref-link" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
+    }
+    return match;
+  });
+  
+  return formatted;
+}
+
+function setupVerseRefClickHandlers() {
+  // Add click handlers to verse reference links
+  setTimeout(() => {
+    const refLinks = document.querySelectorAll('.verse-ref-link');
+    refLinks.forEach(link => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const target = e.target as HTMLElement;
+        const bookId = parseInt(target.getAttribute('data-book-id') || '0');
+        const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
+        const verseNum = parseInt(target.getAttribute('data-verse') || '0');
+        
+        // Find the chapter by chapter_number
+        const book = allBooks.value.find(b => b.book_id === bookId);
+        if (book) {
+          const chaptersData = await getChaptersByBookId(bookId);
+          const targetChapter = chaptersData.find(ch => String(ch.chapter_number) === String(chapterNum));
+          
+          if (targetChapter) {
+            // Get verses for that chapter to find the verse by index
+            const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+            const targetVerse = versesData.find(v => v.verse_index === verseNum);
+            
+            if (targetVerse) {
+              navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+            }
+          }
+        }
+      });
+    });
+  }, 100);
 }
 </script>
 
@@ -341,6 +411,32 @@ function formatVerseWithPaleoBora(verseText: string | null): string {
   outline: none;
   border-color: #42b983;
   box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
+}
+
+.book-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 100;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.book-header h1 {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.chapter-indicator {
+  font-size: 1.5rem;
+  color: #42b983;
+  font-weight: 600;
 }
 
 h1 {
@@ -426,12 +522,13 @@ h1 {
 
 .verse-text {
   color: #333;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
 }
 
 .verse-telugu {
   color: #666;
   font-size: 0.95rem;
+  margin-top: 0.125rem;
 }
 
 .verse-links {
@@ -501,6 +598,22 @@ h1 {
   font-family: 'PaleoBora', serif !important;
 }
 
+.verse-text :deep(.verse-ref-link),
+.verse-telugu :deep(.verse-ref-link) {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0 0.2rem;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.verse-text :deep(.verse-ref-link:hover),
+.verse-telugu :deep(.verse-ref-link:hover) {
+  background: #e7f3ff;
+  text-decoration: underline;
+}
+
 .description-content {
   line-height: 1.8;
   color: #333;
@@ -517,7 +630,7 @@ h1 {
 }
 
 .description-content :deep(p) {
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .description-content :deep(ul),

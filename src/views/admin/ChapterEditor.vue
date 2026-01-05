@@ -117,18 +117,41 @@
               
               <div v-else-if="verseNotes[verse.verse_id]?.length > 0" class="notes-list">
                 <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-item">
-                  <div class="note-content-wrapper">
+                  <div v-if="editingNoteId === note.note_id" class="note-edit-form">
+                    <input 
+                      v-model="editingNote.title" 
+                      type="text" 
+                      placeholder="Note title (optional)"
+                      class="note-title-input"
+                    />
+                    <div :ref="el => { if (el && editingNoteId === note.note_id) setupNoteEditor(el as HTMLElement); }" class="note-editor-container"></div>
+                    <div class="note-form-actions">
+                      <button @click="saveEditedNote(note.note_id)" class="btn btn-sm btn-primary">Save</button>
+                      <button @click="cancelEditNote" class="btn btn-sm btn-secondary">Cancel</button>
+                    </div>
+                  </div>
+                  <div v-else class="note-content-wrapper">
                     <h5 v-if="note.note_title">{{ note.note_title }}</h5>
                     <div class="note-content" v-html="note.note_content"></div>
                     <div class="note-meta">{{ new Date(note.dt_modified).toLocaleDateString() }}</div>
                   </div>
-                  <button 
-                    @click="deleteNoteFromVerse(verse.verse_id, note.verse_note_id)" 
-                    class="btn btn-sm btn-danger btn-delete-note"
-                    title="Delete note"
-                  >
-                    🗑️
-                  </button>
+                  <div class="note-actions">
+                    <button 
+                      v-if="editingNoteId !== note.note_id"
+                      @click="startEditNote(note)" 
+                      class="btn btn-sm btn-primary btn-edit-note"
+                      title="Edit note"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      @click="deleteNoteFromVerse(verse.verse_id, note.verse_note_id)" 
+                      class="btn btn-sm btn-danger btn-delete-note"
+                      title="Delete note"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               </div>
               
@@ -142,12 +165,7 @@
                   placeholder="Note title (optional)"
                   class="note-title-input"
                 />
-                <textarea 
-                  v-model="newNote.content" 
-                  placeholder="Note content..."
-                  rows="4"
-                  class="note-content-input"
-                ></textarea>
+                <div :ref="el => { if (el && addingNoteToVerse === verse.verse_id) setupNewNoteEditor(el as HTMLElement); }" class="note-editor-container"></div>
                 <div class="note-form-actions">
                   <button @click="saveNote(verse.verse_id)" class="btn btn-sm btn-primary btn-save-note">Save Note</button>
                   <button @click="cancelAddNote" class="btn btn-sm btn-secondary btn-cancel-note">Cancel</button>
@@ -295,7 +313,7 @@ import { useRoute } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import { getChapterById } from '@/api/chapters';
 import { getVersesByChapterId, updateVerse, type VerseWithLinks, type VerseLinkData, type VerseNoteData } from '@/api/verses';
-import { getNotesByVerseId, createNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
+import { getNotesByVerseId, createNote, linkNoteToVerse, unlinkNoteFromVerse, updateNote } from '@/api/notes';
 import { createVerseLink, getTagsByVerseId, getAllTags, createTag, linkTagToVerse, searchVerses, deleteVerseLink as deleteLink } from '@/api/links-tags';
 import type { Book, Chapter, Verse, VerseUpdate, Tag } from '@/utils/collectionReferences';
 import Quill from 'quill';
@@ -325,6 +343,9 @@ const verseNotes = ref<Record<number, VerseNoteData[]>>({});
 const loadingNotes = ref(false);
 const addingNoteToVerse = ref<number | null>(null);
 const newNote = ref({ title: '', content: '' });
+const editingNoteId = ref<number | null>(null);
+const editingNote = ref({ title: '', content: '' });
+const noteEditor = ref<Quill | null>(null);
 const selectingVerseRange = ref<boolean>(false);
 const selectedVerseIds = ref<number[]>([]);
 const rangeNote = ref<{ title: string; content: string }>({ title: '', content: '' });
@@ -549,6 +570,86 @@ function startAddNote(verseId: number) {
 function cancelAddNote() {
   addingNoteToVerse.value = null;
   newNote.value = { title: '', content: '' };
+  if (noteEditor.value) {
+    noteEditor.value = null;
+  }
+}
+
+function setupNewNoteEditor(element: HTMLElement) {
+  if (noteEditor.value) return;
+  
+  noteEditor.value = new Quill(element, {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link'],
+        ['clean']
+      ]
+    }
+  });
+  
+  noteEditor.value.root.innerHTML = newNote.value.content;
+}
+
+function setupNoteEditor(element: HTMLElement) {
+  if (noteEditor.value) return;
+  
+  noteEditor.value = new Quill(element, {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link'],
+        ['clean']
+      ]
+    }
+  });
+  
+  noteEditor.value.root.innerHTML = editingNote.value.content;
+}
+
+function startEditNote(note: VerseNoteData) {
+  editingNoteId.value = note.note_id;
+  editingNote.value = {
+    title: note.note_title || '',
+    content: note.note_content
+  };
+  // Reset editor ref so it can be recreated
+  noteEditor.value = null;
+}
+
+function cancelEditNote() {
+  editingNoteId.value = null;
+  editingNote.value = { title: '', content: '' };
+  if (noteEditor.value) {
+    noteEditor.value = null;
+  }
+}
+
+async function saveEditedNote(noteId: number) {
+  if (!noteEditor.value) return;
+  
+  try {
+    const content = noteEditor.value.root.innerHTML;
+    await updateNote(noteId, {
+      note_title: editingNote.value.title || undefined,
+      note_content: content
+    });
+    
+    // Reload all verse data to get updated notes
+    if (chapter.value) {
+      const versesData = await getVersesByChapterId(chapter.value.chapter_id);
+      verses.value = versesData;
+      await loadAllNotesForVerses();
+    }
+    
+    cancelEditNote();
+  } catch (e) {
+    alert('Failed to update note: ' + (e instanceof Error ? e.message : 'Unknown error'));
+  }
 }
 
 async function loadAllNotesForVerses() {
@@ -643,7 +744,13 @@ async function saveRangeNote() {
 }
 
 async function saveNote(verseId: number) {
-  if (!newNote.value.content.trim()) {
+  if (!noteEditor.value) {
+    alert('Editor not initialized');
+    return;
+  }
+  
+  const content = noteEditor.value.root.innerHTML;
+  if (!content.trim() || content === '<p><br></p>') {
     alert('Note content cannot be empty');
     return;
   }
@@ -652,7 +759,7 @@ async function saveNote(verseId: number) {
     // Create the note
     const result = await createNote({
       note_title: newNote.value.title || undefined,
-      note_content: newNote.value.content
+      note_content: content
     });
     
     // Link note to verse
@@ -1169,6 +1276,34 @@ async function saveTag(verseId: number) {
   padding: 0.75rem;
   border-radius: 4px;
   border: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.note-content-wrapper {
+  flex: 1;
+}
+
+.note-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-edit-note {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn-delete-note {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.note-edit-form {
+  width: 100%;
 }
 
 .note-item h5 {
@@ -1202,16 +1337,26 @@ async function saveTag(verseId: number) {
   border: 1px solid #ddd;
   margin-bottom: 0.5rem;
   font-size: 0.8rem;
+  border-radius: 4px;
 }
 
-.note-content-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  font-size: 0.8rem;
-  font-family: inherit;
-  resize: vertical;
+.note-editor-container {
   margin-bottom: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  min-height: 150px;
+}
+
+.note-editor-container :deep(.ql-toolbar) {
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: #f8f9fa;
+}
+
+.note-editor-container :deep(.ql-container) {
+  border: none;
+  font-size: 0.8rem;
 }
 
 .note-form-actions {
