@@ -300,8 +300,8 @@ async function loadVerses(chapterId: number) {
 function formatVerseWithPaleoBora(verseText: string | null): string {
   if (!verseText) return '';
   
-  // Replace Myhla or myhla with span that uses PaleoBora font
-  let formatted = verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
+  // Replace Myhla, myhla, OSWHY, or HWHY with span that uses PaleoBora font
+  let formatted = verseText.replace(/(Myhla|myhla|OSWHY|HWHY)/gi, '<span class="paleobora-text">$1</span>');
   
   // Replace verse references like #prov1:10 with clickable links
   // Now using book_abbr from database

@@ -23,4 +23,8 @@ import { RouterView } from 'vue-router'
   padding: 0;
   box-sizing: border-box;
 }
+
+p {
+  margin-bottom: 0;
+}
 </style>
