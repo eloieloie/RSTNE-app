@@ -188,33 +188,55 @@ app.get("/api/verses/search", async (req, res) => {
       return res.status(400).json({error: "Search query required"});
     }
 
-    // Parse query to extract book name and optional chapter number
-    // e.g., "Genesis" or "Genesis 1"
-    const parts = query.trim().split(/\s+/);
-    const bookPattern = parts[0];
-    const chapterNum = parts[1] ? parts[1] : null;
+    // Check if query is a verse reference pattern (e.g., #bare1:1)
+    const verseRefPattern = /^#([a-z]+)(\d+):(\d+)$/i;
+    const match = query.match(verseRefPattern);
 
-    let sql = `SELECT v.verse_id, v.chapter_id, v.verse_index, 
-         SUBSTRING(v.verse, 1, 100) as verse,
-         c.chapter_number, b.book_name, b.book_index
-         FROM verses_tbl v
-         INNER JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
-         INNER JOIN books_tbl b ON c.book_id = b.book_id
-         WHERE b.book_name LIKE ?`;
+    if (match) {
+      // Search for verses containing this reference pattern
+      const searchPattern = `%${query}%`;
 
-    const params = [`${bookPattern}%`];
+      const sql = `SELECT v.verse_id, v.chapter_id, v.verse_index, 
+           v.verse, v.telugu_verse,
+           c.chapter_number, c.chapter_id,
+           b.book_name, b.book_id
+           FROM verses_tbl v
+           INNER JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
+           INNER JOIN books_tbl b ON c.book_id = b.book_id
+           WHERE v.verse LIKE ? OR v.telugu_verse LIKE ?
+           ORDER BY b.book_id, CAST(c.chapter_number AS UNSIGNED), v.verse_index
+           LIMIT 100`;
 
-    // If chapter number is provided, filter by it
-    if (chapterNum && !isNaN(chapterNum)) {
-      sql += ` AND c.chapter_number = ?`;
-      params.push(chapterNum);
+      const [verses] = await pool.execute(sql, [searchPattern, searchPattern]);
+      res.json(verses);
+    } else {
+      // Original search by book name and chapter
+      const parts = query.trim().split(/\s+/);
+      const bookPattern = parts[0];
+      const chapterNum = parts[1] ? parts[1] : null;
+
+      let sql = `SELECT v.verse_id, v.chapter_id, v.verse_index, 
+           SUBSTRING(v.verse, 1, 100) as verse,
+           c.chapter_number, b.book_name, b.book_index
+           FROM verses_tbl v
+           INNER JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
+           INNER JOIN books_tbl b ON c.book_id = b.book_id
+           WHERE b.book_name LIKE ?`;
+
+      const params = [`${bookPattern}%`];
+
+      // If chapter number is provided, filter by it
+      if (chapterNum && !isNaN(chapterNum)) {
+        sql += ` AND c.chapter_number = ?`;
+        params.push(chapterNum);
+      }
+
+      sql += ` ORDER BY b.book_index, CAST(c.chapter_number AS UNSIGNED), 
+           v.verse_index LIMIT 50`;
+
+      const [verses] = await pool.execute(sql, params);
+      res.json(verses);
     }
-
-    sql += ` ORDER BY b.book_index, CAST(c.chapter_number AS UNSIGNED), v.verse_index
-         LIMIT 50`;
-
-    const [verses] = await pool.execute(sql, params);
-    res.json(verses);
   } catch (error) {
     res.status(500).json({error: error.message});
   }

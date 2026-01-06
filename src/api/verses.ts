@@ -80,3 +80,18 @@ export async function deleteVerse(verseId: number): Promise<void> {
     throw new Error('Failed to delete verse');
   }
 }
+
+export interface VerseSearchResult extends VerseWithLinks {
+  book_name: string;
+  book_id: number;
+  chapter_id: number;
+  chapter_number: string;
+}
+
+export async function searchVersesByText(searchText: string): Promise<VerseSearchResult[]> {
+  const response = await fetch(`${API_BASE_URL}/verses/search?q=${encodeURIComponent(searchText)}`);
+  if (!response.ok) {
+    throw new Error('Failed to search verses');
+  }
+  return response.json();
+}

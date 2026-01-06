@@ -93,6 +93,55 @@
         </main>
       </div>
     </div>
+    
+    <!-- Context Menu for Verse References -->
+    <div 
+      v-if="contextMenu.show" 
+      class="context-menu"
+      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+    >
+      <button @click="handleGoToVerse" class="context-menu-item">
+        Go to verse
+      </button>
+      <button @click="handleSearch" class="context-menu-item">
+        Search
+      </button>
+    </div>
+    
+    <!-- Search Results Popup -->
+    <div v-if="searchPopup.show" class="search-popup-overlay" @click="closeSearchPopup">
+      <div class="search-popup" @click.stop>
+        <div class="search-popup-header">
+          <h3>Search Results for "{{ searchPopup.searchText }}"</h3>
+          <button @click="closeSearchPopup" class="close-button">&times;</button>
+        </div>
+        
+        <div class="search-popup-content">
+          <div v-if="searchPopup.loading" class="search-loading">
+            Searching...
+          </div>
+          
+          <div v-else-if="searchPopup.results.length === 0" class="search-no-results">
+            No verses found containing "{{ searchPopup.searchText }}"
+          </div>
+          
+          <div v-else class="search-results-list">
+            <div 
+              v-for="result in searchPopup.results" 
+              :key="result.verse_id"
+              class="search-result-item"
+              @click="goToSearchResult(result)"
+            >
+              <div class="search-result-reference">
+                {{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}
+              </div>
+              <div class="search-result-text" v-html="formatVerseWithPaleoBora(result.verse)"></div>
+              <div v-if="result.telugu_verse" class="search-result-telugu" v-html="formatVerseWithPaleoBora(result.telugu_verse)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -101,7 +150,7 @@ import { ref, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
-import { getVersesByChapterId, type VerseWithLinks } from '@/api/verses';
+import { getVersesByChapterId, type VerseWithLinks, searchVersesByText, type VerseSearchResult } from '@/api/verses';
 import type { Chapter } from '@/utils/collectionReferences';
 import '@/assets/fonts/fonts.css';
 
@@ -118,6 +167,33 @@ const bookName = ref<string>('');
 const hebrewBookName = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
+const contextMenu = ref<{
+  show: boolean;
+  x: number;
+  y: number;
+  bookId: number;
+  chapterNum: number;
+  verseNum: number;
+}>({
+  show: false,
+  x: 0,
+  y: 0,
+  bookId: 0,
+  chapterNum: 0,
+  verseNum: 0
+});
+
+const searchPopup = ref<{
+  show: boolean;
+  searchText: string;
+  results: VerseSearchResult[];
+  loading: boolean;
+}>({
+  show: false,
+  searchText: '',
+  results: [],
+  loading: false
+});
 
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
   console.log('navigateToVerse called:', { bookId, chapterId, verseId });
@@ -321,33 +397,102 @@ function setupVerseRefClickHandlers() {
   setTimeout(() => {
     const refLinks = document.querySelectorAll('.verse-ref-link');
     refLinks.forEach(link => {
-      link.addEventListener('click', async (e) => {
+      link.addEventListener('click', (e) => {
         e.preventDefault();
         const target = e.target as HTMLElement;
         const bookId = parseInt(target.getAttribute('data-book-id') || '0');
         const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
         const verseNum = parseInt(target.getAttribute('data-verse') || '0');
         
-        // Find the chapter by chapter_number
-        const book = allBooks.value.find(b => b.book_id === bookId);
-        if (book) {
-          const chaptersData = await getChaptersByBookId(bookId);
-          const targetChapter = chaptersData.find(ch => String(ch.chapter_number) === String(chapterNum));
-          
-          if (targetChapter) {
-            // Get verses for that chapter to find the verse by index
-            const versesData = await getVersesByChapterId(targetChapter.chapter_id);
-            const targetVerse = versesData.find(v => v.verse_index === verseNum);
-            
-            if (targetVerse) {
-              navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
-            }
-          }
-        }
+        // Show context menu
+        const rect = target.getBoundingClientRect();
+        contextMenu.value = {
+          show: true,
+          x: rect.left,
+          y: rect.bottom + 5,
+          bookId,
+          chapterNum,
+          verseNum
+        };
       });
     });
   }, 100);
 }
+
+async function handleGoToVerse() {
+  const { bookId, chapterNum, verseNum } = contextMenu.value;
+  contextMenu.value.show = false;
+  
+  // Find the chapter by chapter_number
+  const book = allBooks.value.find(b => b.book_id === bookId);
+  if (book) {
+    const chaptersData = await getChaptersByBookId(bookId);
+    const targetChapter = chaptersData.find(ch => String(ch.chapter_number) === String(chapterNum));
+    
+    if (targetChapter) {
+      // Get verses for that chapter to find the verse by index
+      const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+      const targetVerse = versesData.find(v => v.verse_index === verseNum);
+      
+      if (targetVerse) {
+        navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+      }
+    }
+  }
+}
+
+function handleSearch() {
+  const { bookId, chapterNum, verseNum } = contextMenu.value;
+  contextMenu.value.show = false;
+  
+  // Get book abbreviation for search
+  const book = allBooks.value.find(b => b.book_id === bookId);
+  const bookAbbr = book?.book_abbr || '';
+  const searchText = `#${bookAbbr}${chapterNum}:${verseNum}`;
+  
+  // Show search popup and perform search
+  searchPopup.value.show = true;
+  searchPopup.value.searchText = searchText;
+  searchPopup.value.loading = true;
+  searchPopup.value.results = [];
+  
+  performSearch(searchText);
+}
+
+async function performSearch(searchText: string) {
+  try {
+    const results = await searchVersesByText(searchText);
+    searchPopup.value.results = results;
+  } catch (e) {
+    console.error('Search failed:', e);
+    searchPopup.value.results = [];
+  } finally {
+    searchPopup.value.loading = false;
+  }
+}
+
+function closeSearchPopup() {
+  searchPopup.value.show = false;
+}
+
+async function goToSearchResult(result: VerseSearchResult) {
+  closeSearchPopup();
+  navigateToVerse(result.book_id, result.chapter_id, result.verse_id);
+}
+
+function closeContextMenu() {
+  contextMenu.value.show = false;
+}
+
+// Close context menu when clicking outside
+onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.context-menu') && !target.closest('.verse-ref-link')) {
+      closeContextMenu();
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -732,6 +877,187 @@ h1 {
   .select-prompt {
     padding: 2rem 0.75rem;
     font-size: 1rem;
+  }
+}
+
+.context-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  min-width: 140px;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.context-menu-item:active {
+  background-color: #e9ecef;
+}
+
+.context-menu-item:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.search-popup {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.search-popup-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.search-popup-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.search-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.search-no-results {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+  font-size: 1rem;
+}
+
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-result-item {
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.search-result-item:hover {
+  background: #f8f9fa;
+  border-color: #42b983;
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.1);
+}
+
+.search-result-reference {
+  font-weight: 700;
+  color: #42b983;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.search-result-text {
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 0.25rem;
+}
+
+.search-result-telugu {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .search-popup-overlay {
+    padding: 1rem;
+  }
+  
+  .search-popup {
+    max-height: 90vh;
+  }
+  
+  .search-popup-header {
+    padding: 1rem;
+  }
+  
+  .search-popup-header h3 {
+    font-size: 1rem;
+  }
+  
+  .search-popup-content {
+    padding: 1rem;
   }
 }
 </style>
