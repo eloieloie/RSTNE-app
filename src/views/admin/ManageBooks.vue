@@ -6,10 +6,55 @@
     </header>
 
     <div class="content-container">
-      <!-- Add New Book Form -->
-      <div class="form-card">
-        <h2>{{ editMode ? 'Edit Book' : 'Add New Book' }}</h2>
-        <form @submit.prevent="saveBook" class="book-form">
+      <!-- Books List -->
+      <div class="list-card">
+        <h2>All Books</h2>
+        
+        <div v-if="loading" class="loading">Loading books...</div>
+        <div v-else-if="error" class="error">{{ error }}</div>
+        <div v-else-if="books.length === 0" class="empty">No books found</div>
+        
+        <div v-else class="books-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Abbr</th>
+                <th>Hebrew Name</th>
+                <th>Telugu Name</th>
+                <th>Index</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="book in books" :key="book.book_id">
+                <td>{{ book.book_id }}</td>
+                <td>{{ book.book_name }}</td>
+                <td>{{ book.book_abbr || 'N/A' }}</td>
+                <td>{{ book.hebrew_book_name || 'N/A' }}</td>
+                <td>{{ book.telugu_book_name || 'N/A' }}</td>
+                <td>{{ book.book_index || 'N/A' }}</td>
+                <td class="actions">
+                  <button @click="openEditModal(book)" class="btn-icon btn-edit" title="Edit">
+                    ✏️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Edit Book</h2>
+          <button class="close-button" @click="closeEditModal">&times;</button>
+        </div>
+        <form @submit.prevent="saveBook" class="modal-form">
           <div class="form-group">
             <label for="bookName">Book Name *</label>
             <input
@@ -63,6 +108,26 @@
           </div>
 
           <div class="form-group">
+            <label for="bookHeader">Book Header</label>
+            <textarea
+              id="bookHeader"
+              v-model="formData.book_header"
+              rows="3"
+              placeholder="Enter book header (optional)"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="bookFooter">Book Footer</label>
+            <textarea
+              id="bookFooter"
+              v-model="formData.book_footer"
+              rows="3"
+              placeholder="Enter book footer (optional)"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
             <label for="bookIndex">Book Index</label>
             <input
               id="bookIndex"
@@ -73,61 +138,10 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-              {{ editMode ? 'Update Book' : 'Add Book' }}
-            </button>
-            <button v-if="editMode" type="button" @click="cancelEdit" class="btn btn-secondary">
-              Cancel
-            </button>
+            <button type="submit" class="btn btn-primary">Update Book</button>
+            <button type="button" @click="closeEditModal" class="btn btn-secondary">Cancel</button>
           </div>
         </form>
-      </div>
-
-      <!-- Books List -->
-      <div class="list-card">
-        <h2>All Books</h2>
-        
-        <div v-if="loading" class="loading">Loading books...</div>
-        <div v-else-if="error" class="error">{{ error }}</div>
-        <div v-else-if="books.length === 0" class="empty">No books found</div>
-        
-        <div v-else class="books-table">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Abbr</th>
-                <th>Hebrew Name</th>
-                <th>Telugu Name</th>
-                <th>Description</th>
-                <th>Index</th>
-                <th>Added</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="book in books" :key="book.book_id">
-                <td>{{ book.book_id }}</td>
-                <td>{{ book.book_name }}</td>
-                <td>{{ book.book_abbr || 'N/A' }}</td>
-                <td>{{ book.hebrew_book_name || 'N/A' }}</td>
-                <td>{{ book.telugu_book_name || 'N/A' }}</td>
-                <td>{{ book.book_description || 'N/A' }}</td>
-                <td>{{ book.book_index || 'N/A' }}</td>
-                <td>{{ formatDate(book.dt_added) }}</td>
-                <td class="actions">
-                  <button @click="editBook(book)" class="btn-icon btn-edit" title="Edit">
-                    ✏️
-                  </button>
-                  <button @click="deleteBook(book.book_id)" class="btn-icon btn-delete" title="Delete">
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   </div>
@@ -135,13 +149,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { getAllBooks, createBook, updateBook, deleteBook as apiDeleteBook } from '@/api/books';
+import { getAllBooks, updateBook } from '@/api/books';
 import type { Book, BookInsert } from '@/utils/collectionReferences';
 
 const booksData = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const editMode = ref(false);
+const showEditModal = ref(false);
 const editingId = ref<number | null>(null);
 
 const books = computed(() => {
@@ -158,7 +172,10 @@ const formData = ref<BookInsert>({
   hebrew_book_name: '',
   telugu_book_name: '',
   book_description: '',
-  book_index: undefined
+  book_header: '',
+  book_footer: '',
+  book_index: undefined,
+  category_id: undefined
 });
 
 onMounted(() => {
@@ -178,21 +195,33 @@ async function loadBooks() {
 
 async function saveBook() {
   try {
-    if (editMode.value && editingId.value) {
+    if (editingId.value) {
+      console.log('=== Saving Book ===');
+      console.log('Book ID:', editingId.value);
+      console.log('Form Data:', JSON.stringify(formData.value, null, 2));
+      console.log('Header:', formData.value.book_header);
+      console.log('Footer:', formData.value.book_footer);
+      console.log('Category ID:', formData.value.category_id);
+      
       await updateBook(editingId.value, formData.value);
-    } else {
-      await createBook(formData.value);
+      console.log('✅ Book updated successfully');
+      
+      closeEditModal();
+      loadBooks();
     }
-    
-    resetForm();
-    loadBooks();
   } catch (e) {
-    alert('Failed to save book: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    console.error('❌ Failed to update book:', e);
+    alert('Failed to update book: ' + (e instanceof Error ? e.message : 'Unknown error'));
   }
 }
 
-function editBook(book: Book) {
-  editMode.value = true;
+function openEditModal(book: Book) {
+  console.log('=== Opening Edit Modal ===');
+  console.log('Book Data:', JSON.stringify(book, null, 2));
+  console.log('Current Header:', book.book_header);
+  console.log('Current Footer:', book.book_footer);
+  console.log('Current Category ID:', book.category_id);
+  
   editingId.value = book.book_id;
   formData.value = {
     book_name: book.book_name,
@@ -200,29 +229,19 @@ function editBook(book: Book) {
     hebrew_book_name: book.hebrew_book_name || '',
     telugu_book_name: book.telugu_book_name || '',
     book_description: book.book_description || '',
-    book_index: book.book_index || undefined
+    book_header: book.book_header || '',
+    book_footer: book.book_footer || '',
+    book_index: book.book_index || undefined,
+    category_id: book.category_id || undefined
   };
-}
-
-function cancelEdit() {
-  resetForm();
-}
-
-async function deleteBook(bookId: number) {
-  if (!confirm('Are you sure you want to delete this book? All chapters will also be deleted.')) {
-    return;
-  }
   
-  try {
-    await apiDeleteBook(bookId);
-    loadBooks();
-  } catch (e) {
-    alert('Failed to delete book: ' + (e instanceof Error ? e.message : 'Unknown error'));
-  }
+  console.log('Form Data populated:', JSON.stringify(formData.value, null, 2));
+  showEditModal.value = true;
 }
 
-function resetForm() {
-  editMode.value = false;
+function closeEditModal() {
+  console.log('=== Closing Edit Modal ===');
+  showEditModal.value = false;
   editingId.value = null;
   formData.value = {
     book_name: '',
@@ -230,7 +249,10 @@ function resetForm() {
     hebrew_book_name: '',
     telugu_book_name: '',
     book_description: '',
-    book_index: undefined
+    book_header: '',
+    book_footer: '',
+    book_index: undefined,
+    category_id: undefined
   };
 }
 
@@ -269,24 +291,129 @@ function formatDate(date: Date): string {
 }
 
 .content-container {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 2rem;
+  width: 100%;
 }
 
-.form-card, .list-card {
+.list-card {
   background: white;
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.form-card h2, .list-card h2 {
+.list-card h2 {
   margin: 0 0 1.5rem 0;
   color: #2c3e50;
 }
 
-.book-form {
+.loading, .error, .empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.books-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f8f9fa;
+}
+
+th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.2s;
+}
+
+.btn-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #2c3e50;
+}
+
+.modal-form {
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -349,65 +476,5 @@ function formatDate(date: Date): string {
 
 .btn-secondary:hover {
   background: #d0d0d0;
-}
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.books-table {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: #f8f9fa;
-}
-
-th {
-  text-align: left;
-  padding: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-td {
-  padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  transition: transform 0.2s;
-}
-
-.btn-icon:hover {
-  transform: scale(1.2);
-}
-
-@media (max-width: 1024px) {
-  .content-container {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

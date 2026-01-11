@@ -58,13 +58,32 @@ app.get("/api/books/:id", async (req, res) => {
 // Create book
 app.post("/api/books", async (req, res) => {
   try {
-    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index, category_id} = req.body;
+    const {
+      book_name,
+      book_abbr,
+      hebrew_book_name,
+      telugu_book_name,
+      book_description,
+      book_header,
+      book_footer,
+      book_index,
+      category_id,
+    } = req.body;
+
     const [result] = await pool.execute(
         `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_name, 
-         telugu_book_name, book_description, book_index, category_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         telugu_book_name, book_description, book_header, book_footer, book_index, category_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          book_name, book_abbr || null, hebrew_book_name || null,
-          telugu_book_name || null, book_description || null, book_index || null, category_id || null,
+          book_name,
+          book_abbr || null,
+          hebrew_book_name || null,
+          telugu_book_name || null,
+          book_description || null,
+          book_header || null,
+          book_footer || null,
+          book_index || null,
+          category_id || null,
         ],
     );
     res.status(201).json({id: result.insertId, message: "Book created successfully"});
@@ -76,17 +95,44 @@ app.post("/api/books", async (req, res) => {
 // Update book
 app.put("/api/books/:id", async (req, res) => {
   try {
-    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index, category_id} = req.body;
+    console.log("=== Backend: Update Book ===");
+    console.log("Book ID:", req.params.id);
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+
+    const {
+      book_name,
+      book_abbr,
+      hebrew_book_name,
+      telugu_book_name,
+      book_description,
+      book_header,
+      book_footer,
+      book_index,
+      category_id,
+    } = req.body;
+
     await pool.execute(
         `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_name = ?, 
-         telugu_book_name = ?, book_description = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
+         telugu_book_name = ?, book_description = ?, book_header = ?, book_footer = ?, 
+         book_index = ?, category_id = ? WHERE book_id = ?`,
         [
-          book_name, book_abbr || null, hebrew_book_name || null,
-          telugu_book_name || null, book_description || null, book_index || null, category_id || null, req.params.id,
+          book_name,
+          book_abbr || null,
+          hebrew_book_name || null,
+          telugu_book_name || null,
+          book_description || null,
+          book_header || null,
+          book_footer || null,
+          book_index || null,
+          category_id || null,
+          req.params.id,
         ],
     );
+
+    console.log("✅ Backend: Book updated successfully");
     res.json({message: "Book updated successfully"});
   } catch (error) {
+    console.error("❌ Backend: Update failed:", error);
     res.status(500).json({error: error.message});
   }
 });

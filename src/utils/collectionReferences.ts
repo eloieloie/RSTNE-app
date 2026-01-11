@@ -19,6 +19,8 @@ export interface Book {
   hebrew_book_name: string | null;
   telugu_book_name: string | null;
   book_description: string | null;
+  book_header: string | null;
+  book_footer: string | null;
   book_index: number | null;
   category_id: number | null;
   chapter_count?: number;
@@ -31,6 +33,8 @@ export interface BookInsert {
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;
+  book_header?: string;
+  book_footer?: string;
   book_index?: number;
   category_id?: number;
 }
@@ -41,6 +45,8 @@ export interface BookUpdate {
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;
+  book_header?: string;
+  book_footer?: string;
   book_index?: number;
   category_id?: number;
 }

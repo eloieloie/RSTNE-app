@@ -53,6 +53,15 @@
           </div>
           
           <div v-else class="continuous-scroll-container">
+            <!-- Book Header (Introduction) -->
+            <div v-if="book?.book_header" class="book-header-section">
+              <div 
+                class="book-header-content"
+                :style="{ fontSize: fontSize + 'px' }"
+                v-html="formatVerseWithPaleoBora(book.book_header)"
+              ></div>
+            </div>
+
             <!-- Render loaded chapters in order -->
             <div 
               v-for="chapterData in orderedLoadedChapters" 
@@ -108,6 +117,15 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Book Footer (Conclusion) -->
+            <div v-if="book?.book_footer" class="book-footer-section">
+              <div 
+                class="book-footer-content"
+                :style="{ fontSize: fontSize + 'px' }"
+                v-html="formatVerseWithPaleoBora(book.book_footer)"
+              ></div>
             </div>
 
             <!-- Loading indicator for adjacent chapters -->
@@ -187,6 +205,8 @@ interface Book {
   book_id: number;
   book_name: string;
   book_description?: string | null;
+  book_header?: string | null;
+  book_footer?: string | null;
 }
 
 interface Chapter {
@@ -716,6 +736,40 @@ onUnmounted(() => {
   font-style: italic;
 }
 
+.book-header-section,
+.book-footer-section {
+  padding: 2rem;
+  margin: 2rem 0;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.book-header-section {
+  margin-top: 0;
+  border-bottom: 4px solid #42b983;
+}
+
+.book-footer-section {
+  margin-bottom: 0;
+  border-top: 4px solid #42b983;
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.book-header-content,
+.book-footer-content {
+  line-height: 1.8;
+  color: #333;
+  text-align: left;
+}
+
 .loading, .error, .select-prompt, .no-verses {
   text-align: center;
   padding: 2rem;
@@ -1057,6 +1111,16 @@ onUnmounted(() => {
     font-size: 1.5rem;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .book-header-section,
+  .book-footer-section {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
   }
   
   .verse-item {
