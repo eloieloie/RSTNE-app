@@ -1,164 +1,173 @@
 <template>
   <div class="chapters-page">
-    <div class="top-nav">
-      <router-link to="/" class="back-link">← Back to Books</router-link>
-      
-      <div v-if="!loading && !error && chapters.length > 0" class="chapter-dropdown-container">
-        <label for="chapter-select" class="chapter-label">Chapter:</label>
-        <select 
-          id="chapter-select"
-          v-model="selectedChapterId" 
-          @change="onChapterChange"
-          class="chapter-select"
-        >
-          <option :value="null" disabled>Select a chapter...</option>
-          <option 
-            v-for="chapter in chapters" 
-            :key="chapter.chapter_id" 
-            :value="chapter.chapter_id"
-          >
-            {{ chapter.chapter_number }}
-          </option>
-        </select>
-      </div>
+    <div v-if="loading" class="loading">
+      <p>Loading chapters...</p>
     </div>
-    
-    <div v-if="loading" class="loading">Loading chapters...</div>
-    
-    <div v-else-if="error" class="error">{{ error }}</div>
-    
-    <div v-else>
-      <div class="toggle-buttons-container">
-        <button 
-          @click="showEnglish = !showEnglish" 
-          :class="['toggle-btn', { active: showEnglish }]"
-        >
-          English
-        </button>
-        <button 
-          @click="showTelugu = !showTelugu" 
-          :class="['toggle-btn', { active: showTelugu }]"
-        >
-          Telugu
-        </button>
-        <button 
-          @click="showNotes = !showNotes" 
-          :class="['toggle-btn', { active: showNotes }]"
-        >
-          Notes
-        </button>
-      </div>
-      
-      <div class="book-header">
-        <h1>
-          {{ hebrewBookName || bookName }}
-          <span v-if="selectedChapter" class="chapter-indicator">
-            {{ selectedChapter.chapter_number }}
-          </span>
-        </h1>
-        <p v-if="bookDescription" class="book-description">{{ bookDescription }}</p>
-      </div>
-      
-      <div v-if="chapters.length === 0" class="empty">
-        No chapters found for this book.
-      </div>
-      
-      <div v-else class="content-layout">
+
+    <div v-else-if="error" class="error">
+      <p>{{ error }}</p>
+    </div>
+
+    <div v-else class="content-wrapper">
+      <div class="content-layout">
+        <nav class="top-nav">
+          <router-link to="/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </router-link>
+          
+          <h2 class="book-title">{{ book?.book_name }}</h2>
+          
+          <select 
+            v-model="selectedChapterId" 
+            @change="onChapterChange"
+            class="chapter-select"
+            :disabled="chapters.length === 0"
+          >
+            <option :value="null" disabled>Select a chapter</option>
+            <option 
+              v-for="chapter in sortedChapters" 
+              :key="chapter.chapter_id"
+              :value="chapter.chapter_id"
+            >
+              {{ chapter.chapter_number }}
+            </option>
+          </select>
+
+          <button class="settings-icon" @click="showSettingsModal = true" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </nav>
+
         <main class="chapter-content">
-          <div v-if="!selectedChapter" class="select-prompt">
-            ↑ Select a chapter from the dropdown to view its content
+          <div v-if="chapters.length === 0" class="select-prompt">
+            No chapters available for this book.
           </div>
-          <div v-else>
-            <div v-if="loadingVerses" class="loading-verses">
-              Loading verses...
-            </div>
-            
-            <div v-else-if="verses.length === 0" class="no-verses">
-              No verses found for this chapter.
-            </div>
-            
-            <div v-else class="verses-list">
-              <div 
-                v-for="verse in verses" 
-                :key="verse.verse_id" 
-                :data-verse-id="verse.verse_id"
-                class="verse-item"
-              >
-                <span class="verse-number">{{ verse.verse_index }}</span>
-                <div class="verse-content">
-                  <div v-if="showEnglish" class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
-                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
-                  
-                  <div v-if="verse.links && verse.links.length > 0" class="verse-links">
-                    <a 
-                      v-for="link in verse.links" 
-                      :key="link.target_verse_id"
-                      href="#"
-                      class="link-badge"
-                      :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
-                      @click.prevent="() => { console.log('Link clicked:', link); navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id); }"
-                    >
-                      {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
-                    </a>
-                  </div>
-                  
-                  <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
-                    <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
-                      <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
-                      <div class="note-content" v-html="note.note_content"></div>
+          
+          <div v-else-if="!selectedChapter" class="select-prompt">
+            Please select a chapter from the dropdown above.
+          </div>
+          
+          <div v-else class="continuous-scroll-container">
+            <!-- Render loaded chapters in order -->
+            <div 
+              v-for="chapterData in orderedLoadedChapters" 
+              :key="chapterData.chapter.chapter_id"
+              :ref="el => setChapterRef(chapterData.chapter.chapter_id, el as HTMLElement)"
+              :data-chapter-id="chapterData.chapter.chapter_id"
+              class="chapter-section"
+            >
+              <div class="book-header">
+                <h1>
+                  <span class="chapter-indicator">Chapter {{ chapterData.chapter.chapter_number }}</span>
+                </h1>
+                <p v-if="chapterData.chapter.chapter_description" class="book-description">
+                  {{ chapterData.chapter.chapter_description }}
+                </p>
+              </div>
+
+              <div v-if="chapterData.verses.length === 0" class="no-verses">
+                No verses found for this chapter.
+              </div>
+              
+              <div v-else class="verses-list">
+                <div 
+                  v-for="verse in chapterData.verses" 
+                  :key="verse.verse_id" 
+                  :data-verse-id="verse.verse_id"
+                  class="verse-item"
+                >
+                  <span class="verse-number">{{ verse.verse_index }}</span>
+                  <div class="verse-content">
+                    <div v-if="showEnglish" class="verse-text" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
+                    <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                    
+                    <div v-if="verse.links && verse.links.length > 0" class="verse-links">
+                      <a 
+                        v-for="link in verse.links" 
+                        :key="link.target_verse_id"
+                        href="#"
+                        class="link-badge"
+                        :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
+                        @click.prevent="navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id)"
+                      >
+                        {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
+                      </a>
+                    </div>
+                    
+                    <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
+                      <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
+                        <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
+                        <div class="note-content" v-html="note.note_content"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <!-- Loading indicator for adjacent chapters -->
+            <div v-if="isLoadingAdjacentChapter" class="loading-adjacent">
+              Loading more chapters...
+            </div>
           </div>
         </main>
       </div>
     </div>
-    
-    <!-- Context Menu for Verse References -->
-    <div 
-      v-if="contextMenu.show" 
-      class="context-menu"
-      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
-    >
-      <button @click="handleGoToVerse" class="context-menu-item">
-        Go to verse
-      </button>
-      <button @click="handleSearch" class="context-menu-item">
-        Search
-      </button>
-    </div>
-    
-    <!-- Search Results Popup -->
-    <div v-if="searchPopup.show" class="search-popup-overlay" @click="closeSearchPopup">
-      <div class="search-popup" @click.stop>
-        <div class="search-popup-header">
-          <h3>Search Results for "{{ searchPopup.searchText }}"</h3>
-          <button @click="closeSearchPopup" class="close-button">&times;</button>
+
+    <!-- Settings Modal -->
+    <div v-if="showSettingsModal" class="modal-overlay" @click="showSettingsModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Settings</h3>
+          <button class="close-button" @click="showSettingsModal = false">&times;</button>
         </div>
-        
-        <div class="search-popup-content">
-          <div v-if="searchPopup.loading" class="search-loading">
-            Searching...
+        <div class="modal-body">
+          <div class="settings-section">
+            <h4>Display Options</h4>
+            <div class="settings-group">
+              <label class="setting-item">
+                <span>Show English Verse</span>
+                <button 
+                  @click="showEnglish = !showEnglish" 
+                  :class="['toggle-switch', { active: showEnglish }]"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              </label>
+              <label class="setting-item">
+                <span>Show Telugu Verse</span>
+                <button 
+                  @click="showTelugu = !showTelugu" 
+                  :class="['toggle-switch', { active: showTelugu }]"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              </label>
+              <label class="setting-item">
+                <span>Show Notes</span>
+                <button 
+                  @click="showNotes = !showNotes" 
+                  :class="['toggle-switch', { active: showNotes }]"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              </label>
+            </div>
           </div>
           
-          <div v-else-if="searchPopup.results.length === 0" class="search-no-results">
-            No verses found containing "{{ searchPopup.searchText }}"
-          </div>
-          
-          <div v-else class="search-results-list">
-            <div 
-              v-for="result in searchPopup.results" 
-              :key="result.verse_id"
-              class="search-result-item"
-              @click="goToSearchResult(result)"
-            >
-              <div class="search-result-reference">
-                {{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}
+          <div class="settings-section">
+            <h4>Font Size</h4>
+            <div class="settings-group">
+              <div class="font-size-controls">
+                <button class="font-btn" @click="decreaseFontSize" :disabled="fontSize <= 12">A-</button>
+                <span class="font-size-display">{{ fontSize }}px</span>
+                <button class="font-btn" @click="increaseFontSize" :disabled="fontSize >= 24">A+</button>
               </div>
-              <div class="search-result-text" v-html="formatVerseWithPaleoBora(result.verse)"></div>
-              <div v-if="result.telugu_verse" class="search-result-telugu" v-html="formatVerseWithPaleoBora(result.telugu_verse)"></div>
             </div>
           </div>
         </div>
@@ -168,82 +177,224 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
-import { getBookById, getAllBooks } from '@/api/books';
-import { getVersesByChapterId, type VerseWithLinks, searchVersesByText, type VerseSearchResult } from '@/api/verses';
-import type { Chapter } from '@/utils/collectionReferences';
-import '@/assets/fonts/fonts.css';
+import { getBookById } from '@/api/books';
+import { getVersesByChapterId } from '@/api/verses';
+
+interface Book {
+  book_id: number;
+  book_name: string;
+  book_description?: string | null;
+}
+
+interface Chapter {
+  chapter_id: number;
+  book_id: number;
+  chapter_number: string;
+  chapter_description?: string | null;
+  chapter_notes?: string | null;
+}
+
+interface Verse {
+  verse_id: number;
+  chapter_id: number;
+  verse_index: number | null;
+  verse: string;
+  telugu_verse?: string | null;
+  verse_links?: string | null;
+  verse_notes?: string | null;
+  links?: Array<{
+    target_book_id: number;
+    target_chapter_id: number;
+    target_verse_id: number;
+    target_book_name: string;
+    target_chapter_number: string;
+    target_verse_index: number;
+  }>;
+  notes?: Array<{
+    note_id: number;
+    note_title?: string | null;
+    note_content: string;
+  }>;
+}
+
+interface LoadedChapterData {
+  chapter: Chapter;
+  verses: Verse[];
+}
 
 const route = useRoute();
 const router = useRouter();
-const allBooks = ref<any[]>([]);
-const bookAbbreviations = ref<Record<string, number>>({});
+const book = ref<Book | null>(null);
 const chapters = ref<Chapter[]>([]);
+const loadedChapters = ref<Map<number, LoadedChapterData>>(new Map());
 const selectedChapter = ref<Chapter | null>(null);
 const selectedChapterId = ref<number | null>(null);
-const verses = ref<VerseWithLinks[]>([]);
-const loadingVerses = ref(false);
-const bookName = ref<string>('');
-const hebrewBookName = ref<string>('');
-const bookDescription = ref<string>('');
-const loading = ref(true);
+const loading = ref(false);
 const error = ref<string | null>(null);
-const contextMenu = ref<{
-  show: boolean;
-  x: number;
-  y: number;
-  bookId: number;
-  chapterNum: number;
-  verseNum: number;
-}>({
-  show: false,
-  x: 0,
-  y: 0,
-  bookId: 0,
-  chapterNum: 0,
-  verseNum: 0
-});
-
-const searchPopup = ref<{
-  show: boolean;
-  searchText: string;
-  results: VerseSearchResult[];
-  loading: boolean;
-}>({
-  show: false,
-  searchText: '',
-  results: [],
-  loading: false
-});
+const isLoadingAdjacentChapter = ref(false);
 
 const showEnglish = ref(true);
 const showTelugu = ref(true);
 const showNotes = ref(true);
+const showSettingsModal = ref(false);
+const fontSize = ref(16);
 
-async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
-  console.log('navigateToVerse called:', { bookId, chapterId, verseId });
-  console.log('Current route.params.id:', route.params.id, 'Type:', typeof route.params.id);
-  console.log('Comparison:', Number(route.params.id), '===', bookId, '=', Number(route.params.id) === bookId);
+// Refs for scroll detection
+const chapterRefs = ref<Map<number, HTMLElement>>(new Map());
+const intersectionObserver = ref<IntersectionObserver | null>(null);
+const currentlyVisibleChapterId = ref<number | null>(null);
+
+// Sorted chapters for dropdown
+const sortedChapters = computed(() => {
+  return [...chapters.value].sort((a, b) => {
+    const numA = parseInt(a.chapter_number) || 0;
+    const numB = parseInt(b.chapter_number) || 0;
+    return numA - numB;
+  });
+});
+
+// Ordered loaded chapters for rendering
+const orderedLoadedChapters = computed(() => {
+  const sorted = Array.from(loadedChapters.value.values()).sort((a, b) => {
+    const numA = parseInt(a.chapter.chapter_number) || 0;
+    const numB = parseInt(b.chapter.chapter_number) || 0;
+    return numA - numB;
+  });
+  return sorted;
+});
+
+// Get chapter index
+function getChapterIndex(chapterId: number): number {
+  return sortedChapters.value.findIndex(ch => ch.chapter_id === chapterId);
+}
+
+// Get previous chapter
+function getPreviousChapter(chapterId: number): Chapter | null {
+  const index = getChapterIndex(chapterId);
+  if (index > 0) {
+    return sortedChapters.value[index - 1];
+  }
+  return null;
+}
+
+// Get next chapter
+function getNextChapter(chapterId: number): Chapter | null {
+  const index = getChapterIndex(chapterId);
+  if (index < sortedChapters.value.length - 1) {
+    return sortedChapters.value[index + 1];
+  }
+  return null;
+}
+
+// Set chapter ref
+function setChapterRef(chapterId: number, el: HTMLElement | null) {
+  if (el) {
+    chapterRefs.value.set(chapterId, el);
+  } else {
+    chapterRefs.value.delete(chapterId);
+  }
+}
+
+// Load verses for a chapter
+async function loadChapterVerses(chapterId: number): Promise<void> {
+  if (loadedChapters.value.has(chapterId)) {
+    return; // Already loaded
+  }
+
+  const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
+  if (!chapter) return;
+
+  try {
+    const verses = await getVersesByChapterId(chapterId);
+    loadedChapters.value.set(chapterId, {
+      chapter,
+      verses
+    });
+  } catch (err) {
+    console.error('Error loading chapter verses:', err);
+  }
+}
+
+// Load adjacent chapters (previous and next)
+async function loadAdjacentChapters(chapterId: number): Promise<void> {
+  isLoadingAdjacentChapter.value = true;
   
+  const prevChapter = getPreviousChapter(chapterId);
+  const nextChapter = getNextChapter(chapterId);
+  
+  const promises: Promise<void>[] = [];
+  
+  if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
+    promises.push(loadChapterVerses(prevChapter.chapter_id));
+  }
+  
+  if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
+    promises.push(loadChapterVerses(nextChapter.chapter_id));
+  }
+  
+  await Promise.all(promises);
+  isLoadingAdjacentChapter.value = false;
+}
+
+// Select chapter and load it
+async function selectChapter(chapter: Chapter) {
+  selectedChapter.value = chapter;
+  selectedChapterId.value = chapter.chapter_id;
+  
+  // Load this chapter if not loaded
+  await loadChapterVerses(chapter.chapter_id);
+  
+  // Load adjacent chapters
+  await loadAdjacentChapters(chapter.chapter_id);
+  
+  // Scroll to chapter after DOM updates
+  await nextTick();
+  scrollToChapter(chapter.chapter_id);
+}
+
+// Scroll to chapter
+function scrollToChapter(chapterId: number) {
+  const element = chapterRefs.value.get(chapterId);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Scroll to verse
+function scrollToVerse(verseId: number) {
+  setTimeout(() => {
+    const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+    if (verseElement) {
+      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      verseElement.classList.add('highlight-verse');
+      setTimeout(() => verseElement.classList.remove('highlight-verse'), 3000);
+    }
+  }, 100);
+}
+
+// Handle chapter change from dropdown
+async function onChapterChange() {
+  const chapter = chapters.value.find(ch => ch.chapter_id === selectedChapterId.value);
+  if (chapter) {
+    await selectChapter(chapter);
+  }
+}
+
+// Navigate to verse (for cross-references)
+async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
   // If same book, just select the chapter and scroll
   if (Number(route.params.id) === bookId) {
-    console.log('Same book - finding chapter', chapterId);
     const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
-    console.log('Found chapter:', chapter);
     if (chapter) {
-      console.log('Selecting chapter and scrolling to verse', verseId);
       await selectChapter(chapter);
       await nextTick();
       scrollToVerse(verseId);
-    } else {
-      console.error('Chapter not found:', chapterId);
     }
-  }
-  // Otherwise navigate to the other book's chapter page with query params
-  else {
-    console.log('Different book - navigating to', bookId, 'with query params');
+  } else {
+    // Navigate to other book
     router.push({
       path: `/chapters/${bookId}`,
       query: { chapterId: String(chapterId), verseId: String(verseId) }
@@ -251,296 +402,139 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
   }
 }
 
-function scrollToVerse(verseId: number) {
-  console.log('scrollToVerse called for verseId:', verseId);
-  setTimeout(() => {
-    const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
-    console.log('Found verse element:', verseElement);
-    if (verseElement) {
-      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Highlight the verse briefly
-      verseElement.classList.add('highlight-verse');
-      setTimeout(() => verseElement.classList.remove('highlight-verse'), 2000);
-    } else {
-      console.error('Verse element not found for verseId:', verseId);
-    }
-  }, 300);
-}
-
-onMounted(async () => {
-  const bookId = Number(route.params.id);
-  
-  if (isNaN(bookId)) {
-    error.value = 'Invalid book ID';
-    loading.value = false;
-    return;
-  }
-  
-  try {
-    // Load all books for abbreviation mapping
-    allBooks.value = await getAllBooks();
-    
-    // Create abbreviation mapping using book_abbr from database
-    allBooks.value.forEach(book => {
-      if (book.book_abbr) {
-        bookAbbreviations.value[book.book_abbr.toLowerCase()] = book.book_id;
-      }
-    });
-    
-    const book = await getBookById(bookId);
-    if (!book) {
-      error.value = 'Book not found';
-      return;
-    }
-    
-    bookName.value = book.book_name;
-    hebrewBookName.value = book.hebrew_book_name || book.book_name;
-    bookDescription.value = book.book_description || '';
-    const chaptersData = await getChaptersByBookId(bookId);
-    
-    // Sort chapters by chapter_number
-    chapters.value = chaptersData.sort((a, b) => {
-      const numA = parseInt(String(a.chapter_number)) || 0;
-      const numB = parseInt(String(b.chapter_number)) || 0;
-      return numA - numB;
-    });
-    
-    // Check if we have a target chapter and verse from query params
-    const targetChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
-    const targetVerseId = route.query.verseId ? Number(route.query.verseId) : null;
-    
-    if (targetChapterId && targetVerseId) {
-      // Find and select the target chapter
-      const targetChapter = chapters.value.find(ch => ch.chapter_id === targetChapterId);
-      if (targetChapter) {
-        await selectChapter(targetChapter);
-        await nextTick();
-        scrollToVerse(targetVerseId);
-      }
-    } else if (chapters.value.length > 0) {
-      // Auto-select first chapter if no target specified
-      await selectChapter(chapters.value[0]);
-    }
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load chapters';
-  } finally {
-    loading.value = false;
-  }
-});
-
-// Watch for route changes (when navigating from verse links)
-watch(() => route.params.id, async (newBookId, oldBookId) => {
-  if (newBookId && newBookId !== oldBookId) {
-    console.log('Book changed from', oldBookId, 'to', newBookId);
-    loading.value = true;
-    try {
-      const bookId = Number(newBookId);
-      const book = await getBookById(bookId);
-      if (book) {
-        bookName.value = book.book_name;
-        hebrewBookName.value = book.hebrew_book_name || book.book_name;
-        bookDescription.value = book.book_description || '';
-        const chaptersData = await getChaptersByBookId(bookId);
-        chapters.value = chaptersData.sort((a, b) => {
-          const numA = parseInt(String(a.chapter_number)) || 0;
-          const numB = parseInt(String(b.chapter_number)) || 0;
-          return numA - numB;
-        });
-        
-        // Check for target chapter/verse from query params
-        const targetChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
-        const targetVerseId = route.query.verseId ? Number(route.query.verseId) : null;
-        
-        if (targetChapterId && targetVerseId) {
-          console.log('Loading target chapter:', targetChapterId, 'and verse:', targetVerseId);
-          const targetChapter = chapters.value.find(ch => ch.chapter_id === targetChapterId);
-          if (targetChapter) {
-            await selectChapter(targetChapter);
-            await nextTick();
-            scrollToVerse(targetVerseId);
-          }
-        } else if (chapters.value.length > 0) {
-          await selectChapter(chapters.value[0]);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load new book:', e);
-    } finally {
-      loading.value = false;
-    }
-  }
-});
-
-// Watch for route path changes (when returning from admin pages to same book)
-watch(() => route.fullPath, async (newPath, oldPath) => {
-  // Only reload if we're coming from a different path but same book ID
-  if (newPath !== oldPath && route.name === 'chapters') {
-    const bookId = Number(route.params.id);
-    if (!isNaN(bookId)) {
-      try {
-        const book = await getBookById(bookId);
-        if (book) {
-          bookName.value = book.book_name;
-          hebrewBookName.value = book.hebrew_book_name || book.book_name;
-          bookDescription.value = book.book_description || '';
-        }
-      } catch (e) {
-        console.error('Failed to reload book:', e);
-      }
-    }
-  }
-});
-
-async function selectChapter(chapter: Chapter) {
-  selectedChapter.value = chapter;
-  selectedChapterId.value = chapter.chapter_id;
-  await loadVerses(chapter.chapter_id);
-}
-
-function onChapterChange() {
-  const chapter = chapters.value.find(ch => ch.chapter_id === selectedChapterId.value);
-  if (chapter) {
-    selectChapter(chapter);
+// Font size controls
+function increaseFontSize() {
+  if (fontSize.value < 24) {
+    fontSize.value += 2;
   }
 }
 
-async function loadVerses(chapterId: number) {
-  try {
-    loadingVerses.value = true;
-    verses.value = await getVersesByChapterId(chapterId);
-    console.log('Loaded verses:', verses.value.length);
-    console.log('First verse with links:', verses.value.find(v => v.links && v.links.length > 0));
-    
-    // Setup click handlers for verse references after DOM updates
-    await nextTick();
-    setupVerseRefClickHandlers();
-  } catch (e) {
-    console.error('Failed to load verses:', e);
-    verses.value = [];
-  } finally {
-    loadingVerses.value = false;
+function decreaseFontSize() {
+  if (fontSize.value > 12) {
+    fontSize.value -= 2;
   }
 }
 
-function formatVerseWithPaleoBora(verseText: string | null): string {
-  if (!verseText) return '';
+// Format verse with PaleoBora font
+function formatVerseWithPaleoBora(text: string): string {
+  if (!text) return '';
   
-  // Replace Myhla, myhla, OSWHY, or HWHY with span that uses PaleoBora font
-  let formatted = verseText.replace(/(Myhla|myhla|OSWHY|HWHY)/gi, '<span class="paleobora-text">$1</span>');
+  const patterns = [
+    { search: /HWHY/g, replace: '<span class="paleobora-text">HWHY</span>' },
+    { search: /hwhy/g, replace: '<span class="paleobora-text">hwhy</span>' },
+    { search: /OSWHY/g, replace: '<span class="paleobora-text">OSWHY</span>' },
+    { search: /oswhy/g, replace: '<span class="paleobora-text">oswhy</span>' },
+    { search: /MYHLA/g, replace: '<span class="paleobora-text">MYHLA</span>' },
+    { search: /Myhla/g, replace: '<span class="paleobora-text">Myhla</span>' },
+    { search: /myhla/g, replace: '<span class="paleobora-text">myhla</span>' }
+  ];
   
-  // Replace verse references like #prov1:10 with clickable links
-  // Now using book_abbr from database
-  formatted = formatted.replace(/#([a-z]+)(\d+):(\d+)/gi, (match, bookAbbr, chapter, verse) => {
-    const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
-    if (bookId) {
-      return `<a href="#" class="verse-ref-link" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
-    }
-    return match;
+  let formatted = text;
+  patterns.forEach(pattern => {
+    formatted = formatted.replace(pattern.search, pattern.replace);
   });
   
   return formatted;
 }
 
-function setupVerseRefClickHandlers() {
-  // Add click handlers to verse reference links
-  setTimeout(() => {
-    const refLinks = document.querySelectorAll('.verse-ref-link');
-    refLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const target = e.target as HTMLElement;
-        const bookId = parseInt(target.getAttribute('data-book-id') || '0');
-        const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
-        const verseNum = parseInt(target.getAttribute('data-verse') || '0');
-        
-        // Show context menu
-        const rect = target.getBoundingClientRect();
-        contextMenu.value = {
-          show: true,
-          x: rect.left,
-          y: rect.bottom + 5,
-          bookId,
-          chapterNum,
-          verseNum
-        };
-      });
-    });
-  }, 100);
-}
-
-async function handleGoToVerse() {
-  const { bookId, chapterNum, verseNum } = contextMenu.value;
-  contextMenu.value.show = false;
+// Setup intersection observer for chapter visibility
+function setupIntersectionObserver() {
+  const options = {
+    root: null,
+    rootMargin: '-50% 0px -50% 0px', // Trigger when chapter is in middle of viewport
+    threshold: 0
+  };
   
-  // Find the chapter by chapter_number
-  const book = allBooks.value.find(b => b.book_id === bookId);
-  if (book) {
-    const chaptersData = await getChaptersByBookId(bookId);
-    const targetChapter = chaptersData.find(ch => String(ch.chapter_number) === String(chapterNum));
-    
-    if (targetChapter) {
-      // Get verses for that chapter to find the verse by index
-      const versesData = await getVersesByChapterId(targetChapter.chapter_id);
-      const targetVerse = versesData.find(v => v.verse_index === verseNum);
-      
-      if (targetVerse) {
-        navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+  intersectionObserver.value = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const chapterId = parseInt(entry.target.getAttribute('data-chapter-id') || '0');
+        if (chapterId) {
+          currentlyVisibleChapterId.value = chapterId;
+          
+          // Update dropdown to match visible chapter
+          if (selectedChapterId.value !== chapterId) {
+            selectedChapterId.value = chapterId;
+            const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
+            if (chapter) {
+              selectedChapter.value = chapter;
+            }
+          }
+          
+          // Load adjacent chapters when a chapter becomes visible
+          loadAdjacentChapters(chapterId);
+        }
       }
-    }
-  }
-}
-
-function handleSearch() {
-  const { bookId, chapterNum, verseNum } = contextMenu.value;
-  contextMenu.value.show = false;
+    });
+  }, options);
   
-  // Get book abbreviation for search
-  const book = allBooks.value.find(b => b.book_id === bookId);
-  const bookAbbr = book?.book_abbr || '';
-  const searchText = `#${bookAbbr}${chapterNum}:${verseNum}`;
-  
-  // Show search popup and perform search
-  searchPopup.value.show = true;
-  searchPopup.value.searchText = searchText;
-  searchPopup.value.loading = true;
-  searchPopup.value.results = [];
-  
-  performSearch(searchText);
-}
-
-async function performSearch(searchText: string) {
-  try {
-    const results = await searchVersesByText(searchText);
-    searchPopup.value.results = results;
-  } catch (e) {
-    console.error('Search failed:', e);
-    searchPopup.value.results = [];
-  } finally {
-    searchPopup.value.loading = false;
-  }
-}
-
-function closeSearchPopup() {
-  searchPopup.value.show = false;
-}
-
-async function goToSearchResult(result: VerseSearchResult) {
-  closeSearchPopup();
-  navigateToVerse(result.book_id, result.chapter_id, result.verse_id);
-}
-
-function closeContextMenu() {
-  contextMenu.value.show = false;
-}
-
-// Close context menu when clicking outside
-onMounted(() => {
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.context-menu') && !target.closest('.verse-ref-link')) {
-      closeContextMenu();
-    }
+  // Observe all chapter sections
+  chapterRefs.value.forEach((element) => {
+    intersectionObserver.value?.observe(element);
   });
+}
+
+// Watch for new chapter refs and observe them
+watch(() => chapterRefs.value.size, () => {
+  if (intersectionObserver.value) {
+    chapterRefs.value.forEach((element) => {
+      intersectionObserver.value?.observe(element);
+    });
+  }
+});
+
+// Initialize
+onMounted(async () => {
+  loading.value = true;
+  error.value = null;
+  
+  const bookId = Number(route.params.id);
+  if (isNaN(bookId)) {
+    error.value = 'Invalid book ID';
+    loading.value = false;
+    return;
+  }
+
+  try {
+    // Load book and chapters
+    book.value = await getBookById(bookId);
+    chapters.value = await getChaptersByBookId(bookId);
+    
+    // Check for query parameters (for cross-references)
+    const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
+    const queryVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+    
+    if (queryChapterId) {
+      const chapter = chapters.value.find(ch => ch.chapter_id === queryChapterId);
+      if (chapter) {
+        await selectChapter(chapter);
+        if (queryVerseId) {
+          await nextTick();
+          scrollToVerse(queryVerseId);
+        }
+      }
+    } else if (chapters.value.length > 0) {
+      // Select first chapter by default
+      await selectChapter(sortedChapters.value[0]);
+    }
+    
+    // Setup intersection observer after initial load
+    await nextTick();
+    setupIntersectionObserver();
+    
+  } catch (err: any) {
+    error.value = err.message || 'Failed to load chapters';
+    console.error('Error loading chapters:', err);
+  } finally {
+    loading.value = false;
+  }
+});
+
+// Cleanup
+onUnmounted(() => {
+  if (intersectionObserver.value) {
+    intersectionObserver.value.disconnect();
+  }
 });
 </script>
 
@@ -552,49 +546,57 @@ onMounted(() => {
   min-height: 100vh;
 }
 
+.content-wrapper {
+  width: 100%;
+}
+
 .top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: white;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 0.5rem;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  justify-content: space-between;
 }
 
 .back-link {
   color: #42b983;
   text-decoration: none;
-  font-size: 1rem;
   font-weight: 500;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .back-link:hover {
+  color: #359670;
   text-decoration: underline;
 }
 
-.chapter-dropdown-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chapter-label {
+.book-title {
+  margin: 0;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
-  font-size: 0.95rem;
+  color: #2c3e50;
+  white-space: nowrap;
 }
 
 .chapter-select {
-  padding: 8px 12px;
-  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
   border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background-color: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: white;
   cursor: pointer;
-  width: 80px;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
+  width: auto;
 }
 
 .chapter-select:hover {
@@ -607,39 +609,27 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
 }
 
-.book-header {
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 100;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.book-header h1 {
-  margin: 0;
+.settings-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
   display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
+  align-items: center;
   justify-content: center;
-}
-
-.book-description {
-  text-align: center;
+  transition: all 0.2s;
   color: #666;
-  font-size: 0.95rem;
-  margin: 0.5rem 0 0 0;
-  line-height: 1.5;
-  font-style: italic;
 }
 
-.chapter-indicator {
-  font-size: 1.5rem;
+.settings-icon:hover {
+  background: #f0f0f0;
   color: #42b983;
-  font-weight: 600;
+}
+
+.settings-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .toggle-buttons-container {
@@ -647,8 +637,6 @@ onMounted(() => {
   gap: 0.5rem;
   justify-content: center;
   align-items: center;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
 }
 
 .toggle-btn {
@@ -679,59 +667,78 @@ onMounted(() => {
   border-color: #359670;
 }
 
-h1 {
-  color: #2c3e50;
-  margin-bottom: 2rem;
-}
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.2rem;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.content-layout {
-  display: block;
-  width: 100%;
-}
-
 .chapter-content {
   background: white;
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-height: 400px;
+}
+
+.continuous-scroll-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.chapter-section {
+  scroll-margin-top: 150px; /* Account for sticky header */
+}
+
+.book-header {
+  padding: 2rem 0 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e0e0e0;
   text-align: left;
 }
 
-.select-prompt {
-  color: #999;
-  text-align: center;
-  padding: 4rem 2rem;
-  font-size: 1.1rem;
-}
-
-.chapter-content h2 {
+.book-header h1 {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  justify-content: flex-start;
   color: #2c3e50;
-  margin: 0 0 1.5rem 0;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e0e0e0;
 }
 
-.loading-verses, .no-verses {
+.chapter-indicator {
+  font-size: 1.5rem;
+  color: #42b983;
+  font-weight: 600;
+}
+
+.book-description {
+  text-align: left;
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.loading, .error, .select-prompt, .no-verses {
   text-align: center;
   padding: 2rem;
+  font-size: 1.2rem;
   color: #999;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.loading-adjacent {
+  text-align: center;
+  padding: 1rem;
+  color: #999;
+  font-style: italic;
 }
 
 .verses-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  text-align: left;
 }
 
 .verse-item {
@@ -763,12 +770,14 @@ h1 {
 .verse-text {
   color: #333;
   margin-bottom: 0.125rem;
+  text-align: left;
 }
 
 .verse-telugu {
   color: #666;
   font-size: 0.95rem;
   margin-top: 0.125rem;
+  text-align: left;
 }
 
 .verse-links {
@@ -838,206 +847,34 @@ h1 {
   font-family: 'PaleoBora', serif !important;
 }
 
-.verse-text :deep(.verse-ref-link),
-.verse-telugu :deep(.verse-ref-link) {
-  color: #0366d6;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0 0.2rem;
-  border-radius: 2px;
-  transition: all 0.2s;
-}
-
-.verse-text :deep(.verse-ref-link:hover),
-.verse-telugu :deep(.verse-ref-link:hover) {
-  background: #e7f3ff;
-  text-decoration: underline;
-}
-
-.description-content {
-  line-height: 1.8;
-  color: #333;
-  margin-bottom: 2rem;
-  text-align: left;
-}
-
-.description-content :deep(h1),
-.description-content :deep(h2),
-.description-content :deep(h3) {
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.description-content :deep(p) {
-  margin-bottom: 0;
-}
-
-.description-content :deep(ul),
-.description-content :deep(ol) {
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-}
-
-.description-content :deep(li) {
-  margin-bottom: 0.5rem;
-}
-
-.description-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 1rem 0;
-}
-
-.description-content :deep(a) {
-  color: #42b983;
-  text-decoration: none;
-}
-
-.description-content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-  .chapters-page {
-    padding: 0;
-    min-height: 100vh;
-  }
-  
-  h1 {
-    font-size: 1.5rem;
-    margin: 0 0 0.5rem 0;
-    padding: 0.75rem;
-  }
-  
-  .back-link {
-    margin: 0.5rem;
-  }
-  
-  .content-layout {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  
-  .chapters-sidebar {
-    position: static;
-    padding: 0.75rem;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .chapters-sidebar h2 {
-    font-size: 1.1rem;
-    margin: 0 0 0.75rem 0;
-    padding-bottom: 0.5rem;
-  }
-  
-  .chapter-link {
-    padding: 0.5rem;
-    font-size: 0.95rem;
-  }
-  
-  .chapter-content {
-    padding: 0.75rem;
-    margin: 0;
-    border-radius: 0;
-    min-height: 300px;
-    box-shadow: none;
-  }
-  
-  .chapter-content h2 {
-    font-size: 1.3rem;
-    margin: 0 0 0.75rem 0;
-    padding-bottom: 0.5rem;
-  }
-  
-  .verse-item {
-    gap: 0.5rem;
-    padding: 0.5rem 0;
-    font-size: 0.95rem;
-  }
-  
-  .verse-number {
-    min-width: 25px;
-    font-size: 0.85rem;
-  }
-  
-  .verse-telugu {
-    font-size: 0.9rem;
-  }
-  
-  .select-prompt {
-    padding: 2rem 0.75rem;
-    font-size: 1rem;
-  }
-}
-
-.context-menu {
-  position: fixed;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  overflow: hidden;
-  min-width: 140px;
-}
-
-.context-menu-item {
-  display: block;
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: none;
-  background: white;
-  text-align: left;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #333;
-  transition: background-color 0.2s;
-}
-
-.context-menu-item:hover {
-  background-color: #f8f9fa;
-}
-
-.context-menu-item:active {
-  background-color: #e9ecef;
-}
-
-.context-menu-item:not(:last-child) {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.search-popup-overlay {
+/* Settings Modal */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  z-index: 2000;
+  padding: 1rem;
 }
 
-.search-popup {
+.modal-content {
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 800px;
+  max-width: 500px;
   width: 100%;
   max-height: 80vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-.search-popup-header {
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1046,10 +883,10 @@ h1 {
   background: #f8f9fa;
 }
 
-.search-popup-header h3 {
+.modal-header h3 {
   margin: 0;
   color: #2c3e50;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
 }
 
@@ -1066,6 +903,7 @@ h1 {
   justify-content: center;
   border-radius: 4px;
   transition: all 0.2s;
+  line-height: 1;
 }
 
 .close-button:hover {
@@ -1073,86 +911,162 @@ h1 {
   color: #333;
 }
 
-.search-popup-content {
-  flex: 1;
-  overflow-y: auto;
+.modal-body {
   padding: 1.5rem;
+  overflow-y: auto;
 }
 
-.search-loading {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.1rem;
+.settings-section {
+  margin-bottom: 2rem;
 }
 
-.search-no-results {
-  text-align: center;
-  padding: 3rem;
-  color: #999;
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
   font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0.5rem;
 }
 
-.search-results-list {
+.settings-group {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.search-result-item {
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
   border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.setting-item:hover {
+  background: #e9ecef;
+}
+
+.setting-item span {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: #ccc;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background 0.3s;
+  padding: 0;
+}
+
+.toggle-switch.active {
+  background: #42b983;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  display: block;
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(24px);
+}
+
+/* Font Size Controls */
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.font-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.search-result-item:hover {
-  background: #f8f9fa;
+.font-btn:hover:not(:disabled) {
   border-color: #42b983;
-  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.1);
-}
-
-.search-result-reference {
-  font-weight: 700;
   color: #42b983;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+  background: #f0fdf8;
 }
 
-.search-result-text {
-  color: #333;
-  line-height: 1.6;
-  margin-bottom: 0.25rem;
+.font-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-.search-result-telugu {
-  color: #666;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin-top: 0.25rem;
+.font-size-display {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #42b983;
+  min-width: 50px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
-  .search-popup-overlay {
-    padding: 1rem;
+  .chapters-page {
+    padding: 0;
   }
   
-  .search-popup {
-    max-height: 90vh;
+  .top-nav {
+    padding: 0.75rem;
   }
   
-  .search-popup-header {
-    padding: 1rem;
+  .chapter-content {
+    padding: 0.75rem;
+    border-radius: 0;
   }
   
-  .search-popup-header h3 {
-    font-size: 1rem;
+  .book-header h1 {
+    font-size: 1.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
-  .search-popup-content {
-    padding: 1rem;
+  .verse-item {
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .verse-number {
+    min-width: 25px;
+    font-size: 0.85rem;
   }
 }
 </style>
