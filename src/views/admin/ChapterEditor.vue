@@ -273,7 +273,33 @@
               <div id="english-editor" class="quill-editor"></div>
             </div>
             <div class="editor-group">
-              <label>Telugu Verse (Optional):</label>
+              <label class="telugu-label-with-action">
+                <span>Telugu Verse (Optional):</span>
+                <button 
+                  @click="translateToTelugu" 
+                  class="btn btn-sm btn-info btn-translate"
+                  :disabled="translating"
+                  title="Translate English verse to Telugu using Google Translate"
+                >
+                  {{ translating ? '🔄 Translating...' : '🌐 Translate to Telugu' }}
+                </button>
+              </label>
+              
+              <!-- Translation Result Display -->
+              <div v-if="showTranslation && translatedText" class="translation-result">
+                <div class="translation-header">
+                  <span class="translation-label">📝 Translation Result:</span>
+                  <button 
+                    @click="replaceTeluguVerse" 
+                    class="btn btn-sm btn-success btn-replace"
+                    title="Replace Telugu verse content with this translation"
+                  >
+                    ✅ Replace Telugu Verse
+                  </button>
+                </div>
+                <div class="translation-content" v-html="translatedText"></div>
+              </div>
+              
               <div id="telugu-editor" class="quill-editor"></div>
             </div>
           </div>
@@ -336,6 +362,11 @@ const editFormData = ref<VerseUpdate>({
 
 const englishEditor = ref<Quill | null>(null);
 const teluguEditor = ref<Quill | null>(null);
+
+// Translation management
+const translating = ref(false);
+const translatedText = ref('');
+const showTranslation = ref(false);
 
 // Notes management
 const showNotesForVerse = ref<number | null>(null);
@@ -487,6 +518,10 @@ function cancelEdit() {
     verse: '',
     telugu_verse: ''
   };
+  // Reset translation state
+  translating.value = false;
+  translatedText.value = '';
+  showTranslation.value = false;
 }
 
 function cleanupEditors() {
@@ -536,6 +571,74 @@ async function saveVerse(verseId: number) {
   } catch (e) {
     alert('Failed to save verse: ' + (e instanceof Error ? e.message : 'Unknown error'));
   }
+}
+
+// Translation functions
+async function translateToTelugu() {
+  if (!englishEditor.value) {
+    alert('English editor not initialized');
+    return;
+  }
+  
+  // Get plain text from English editor (strip HTML)
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = englishEditor.value.root.innerHTML;
+  const englishText = tempDiv.textContent || tempDiv.innerText || '';
+  
+  if (!englishText.trim()) {
+    alert('English verse is empty. Please enter text to translate.');
+    return;
+  }
+  
+  translating.value = true;
+  showTranslation.value = false;
+  
+  try {
+    // Using Google Translate API via a free proxy service
+    const apiUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=te&dt=t&q=${encodeURIComponent(englishText)}`;
+    
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('Translation service unavailable');
+    }
+    
+    const data = await response.json();
+    
+    // Extract translated text from response
+    let translated = '';
+    if (data && data[0]) {
+      for (let i = 0; i < data[0].length; i++) {
+        if (data[0][i][0]) {
+          translated += data[0][i][0];
+        }
+      }
+    }
+    
+    if (!translated) {
+      throw new Error('Translation returned empty result');
+    }
+    
+    translatedText.value = translated;
+    showTranslation.value = true;
+    
+  } catch (e) {
+    alert('Translation failed: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    console.error('Translation error:', e);
+  } finally {
+    translating.value = false;
+  }
+}
+
+function replaceTeluguVerse() {
+  if (!teluguEditor.value || !translatedText.value) {
+    return;
+  }
+  
+  // Set the translated text in the Telugu editor
+  teluguEditor.value.root.innerHTML = translatedText.value;
+  
+  // Close the translation result display
+  showTranslation.value = false;
 }
 
 // Notes functions
@@ -1200,6 +1303,55 @@ async function saveTag(verseId: number) {
   font-weight: 600;
   color: #333;
   font-size: 0.75rem;
+}
+
+.telugu-label-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.btn-translate {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.translation-result {
+  background: #e7f3ff;
+  border: 2px solid #2196F3;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.translation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.translation-label {
+  font-weight: 600;
+  color: #1976D2;
+  font-size: 0.8rem;
+}
+
+.btn-replace {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.translation-content {
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  color: #333;
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 .quill-editor {
