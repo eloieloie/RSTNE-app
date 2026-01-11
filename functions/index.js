@@ -27,7 +27,11 @@ const pool = mysql.createPool(dbConfig);
 app.get("/api/books", async (req, res) => {
   try {
     const [books] = await pool.execute(
-        "SELECT * FROM books_tbl ORDER BY dt_added DESC",
+        `SELECT b.*, COUNT(c.chapter_id) as chapter_count 
+         FROM books_tbl b
+         LEFT JOIN chapters_tbl c ON b.book_id = c.book_id
+         GROUP BY b.book_id
+         ORDER BY b.book_index, b.dt_added DESC`,
     );
     res.json(books);
   } catch (error) {
@@ -54,13 +58,13 @@ app.get("/api/books/:id", async (req, res) => {
 // Create book
 app.post("/api/books", async (req, res) => {
   try {
-    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index} = req.body;
+    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index, category_id} = req.body;
     const [result] = await pool.execute(
         `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_name, 
-         telugu_book_name, book_description, book_index) VALUES (?, ?, ?, ?, ?, ?)`,
+         telugu_book_name, book_description, book_index, category_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           book_name, book_abbr || null, hebrew_book_name || null,
-          telugu_book_name || null, book_description || null, book_index || null,
+          telugu_book_name || null, book_description || null, book_index || null, category_id || null,
         ],
     );
     res.status(201).json({id: result.insertId, message: "Book created successfully"});
@@ -72,13 +76,13 @@ app.post("/api/books", async (req, res) => {
 // Update book
 app.put("/api/books/:id", async (req, res) => {
   try {
-    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index} = req.body;
+    const {book_name, book_abbr, hebrew_book_name, telugu_book_name, book_description, book_index, category_id} = req.body;
     await pool.execute(
         `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_name = ?, 
-         telugu_book_name = ?, book_description = ?, book_index = ? WHERE book_id = ?`,
+         telugu_book_name = ?, book_description = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
         [
           book_name, book_abbr || null, hebrew_book_name || null,
-          telugu_book_name || null, book_description || null, book_index || null, req.params.id,
+          telugu_book_name || null, book_description || null, book_index || null, category_id || null, req.params.id,
         ],
     );
     res.json({message: "Book updated successfully"});

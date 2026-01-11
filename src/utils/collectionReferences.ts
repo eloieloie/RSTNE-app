@@ -1,6 +1,7 @@
 // Table Names
 export const TABLES = {
   BOOKS: 'books_tbl',
+  BOOK_CATEGORIES: 'book_categories_tbl',
   CHAPTERS: 'chapters_tbl',
   VERSES: 'verses_tbl',
   NOTES: 'notes_tbl',
@@ -19,6 +20,8 @@ export interface Book {
   telugu_book_name: string | null;
   book_description: string | null;
   book_index: number | null;
+  category_id: number | null;
+  chapter_count?: number;
   dt_added: Date;
 }
 
@@ -29,6 +32,7 @@ export interface BookInsert {
   telugu_book_name?: string;
   book_description?: string;
   book_index?: number;
+  category_id?: number;
 }
 
 export interface BookUpdate {
@@ -38,6 +42,7 @@ export interface BookUpdate {
   telugu_book_name?: string;
   book_description?: string;
   book_index?: number;
+  category_id?: number;
 }
 
 export interface Chapter {
