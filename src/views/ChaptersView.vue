@@ -28,6 +28,27 @@
     <div v-else-if="error" class="error">{{ error }}</div>
     
     <div v-else>
+      <div class="toggle-buttons-container">
+        <button 
+          @click="showEnglish = !showEnglish" 
+          :class="['toggle-btn', { active: showEnglish }]"
+        >
+          English
+        </button>
+        <button 
+          @click="showTelugu = !showTelugu" 
+          :class="['toggle-btn', { active: showTelugu }]"
+        >
+          Telugu
+        </button>
+        <button 
+          @click="showNotes = !showNotes" 
+          :class="['toggle-btn', { active: showNotes }]"
+        >
+          Notes
+        </button>
+      </div>
+      
       <div class="book-header">
         <h1>
           {{ hebrewBookName || bookName }}
@@ -35,6 +56,7 @@
             {{ selectedChapter.chapter_number }}
           </span>
         </h1>
+        <p v-if="bookDescription" class="book-description">{{ bookDescription }}</p>
       </div>
       
       <div v-if="chapters.length === 0" class="empty">
@@ -64,8 +86,8 @@
               >
                 <span class="verse-number">{{ verse.verse_index }}</span>
                 <div class="verse-content">
-                  <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
-                  <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  <div v-if="showEnglish" class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
+                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   
                   <div v-if="verse.links && verse.links.length > 0" class="verse-links">
                     <a 
@@ -80,7 +102,7 @@
                     </a>
                   </div>
                   
-                  <div v-if="verse.notes && verse.notes.length > 0" class="verse-notes">
+                  <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                     <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
                       <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
                       <div class="note-content" v-html="note.note_content"></div>
@@ -165,6 +187,7 @@ const verses = ref<VerseWithLinks[]>([]);
 const loadingVerses = ref(false);
 const bookName = ref<string>('');
 const hebrewBookName = ref<string>('');
+const bookDescription = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const contextMenu = ref<{
@@ -194,6 +217,10 @@ const searchPopup = ref<{
   results: [],
   loading: false
 });
+
+const showEnglish = ref(true);
+const showTelugu = ref(true);
+const showNotes = ref(true);
 
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
   console.log('navigateToVerse called:', { bookId, chapterId, verseId });
@@ -268,6 +295,7 @@ onMounted(async () => {
     
     bookName.value = book.book_name;
     hebrewBookName.value = book.hebrew_book_name || book.book_name;
+    bookDescription.value = book.book_description || '';
     const chaptersData = await getChaptersByBookId(bookId);
     
     // Sort chapters by chapter_number
@@ -311,6 +339,7 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
       if (book) {
         bookName.value = book.book_name;
         hebrewBookName.value = book.hebrew_book_name || book.book_name;
+        bookDescription.value = book.book_description || '';
         const chaptersData = await getChaptersByBookId(bookId);
         chapters.value = chaptersData.sort((a, b) => {
           const numA = parseInt(String(a.chapter_number)) || 0;
@@ -338,6 +367,26 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
       console.error('Failed to load new book:', e);
     } finally {
       loading.value = false;
+    }
+  }
+});
+
+// Watch for route path changes (when returning from admin pages to same book)
+watch(() => route.fullPath, async (newPath, oldPath) => {
+  // Only reload if we're coming from a different path but same book ID
+  if (newPath !== oldPath && route.name === 'chapters') {
+    const bookId = Number(route.params.id);
+    if (!isNaN(bookId)) {
+      try {
+        const book = await getBookById(bookId);
+        if (book) {
+          bookName.value = book.book_name;
+          hebrewBookName.value = book.hebrew_book_name || book.book_name;
+          bookDescription.value = book.book_description || '';
+        }
+      } catch (e) {
+        console.error('Failed to reload book:', e);
+      }
     }
   }
 });
@@ -578,10 +627,56 @@ onMounted(() => {
   justify-content: center;
 }
 
+.book-description {
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
 .chapter-indicator {
   font-size: 1.5rem;
   color: #42b983;
   font-weight: 600;
+}
+
+.toggle-buttons-container {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  border-color: #42b983;
+  color: #42b983;
+}
+
+.toggle-btn.active {
+  background: #42b983;
+  border-color: #42b983;
+  color: white;
+}
+
+.toggle-btn.active:hover {
+  background: #359670;
+  border-color: #359670;
 }
 
 h1 {

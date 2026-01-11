@@ -14,18 +14,20 @@
       <div v-else-if="Object.keys(groupedChapters).length === 0" class="empty">No chapters found</div>
       
       <div v-else class="books-list">
-        <div v-for="(chapters, bookId) in groupedChapters" :key="bookId" class="book-section">
-          <h2 class="book-title">{{ getBookName(Number(bookId)) }}</h2>
-          <div class="chapters-grid">
-            <router-link
-              v-for="chapter in chapters"
-              :key="chapter.chapter_id"
-              :to="`/admin/chapters/${chapter.chapter_id}`"
-              class="chapter-link"
-            >
-              <span class="chapter-number">{{ chapter.chapter_number }}</span>
-            </router-link>
-          </div>
+        <div v-for="book in sortedBooks" :key="book.book_id" class="book-section">
+          <template v-if="groupedChapters[book.book_id]">
+            <h2 class="book-title">{{ book.book_name }}</h2>
+            <div class="chapters-grid">
+              <router-link
+                v-for="chapter in groupedChapters[book.book_id]"
+                :key="chapter.chapter_id"
+                :to="`/admin/chapters/${chapter.chapter_id}`"
+                class="chapter-link"
+              >
+                <span class="chapter-number">{{ chapter.chapter_number }}</span>
+              </router-link>
+            </div>
+          </template>
         </div>
       </div>
     </div>
