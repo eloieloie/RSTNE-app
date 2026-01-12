@@ -593,15 +593,33 @@ async function handleGoToVerse() {
   const { bookId, chapterNum, verseNum } = contextMenu.value;
   contextMenu.value.show = false;
   
-  // Find the target chapter by chapter number
-  const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
-  if (targetChapter) {
-    // Get verses for that chapter to find the verse by index
-    const versesData = await getVersesByChapterId(targetChapter.chapter_id);
-    const targetVerse = versesData.find(v => v.verse_index === verseNum);
-    
-    if (targetVerse) {
-      navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+  // If same book, find chapter and navigate
+  if (Number(route.params.id) === bookId) {
+    const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
+    if (targetChapter) {
+      const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+      const targetVerse = versesData.find(v => v.verse_index === verseNum);
+      
+      if (targetVerse) {
+        navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+      }
+    }
+  } else {
+    // Different book - need to load that book's chapters first
+    try {
+      const targetBookChapters = await getChaptersByBookId(bookId);
+      const targetChapter = targetBookChapters.find(ch => ch.chapter_number === String(chapterNum));
+      
+      if (targetChapter) {
+        const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+        const targetVerse = versesData.find(v => v.verse_index === verseNum);
+        
+        if (targetVerse) {
+          navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading target book chapters:', err);
     }
   }
 }
