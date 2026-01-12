@@ -296,6 +296,10 @@ const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
 
+// Track highlighted verse to prevent premature removal
+const highlightedVerseId = ref<number | null>(null);
+const highlightTimeout = ref<number | null>(null);
+
 // Context menu state for verse reference links
 const contextMenu = ref<{
   show: boolean;
@@ -438,19 +442,123 @@ function scrollToChapter(chapterId: number) {
 // Scroll to verse
 function scrollToVerse(verseId: number) {
   console.log('scrollToVerse: Looking for verse with id:', verseId);
-  setTimeout(() => {
+  
+  // Clear any existing highlight timeout
+  if (highlightTimeout.value) {
+    clearTimeout(highlightTimeout.value);
+    highlightTimeout.value = null;
+  }
+  
+  // Remove previous highlight if exists
+  if (highlightedVerseId.value) {
+    const prevElement = document.querySelector(`[data-verse-id="${highlightedVerseId.value}"]`);
+    if (prevElement) {
+      prevElement.classList.remove('highlight-verse');
+    }
+  }
+  
+  let attempts = 0;
+  const maxAttempts = 20; // Try for up to 2 seconds
+  
+  const tryScroll = () => {
     const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
-    console.log('scrollToVerse: Found element:', verseElement);
     
     if (verseElement) {
-      console.log('scrollToVerse: Scrolling to element...');
+      console.log('scrollToVerse: Found element, scrolling and highlighting...');
+      console.log('scrollToVerse: Element classes before adding highlight:', verseElement.className);
       verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       verseElement.classList.add('highlight-verse');
-      setTimeout(() => verseElement.classList.remove('highlight-verse'), 13000);
+      console.log('scrollToVerse: Element classes after adding highlight:', verseElement.className);
+      console.log('scrollToVerse: Has highlight class?', verseElement.classList.contains('highlight-verse'));
+      
+      // Track this verse as highlighted
+      highlightedVerseId.value = verseId;
+      
+      // Check immediately after 100ms
+      setTimeout(() => {
+        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
+        console.log('scrollToVerse: After 100ms - Element exists?', !!el);
+        if (el) {
+          console.log('scrollToVerse: After 100ms - Classes:', el.className);
+          console.log('scrollToVerse: After 100ms - Has highlight?', el.classList.contains('highlight-verse'));
+        }
+      }, 100);
+      
+      // Check after 1 second
+      setTimeout(() => {
+        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
+        console.log('scrollToVerse: After 1 second - Element exists?', !!el);
+        if (el) {
+          console.log('scrollToVerse: After 1 second - Classes:', el.className);
+          console.log('scrollToVerse: After 1 second - Has highlight?', el.classList.contains('highlight-verse'));
+        }
+      }, 1000);
+      
+      // Use MutationObserver to watch for class changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const element = mutation.target as HTMLElement;
+            console.warn('scrollToVerse: Class changed! Old:', mutation.oldValue, 'New:', element.className);
+            if (!element.classList.contains('highlight-verse')) {
+              console.warn('scrollToVerse: Highlight class was removed by something! Re-applying...');
+              element.classList.add('highlight-verse');
+            }
+          }
+        });
+      });
+      
+      observer.observe(verseElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+        attributeOldValue: true
+      });
+      
+      // Also periodically check the element exists and has the class
+      const checkInterval = setInterval(() => {
+        const element = document.querySelector(`[data-verse-id="${verseId}"]`);
+        if (element) {
+          if (!element.classList.contains('highlight-verse')) {
+            console.warn('scrollToVerse: Re-applying highlight (element exists but class missing)');
+            element.classList.add('highlight-verse');
+            // Re-observe if element was recreated
+            observer.disconnect();
+            observer.observe(element, {
+              attributes: true,
+              attributeFilter: ['class'],
+              attributeOldValue: true
+            });
+          }
+        } else {
+          console.warn('scrollToVerse: Verse element disappeared from DOM!');
+        }
+      }, 500);
+      
+      // Set timeout to remove highlight after 30 seconds
+      highlightTimeout.value = window.setTimeout(() => {
+        clearInterval(checkInterval);
+        observer.disconnect();
+        const element = document.querySelector(`[data-verse-id="${verseId}"]`);
+        console.log('scrollToVerse: 30 seconds elapsed - Element exists?', !!element);
+        if (element) {
+          console.log('scrollToVerse: 30 seconds elapsed - Has highlight?', element.classList.contains('highlight-verse'));
+          console.log('scrollToVerse: Removing highlight after 30 seconds');
+          element.classList.remove('highlight-verse');
+          console.log('scrollToVerse: After removal - Classes:', element.className);
+        }
+        highlightedVerseId.value = null;
+        highlightTimeout.value = null;
+      }, 30000);
+    } else if (attempts < maxAttempts) {
+      attempts++;
+      console.log(`scrollToVerse: Verse not found yet, retrying (${attempts}/${maxAttempts})...`);
+      setTimeout(tryScroll, 100);
     } else {
-      console.warn('scrollToVerse: Verse element not found in DOM!');
+      console.warn('scrollToVerse: Verse element not found after', maxAttempts, 'attempts');
     }
-  }, 100);
+  };
+  
+  tryScroll();
 }
 
 // Handle verse selection from VersePicker
@@ -493,11 +601,47 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
     console.log('navigateToVerse: Found chapter:', chapter);
     
     if (chapter) {
-      console.log('navigateToVerse: Selecting chapter...');
-      await selectChapter(chapter);
-      await nextTick();
-      console.log('navigateToVerse: Scrolling to verse:', verseId);
-      scrollToVerse(verseId);
+      // Check if we're already on this chapter
+      if (selectedChapterId.value === chapterId) {
+        console.log('navigateToVerse: Already on this chapter, just scrolling to verse:', verseId);
+        await nextTick();
+        scrollToVerse(verseId);
+      } else {
+        console.log('navigateToVerse: Selecting different chapter...');
+        
+        // Ensure the target chapter is loaded before selecting
+        if (!loadedChapters.value.has(chapterId)) {
+          console.log('navigateToVerse: Target chapter not loaded, loading it...');
+          await loadChapterVerses(chapterId);
+        }
+        
+        await selectChapter(chapter);
+        
+        // Wait for chapter verses to be loaded and DOM to be ready
+        let attempts = 0;
+        const maxAttempts = 30; // Increase attempts for far chapters
+        
+        const waitForChapter = async () => {
+          await nextTick();
+          const chapterElement = document.querySelector(`[data-chapter-id="${chapterId}"]`);
+          const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+          
+          if (chapterElement && verseElement) {
+            console.log('navigateToVerse: Chapter and verse loaded, scrolling to verse:', verseId);
+            scrollToVerse(verseId);
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            console.log(`navigateToVerse: Waiting for chapter/verse to load (${attempts}/${maxAttempts})... Chapter exists: ${!!chapterElement}, Verse exists: ${!!verseElement}`);
+            setTimeout(waitForChapter, 150);
+          } else {
+            console.warn('navigateToVerse: Chapter/verse not found in DOM after', maxAttempts, 'attempts');
+            // Try scrolling anyway
+            scrollToVerse(verseId);
+          }
+        };
+        
+        await waitForChapter();
+      }
       console.log('navigateToVerse: Scroll complete');
     } else {
       console.warn('navigateToVerse: Chapter not found!');
@@ -597,8 +741,18 @@ async function handleGoToVerse() {
   if (Number(route.params.id) === bookId) {
     const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
     if (targetChapter) {
-      const versesData = await getVersesByChapterId(targetChapter.chapter_id);
-      const targetVerse = versesData.find(v => v.verse_index === verseNum);
+      // Check if the target chapter is already loaded
+      const chapterData = loadedChapters.value.get(targetChapter.chapter_id);
+      let targetVerse;
+      
+      if (chapterData) {
+        // Chapter already loaded, find verse from cached data
+        targetVerse = chapterData.verses.find(v => v.verse_index === verseNum);
+      } else {
+        // Need to load verses first
+        const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+        targetVerse = versesData.find(v => v.verse_index === verseNum);
+      }
       
       if (targetVerse) {
         navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
@@ -823,10 +977,27 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
   }
 });
 
+// Watch for loaded chapters and re-apply highlight if needed
+watch(() => loadedChapters.value.size, async () => {
+  // If we have a verse that should be highlighted, re-apply the highlight
+  if (highlightedVerseId.value) {
+    await nextTick();
+    const verseElement = document.querySelector(`[data-verse-id="${highlightedVerseId.value}"]`);
+    if (verseElement && !verseElement.classList.contains('highlight-verse')) {
+      console.log('Re-applying highlight to verse:', highlightedVerseId.value);
+      verseElement.classList.add('highlight-verse');
+    }
+  }
+});
+
 // Cleanup
 onUnmounted(() => {
   if (intersectionObserver.value) {
     intersectionObserver.value.disconnect();
+  }
+  // Clear highlight timeout
+  if (highlightTimeout.value) {
+    clearTimeout(highlightTimeout.value);
   }
   // Remove event listeners
   document.removeEventListener('click', handleVerseRefClick);
