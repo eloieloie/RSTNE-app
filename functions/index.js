@@ -27,14 +27,29 @@ const pool = mysql.createPool(dbConfig);
 app.get("/api/books", async (req, res) => {
   try {
     const [books] = await pool.execute(
-        `SELECT b.*, COUNT(c.chapter_id) as chapter_count 
+        `SELECT 
+           b.book_id,
+           b.book_name,
+           b.book_abbr,
+           b.hebrew_book_name,
+           b.telugu_book_name,
+           b.book_description,
+           b.book_header,
+           b.book_footer,
+           b.book_index,
+           b.category_id,
+           b.dt_added,
+           COUNT(c.chapter_id) as chapter_count 
          FROM books_tbl b
          LEFT JOIN chapters_tbl c ON b.book_id = c.book_id
-         GROUP BY b.book_id
+         GROUP BY b.book_id, b.book_name, b.book_abbr, b.hebrew_book_name, 
+                  b.telugu_book_name, b.book_description, b.book_header, 
+                  b.book_footer, b.book_index, b.category_id, b.dt_added
          ORDER BY b.book_index, b.dt_added DESC`,
     );
     res.json(books);
   } catch (error) {
+    console.error("Error fetching books:", error);
     res.status(500).json({error: error.message});
   }
 });
@@ -246,7 +261,7 @@ app.get("/api/verses/search", async (req, res) => {
       // Search for verses containing this reference pattern
       const searchPattern = `%${query}%`;
 
-      const sql = `SELECT v.verse_id, v.chapter_id, v.verse_index, 
+      const sql = `SELECT v.verse_id, v.chapter_id, v.verse_index,
            v.verse, v.telugu_verse,
            c.chapter_number, c.chapter_id,
            b.book_name, b.book_id
@@ -265,7 +280,7 @@ app.get("/api/verses/search", async (req, res) => {
       const bookPattern = parts[0];
       const chapterNum = parts[1] ? parts[1] : null;
 
-      let sql = `SELECT v.verse_id, v.chapter_id, v.verse_index, 
+      let sql = `SELECT v.verse_id, v.chapter_id, v.verse_index,
            SUBSTRING(v.verse, 1, 100) as verse,
            c.chapter_number, b.book_name, b.book_index
            FROM verses_tbl v
@@ -281,13 +296,65 @@ app.get("/api/verses/search", async (req, res) => {
         params.push(chapterNum);
       }
 
-      sql += ` ORDER BY b.book_index, CAST(c.chapter_number AS UNSIGNED), 
+      sql += ` ORDER BY b.book_index, CAST(c.chapter_number AS UNSIGNED),
            v.verse_index LIMIT 50`;
 
       const [verses] = await pool.execute(sql, params);
       res.json(verses);
     }
   } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Full-text verse search (for search feature)
+app.get("/api/verses/text-search", async (req, res) => {
+  console.log("========== TEXT SEARCH ENDPOINT CALLED ==========");
+  console.log("Query params:", req.query);
+
+  try {
+    const {q} = req.query;
+
+    console.log("Search query 'q':", q);
+
+    if (!q || typeof q !== "string") {
+      console.log("ERROR: Search query is missing or invalid");
+      return res.status(400).json({error: "Search query is required"});
+    }
+
+    // Build the LIKE pattern: "not My people" -> "%not%My%people%"
+    const terms = q.trim().split(/\s+/);
+    const pattern = "%" + terms.join("%") + "%";
+
+    console.log("Searching for query:", q);
+    console.log("LIKE pattern:", pattern);
+
+    const [results] = await pool.execute(
+        `SELECT
+           v.verse_id,
+           v.chapter_id,
+           v.verse_index,
+           v.verse,
+           c.chapter_number,
+           c.book_id,
+           b.book_name
+         FROM verses_tbl v
+         JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
+         JOIN books_tbl b ON c.book_id = b.book_id
+         WHERE LOWER(v.verse) LIKE LOWER(?)
+         ORDER BY b.book_index, c.chapter_number, v.verse_index
+         LIMIT 500`,
+        [pattern],
+    );
+
+    console.log(`Found ${results.length} verses`);
+
+    res.json({
+      results: results,
+      count: results.length,
+    });
+  } catch (error) {
+    console.error("Search error:", error);
     res.status(500).json({error: error.message});
   }
 });

@@ -17,23 +17,22 @@
             </svg>
           </router-link>
           
-          <h2 class="book-title">{{ book?.book_name }}</h2>
-          
-          <select 
-            v-model="selectedChapterId" 
-            @change="onChapterChange"
-            class="chapter-select"
-            :disabled="chapters.length === 0"
-          >
-            <option :value="null" disabled>Select a chapter</option>
-            <option 
-              v-for="chapter in sortedChapters" 
-              :key="chapter.chapter_id"
-              :value="chapter.chapter_id"
-            >
-              {{ chapter.chapter_number }}
-            </option>
-          </select>
+          <button class="verse-picker-button" @click="showVersePicker = true">
+            <span class="book-name">{{ book?.book_name }}</span>
+            <span v-if="selectedChapter" class="chapter-verse">
+              {{ selectedChapter.chapter_number }}:{{ getCurrentVerseIndex() }}
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <button class="search-icon" @click="showSearchModal = true" title="Search Verses">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </button>
 
           <button class="settings-icon" @click="showSettingsModal = true" title="Settings">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -137,6 +136,36 @@
       </div>
     </div>
 
+    <!-- Verse Picker -->
+    <VersePicker
+      :is-open="showVersePicker"
+      :initial-book-id="book?.book_id"
+      :initial-chapter-id="selectedChapterId ?? undefined"
+      @close="showVersePicker = false"
+      @select="handleVerseSelection"
+    />
+
+    <!-- Verse Search -->
+    <VerseSearch
+      :is-open="showSearchModal"
+      @close="showSearchModal = false"
+      @select="handleVerseSelection"
+    />
+
+    <!-- Context Menu for Verse References -->
+    <div 
+      v-if="contextMenu.show" 
+      class="context-menu"
+      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+    >
+      <button @click="handleGoToVerse" class="context-menu-item">
+        Go to verse
+      </button>
+      <button @click="handleSearch" class="context-menu-item">
+        Search
+      </button>
+    </div>
+
     <!-- Settings Modal -->
     <div v-if="showSettingsModal" class="modal-overlay" @click="showSettingsModal = false">
       <div class="modal-content" @click.stop>
@@ -198,8 +227,10 @@
 import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
-import { getBookById } from '@/api/books';
+import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
+import VersePicker from '@/components/VersePicker.vue';
+import VerseSearch from '@/components/VerseSearch.vue';
 
 interface Book {
   book_id: number;
@@ -247,6 +278,8 @@ interface LoadedChapterData {
 
 const route = useRoute();
 const router = useRouter();
+const allBooks = ref<any[]>([]);
+const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
 const chapters = ref<Chapter[]>([]);
 const loadedChapters = ref<Map<number, LoadedChapterData>>(new Map());
@@ -260,6 +293,25 @@ const showEnglish = ref(true);
 const showTelugu = ref(true);
 const showNotes = ref(true);
 const showSettingsModal = ref(false);
+const showVersePicker = ref(false);
+const showSearchModal = ref(false);
+
+// Context menu state for verse reference links
+const contextMenu = ref<{
+  show: boolean;
+  x: number;
+  y: number;
+  bookId: number;
+  chapterNum: number;
+  verseNum: number;
+}>({
+  show: false,
+  x: 0,
+  y: 0,
+  bookId: 0,
+  chapterNum: 0,
+  verseNum: 0
+});
 const fontSize = ref(16);
 
 // Refs for scroll detection
@@ -385,36 +437,76 @@ function scrollToChapter(chapterId: number) {
 
 // Scroll to verse
 function scrollToVerse(verseId: number) {
+  console.log('scrollToVerse: Looking for verse with id:', verseId);
   setTimeout(() => {
     const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+    console.log('scrollToVerse: Found element:', verseElement);
+    
     if (verseElement) {
+      console.log('scrollToVerse: Scrolling to element...');
       verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       verseElement.classList.add('highlight-verse');
-      setTimeout(() => verseElement.classList.remove('highlight-verse'), 3000);
+      setTimeout(() => verseElement.classList.remove('highlight-verse'), 13000);
+    } else {
+      console.warn('scrollToVerse: Verse element not found in DOM!');
     }
   }, 100);
 }
 
-// Handle chapter change from dropdown
-async function onChapterChange() {
-  const chapter = chapters.value.find(ch => ch.chapter_id === selectedChapterId.value);
-  if (chapter) {
-    await selectChapter(chapter);
+// Handle verse selection from VersePicker
+async function handleVerseSelection(bookId: number, chapterId: number, verseId: number) {
+  console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId });
+  showVersePicker.value = false;
+  console.log('ChaptersView: Calling navigateToVerse...');
+  await navigateToVerse(bookId, chapterId, verseId);
+  console.log('ChaptersView: navigateToVerse completed');
+}
+
+// Get current visible verse index for display
+function getCurrentVerseIndex(): string {
+  // Get the first verse of the currently selected chapter
+  if (!selectedChapterId.value) return '1';
+  
+  const chapterData = loadedChapters.value.get(selectedChapterId.value);
+  if (chapterData && chapterData.verses.length > 0) {
+    return String(chapterData.verses[0].verse_index || 1);
   }
+  return '1';
 }
 
 // Navigate to verse (for cross-references)
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
+  console.log('navigateToVerse: Starting navigation with:', { bookId, chapterId, verseId });
+  console.log('navigateToVerse: Current route bookId:', route.params.id);
+  console.log('navigateToVerse: chapters.value:', chapters.value);
+  console.log('navigateToVerse: chapters.value length:', chapters.value.length);
+  console.log('navigateToVerse: Looking for chapterId:', chapterId);
+  
   // If same book, just select the chapter and scroll
   if (Number(route.params.id) === bookId) {
+    console.log('navigateToVerse: Same book, finding chapter...');
+    
+    // Log all chapter IDs in the array
+    console.log('navigateToVerse: Available chapter IDs:', chapters.value.map(ch => ch.chapter_id));
+    
     const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
+    console.log('navigateToVerse: Found chapter:', chapter);
+    
     if (chapter) {
+      console.log('navigateToVerse: Selecting chapter...');
       await selectChapter(chapter);
       await nextTick();
+      console.log('navigateToVerse: Scrolling to verse:', verseId);
       scrollToVerse(verseId);
+      console.log('navigateToVerse: Scroll complete');
+    } else {
+      console.warn('navigateToVerse: Chapter not found!');
+      console.warn('navigateToVerse: Searched for chapterId:', chapterId, 'type:', typeof chapterId);
+      console.warn('navigateToVerse: Available IDs:', chapters.value.map(ch => `${ch.chapter_id} (${typeof ch.chapter_id})`));
     }
   } else {
     // Navigate to other book
+    console.log('navigateToVerse: Different book, routing to:', `/chapters/${bookId}`);
     router.push({
       path: `/chapters/${bookId}`,
       query: { chapterId: String(chapterId), verseId: String(verseId) }
@@ -454,7 +546,92 @@ function formatVerseWithPaleoBora(text: string): string {
     formatted = formatted.replace(pattern.search, pattern.replace);
   });
   
+  // Convert inline verse references like #Yoch1:3 to clickable links
+  // Using book abbreviations from allBooks
+  formatted = formatted.replace(/#([a-z]+)(\d+):(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+    const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
+    console.log('Found verse ref:', match, 'bookAbbr:', bookAbbr, 'bookId:', bookId);
+    if (bookId) {
+      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
+    }
+    return match;
+  });
+  
   return formatted;
+}
+
+// Handle clicks on inline verse references using event delegation
+function handleVerseRefClick(event: Event) {
+  const target = event.target as HTMLElement;
+  
+  // Check if clicked element is an inline verse reference link
+  if (target.tagName === 'A' && target.classList.contains('inline-verse-ref')) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const bookId = parseInt(target.getAttribute('data-book-id') || '0');
+    const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
+    const verseNum = parseInt(target.getAttribute('data-verse') || '0');
+    
+    console.log('Verse ref clicked:', { bookId, chapterNum, verseNum });
+    
+    // Show context menu
+    const rect = target.getBoundingClientRect();
+    contextMenu.value = {
+      show: true,
+      x: rect.left,
+      y: rect.bottom + window.scrollY + 5,
+      bookId,
+      chapterNum,
+      verseNum
+    };
+  }
+}
+
+// Handle "Go to verse" from context menu
+async function handleGoToVerse() {
+  const { bookId, chapterNum, verseNum } = contextMenu.value;
+  contextMenu.value.show = false;
+  
+  // Find the target chapter by chapter number
+  const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
+  if (targetChapter) {
+    // Get verses for that chapter to find the verse by index
+    const versesData = await getVersesByChapterId(targetChapter.chapter_id);
+    const targetVerse = versesData.find(v => v.verse_index === verseNum);
+    
+    if (targetVerse) {
+      navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+    }
+  }
+}
+
+// Handle "Search" from context menu
+function handleSearch() {
+  const { bookId, chapterNum, verseNum } = contextMenu.value;
+  contextMenu.value.show = false;
+  
+  // Get book abbreviation for search
+  const book = allBooks.value.find(b => b.book_id === bookId);
+  const bookAbbr = book?.book_abbr || '';
+  const searchText = `#${bookAbbr}${chapterNum}:${verseNum}`;
+  
+  // Open search modal with the reference
+  showSearchModal.value = true;
+  (window as any).initialSearchQuery = searchText;
+}
+
+// Close context menu when clicking outside
+function closeContextMenu(event: Event) {
+  // Don't close if clicking on verse ref link or inside context menu
+  const target = event.target as HTMLElement;
+  if (target.closest('.context-menu') || target.classList.contains('inline-verse-ref')) {
+    return;
+  }
+  
+  if (contextMenu.value.show) {
+    contextMenu.value.show = false;
+  }
 }
 
 // Setup intersection observer for chapter visibility
@@ -516,6 +693,16 @@ onMounted(async () => {
   }
 
   try {
+    // Load all books for abbreviation mapping
+    allBooks.value = await getAllBooks();
+    bookAbbreviations.value = {};
+    allBooks.value.forEach(b => {
+      if (b.book_abbr) {
+        bookAbbreviations.value[b.book_abbr.toLowerCase()] = b.book_id;
+      }
+    });
+    console.log('Loaded book abbreviations:', bookAbbreviations.value);
+    
     // Load book and chapters
     book.value = await getBookById(bookId);
     chapters.value = await getChaptersByBookId(bookId);
@@ -542,6 +729,12 @@ onMounted(async () => {
     await nextTick();
     setupIntersectionObserver();
     
+    // Add event delegation for inline verse reference clicks
+    document.addEventListener('click', handleVerseRefClick);
+    
+    // Add document click listener to close context menu
+    document.addEventListener('click', closeContextMenu);
+    
   } catch (err: any) {
     error.value = err.message || 'Failed to load chapters';
     console.error('Error loading chapters:', err);
@@ -550,11 +743,76 @@ onMounted(async () => {
   }
 });
 
+// Watch for route changes (when navigating to different book via verse picker)
+watch(() => route.params.id, async (newBookId, oldBookId) => {
+  if (newBookId && newBookId !== oldBookId) {
+    console.log('Route changed from book', oldBookId, 'to book', newBookId);
+    loading.value = true;
+    error.value = null;
+    
+    const bookId = Number(newBookId);
+    if (isNaN(bookId)) {
+      error.value = 'Invalid book ID';
+      loading.value = false;
+      return;
+    }
+
+    try {
+      // Clear previous data
+      loadedChapters.value.clear();
+      selectedChapter.value = null;
+      selectedChapterId.value = null;
+      
+      // Load new book and chapters
+      book.value = await getBookById(bookId);
+      chapters.value = await getChaptersByBookId(bookId);
+      
+      console.log('New book loaded:', book.value?.book_name);
+      console.log('Query params:', route.query);
+      
+      // Check for query parameters (from verse picker navigation)
+      const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
+      const queryVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+      
+      console.log('Looking for chapter:', queryChapterId, 'verse:', queryVerseId);
+      
+      if (queryChapterId) {
+        const chapter = chapters.value.find(ch => ch.chapter_id === queryChapterId);
+        console.log('Found chapter:', chapter);
+        
+        if (chapter) {
+          await selectChapter(chapter);
+          if (queryVerseId) {
+            await nextTick();
+            scrollToVerse(queryVerseId);
+          }
+        }
+      } else if (chapters.value.length > 0) {
+        // Select first chapter by default
+        await selectChapter(sortedChapters.value[0]);
+      }
+      
+      // Setup intersection observer for new content
+      await nextTick();
+      setupIntersectionObserver();
+      
+    } catch (err: any) {
+      error.value = err.message || 'Failed to load chapters';
+      console.error('Error loading chapters:', err);
+    } finally {
+      loading.value = false;
+    }
+  }
+});
+
 // Cleanup
 onUnmounted(() => {
   if (intersectionObserver.value) {
     intersectionObserver.value.disconnect();
   }
+  // Remove event listeners
+  document.removeEventListener('click', handleVerseRefClick);
+  document.removeEventListener('click', closeContextMenu);
 });
 </script>
 
@@ -600,35 +858,57 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
-.book-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+.verse-picker-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
   color: #2c3e50;
+  min-width: 0;
+}
+
+.verse-picker-button:hover {
+  border-color: #42b983;
+  background: #f8f9fa;
+}
+
+.verse-picker-button:active {
+  transform: scale(0.98);
+}
+
+.book-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chapter-verse {
+  font-size: 0.9rem;
+  color: #42b983;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.chapter-select {
-  padding: 0.5rem 0.75rem;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: auto;
+.chevron-icon {
+  flex-shrink: 0;
+  color: #999;
+  transition: transform 0.2s;
 }
 
-.chapter-select:hover {
-  border-color: #42b983;
+.verse-picker-button:hover .chevron-icon {
+  color: #42b983;
 }
 
-.chapter-select:focus {
-  outline: none;
-  border-color: #42b983;
-  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
-}
-
+.search-icon,
 .settings-icon {
   background: none;
   border: none;
@@ -639,14 +919,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  flex-shrink: 0;
   color: #666;
 }
 
+.search-icon:hover,
 .settings-icon:hover {
   background: #f0f0f0;
   color: #42b983;
 }
 
+.search-icon svg,
 .settings-icon svg {
   width: 24px;
   height: 24px;
@@ -857,6 +1140,48 @@ onUnmounted(() => {
   background: #0366d6;
   color: white;
   transform: translateY(-1px);
+}
+
+/* Inline verse references within text */
+.inline-verse-ref {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 1px dotted #0366d6;
+  transition: all 0.2s;
+}
+
+.inline-verse-ref:hover {
+  color: #0056b3;
+  border-bottom: 1px solid #0056b3;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  padding: 4px 0;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.context-menu-item:hover {
+  background: #f5f5f5;
 }
 
 .verse-notes {
@@ -1100,6 +1425,20 @@ onUnmounted(() => {
   
   .top-nav {
     padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .verse-picker-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .book-name {
+    font-size: 0.95rem;
+  }
+
+  .chapter-verse {
+    font-size: 0.85rem;
   }
   
   .chapter-content {
