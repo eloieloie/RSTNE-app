@@ -325,7 +325,11 @@ const fontSize = ref(16);
 // Refs for scroll detection
 const chapterRefs = ref<Map<number, HTMLElement>>(new Map());
 const intersectionObserver = ref<IntersectionObserver | null>(null);
+const bottomObserver = ref<IntersectionObserver | null>(null);
+const topObserver = ref<IntersectionObserver | null>(null);
 const currentlyVisibleChapterId = ref<number | null>(null);
+const lastScrollY = ref(0);
+const isLoadingChapter = ref(false);
 
 // Sorted chapters for dropdown
 const sortedChapters = computed(() => {
@@ -420,15 +424,17 @@ async function loadAdjacentChapters(chapterId: number): Promise<void> {
 }
 
 // Select chapter and load it
-async function selectChapter(chapter: Chapter, skipScroll: boolean = false) {
+async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skipAdjacentLoad: boolean = false) {
   selectedChapter.value = chapter;
   selectedChapterId.value = chapter.chapter_id;
   
   // Load this chapter if not loaded
   await loadChapterVerses(chapter.chapter_id);
   
-  // Load adjacent chapters
-  await loadAdjacentChapters(chapter.chapter_id);
+  // Load adjacent chapters only if not navigating to a specific verse
+  if (!skipAdjacentLoad) {
+    await loadAdjacentChapters(chapter.chapter_id);
+  }
   
   // Scroll to chapter after DOM updates (unless skipScroll is true)
   if (!skipScroll) {
@@ -596,13 +602,15 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
       } else {
         console.log('navigateToVerse: Selecting different chapter...');
         
-        // Ensure the target chapter is loaded before selecting
-        if (!loadedChapters.value.has(chapterId)) {
-          console.log('navigateToVerse: Target chapter not loaded, loading it...');
-          await loadChapterVerses(chapterId);
-        }
+        // Clear previously loaded chapters to only show the target chapter
+        loadedChapters.value.clear();
         
-        await selectChapter(chapter);
+        // Load only the target chapter (no adjacent chapters)
+        console.log('navigateToVerse: Loading only target chapter:', chapterId);
+        await loadChapterVerses(chapterId);
+        
+        // Select chapter and skip adjacent chapter loading
+        await selectChapter(chapter, true, true);
         
         // Wait for chapter verses to be loaded and DOM to be ready
         let attempts = 0;
@@ -816,9 +824,90 @@ function closeContextMenu(event: Event) {
   }
 }
 
+// Handle scroll for loading adjacent chapters
+function handleScroll() {
+  if (isNavigatingToVerse.value || isLoadingChapter.value) {
+    return;
+  }
+  
+  const currentScrollY = window.scrollY;
+  const scrollingDown = currentScrollY > lastScrollY.value;
+  lastScrollY.value = currentScrollY;
+  
+  // Get first and last loaded chapters
+  const loadedChapterIds = Array.from(loadedChapters.value.keys()).sort((a, b) => {
+    const chA = chapters.value.find(ch => ch.chapter_id === a);
+    const chB = chapters.value.find(ch => ch.chapter_id === b);
+    const numA = parseInt(chA?.chapter_number || '0');
+    const numB = parseInt(chB?.chapter_number || '0');
+    return numA - numB;
+  });
+  
+  if (loadedChapterIds.length === 0) return;
+  
+  const firstLoadedChapterId = loadedChapterIds[0];
+  const lastLoadedChapterId = loadedChapterIds[loadedChapterIds.length - 1];
+  
+  // Check if scrolling down and near bottom
+  if (scrollingDown) {
+    const lastChapterElement = document.querySelector(`[data-chapter-id="${lastLoadedChapterId}"]`);
+    if (lastChapterElement) {
+      const rect = lastChapterElement.getBoundingClientRect();
+      const distanceFromBottom = rect.bottom - window.innerHeight;
+      
+      // Load next chapter when within 1.5 viewports of bottom (works on mobile and desktop)
+      const threshold = window.innerHeight * 1.5;
+      if (distanceFromBottom < threshold) {
+        const nextChapter = getNextChapter(lastLoadedChapterId);
+        if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
+          console.log('Scroll: Loading next chapter:', nextChapter.chapter_number);
+          isLoadingChapter.value = true;
+          loadChapterVerses(nextChapter.chapter_id).finally(() => {
+            isLoadingChapter.value = false;
+          });
+        }
+      }
+    }
+  } else {
+    // Scrolling up, check if near top
+    const firstChapterElement = document.querySelector(`[data-chapter-id="${firstLoadedChapterId}"]`);
+    if (firstChapterElement) {
+      const rect = firstChapterElement.getBoundingClientRect();
+      const distanceFromTop = rect.top;
+      
+      // Load previous chapter when within 1.5 viewports of top (works on mobile and desktop)
+      const threshold = window.innerHeight * 1.5;
+      if (distanceFromTop > -threshold && distanceFromTop < threshold) {
+        const prevChapter = getPreviousChapter(firstLoadedChapterId);
+        if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
+          console.log('Scroll: Loading previous chapter:', prevChapter.chapter_number);
+          isLoadingChapter.value = true;
+          
+          // Store scroll position relative to first chapter
+          const scrollBeforeLoad = window.scrollY;
+          const firstChapterTop = rect.top + scrollBeforeLoad;
+          
+          loadChapterVerses(prevChapter.chapter_id).then(async () => {
+            await nextTick();
+            // Restore position relative to the same chapter
+            const newRect = firstChapterElement.getBoundingClientRect();
+            const newFirstChapterTop = newRect.top + window.scrollY;
+            const offset = newFirstChapterTop - firstChapterTop;
+            window.scrollTo({ top: scrollBeforeLoad + offset, behavior: 'instant' });
+            isLoadingChapter.value = false;
+          }).catch(() => {
+            isLoadingChapter.value = false;
+          });
+        }
+      }
+    }
+  }
+}
+
 // Setup intersection observer for chapter visibility
 function setupIntersectionObserver() {
-  const options = {
+  // Observer for chapter visibility (middle of viewport)
+  const visibilityOptions = {
     root: null,
     rootMargin: '-50% 0px -50% 0px', // Trigger when chapter is in middle of viewport
     threshold: 0
@@ -839,19 +928,90 @@ function setupIntersectionObserver() {
               selectedChapter.value = chapter;
             }
           }
+        }
+      }
+    });
+  }, visibilityOptions);
+  
+  // Observer for loading next chapter when scrolling to bottom
+  const bottomOptions = {
+    root: null,
+    rootMargin: '0px 0px -80% 0px', // Trigger when bottom 20% of chapter is visible
+    threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  };
+  
+  bottomObserver.value = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !isNavigatingToVerse.value) {
+        const chapterId = parseInt(entry.target.getAttribute('data-chapter-id') || '0');
+        if (chapterId) {
+          // Check if we're near the bottom of this chapter
+          const rect = entry.boundingClientRect;
+          const viewportHeight = window.innerHeight;
+          const bottomDistance = rect.bottom - viewportHeight;
           
-          // Load adjacent chapters when a chapter becomes visible (unless we're navigating to a verse)
-          if (!isNavigatingToVerse.value) {
-            loadAdjacentChapters(chapterId);
+          // Load next chapter when we're within 500px of the bottom
+          if (bottomDistance < 500 && bottomDistance > -100) {
+            const nextChapter = getNextChapter(chapterId);
+            if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
+              console.log('Bottom reached for chapter', chapterId, 'loading next chapter:', nextChapter.chapter_number);
+              loadChapterVerses(nextChapter.chapter_id);
+            }
           }
         }
       }
     });
-  }, options);
+  }, bottomOptions);
   
-  // Observe all chapter sections
+  // Observer for loading previous chapter when scrolling to top
+  const topOptions = {
+    root: null,
+    rootMargin: '-80% 0px 0px 0px', // Trigger when top 20% of chapter is visible
+    threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  };
+  
+  topObserver.value = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !isNavigatingToVerse.value) {
+        const chapterId = parseInt(entry.target.getAttribute('data-chapter-id') || '0');
+        if (chapterId) {
+          // Check if we're near the top of this chapter
+          const rect = entry.boundingClientRect;
+          const topDistance = rect.top;
+          
+          // Load previous chapter when we're within 500px of the top
+          if (topDistance < 500 && topDistance > -100) {
+            const prevChapter = getPreviousChapter(chapterId);
+            if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
+              console.log('Top reached for chapter', chapterId, 'loading previous chapter:', prevChapter.chapter_number);
+              // Store current scroll position and the chapter element's position
+              const currentScrollY = window.scrollY;
+              const chapterTop = rect.top + window.scrollY;
+              
+              loadChapterVerses(prevChapter.chapter_id).then(async () => {
+                // Wait for DOM to update
+                await nextTick();
+                // Calculate new position: find the chapter element again and maintain relative position
+                const chapterElement = document.querySelector(`[data-chapter-id="${chapterId}"]`);
+                if (chapterElement) {
+                  const newRect = chapterElement.getBoundingClientRect();
+                  const newChapterTop = newRect.top + window.scrollY;
+                  const offset = newChapterTop - chapterTop;
+                  window.scrollTo({ top: currentScrollY + offset, behavior: 'instant' });
+                }
+              });
+            }
+          }
+        }
+      }
+    });
+  }, topOptions);
+  
+  // Observe all chapter sections with all three observers
   chapterRefs.value.forEach((element) => {
     intersectionObserver.value?.observe(element);
+    bottomObserver.value?.observe(element);
+    topObserver.value?.observe(element);
   });
 }
 
@@ -860,6 +1020,8 @@ watch(() => chapterRefs.value.size, () => {
   if (intersectionObserver.value) {
     chapterRefs.value.forEach((element) => {
       intersectionObserver.value?.observe(element);
+      bottomObserver.value?.observe(element);
+      topObserver.value?.observe(element);
     });
   }
 });
@@ -971,8 +1133,8 @@ onMounted(async () => {
     }
     
     if (targetChapter) {
-      // Skip chapter scroll if we're going to scroll to a specific verse
-      await selectChapter(targetChapter, !!scrollToVerseId);
+      // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
+      await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
       
       console.log('onMounted: After selectChapter, loaded chapters:', Array.from(loadedChapters.value.keys()));
       console.log('onMounted: Looking for verse in loaded chapters...');
@@ -1007,6 +1169,9 @@ onMounted(async () => {
     // Setup intersection observer after initial load
     await nextTick();
     setupIntersectionObserver();
+    
+    // Add scroll listener for loading adjacent chapters
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Add event delegation for inline verse reference clicks
     document.addEventListener('click', handleVerseRefClick);
@@ -1112,8 +1277,8 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
       }
       
       if (targetChapter) {
-        // Skip chapter scroll if we're going to scroll to a specific verse
-        await selectChapter(targetChapter, !!scrollToVerseId);
+        // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
+        await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
         if (scrollToVerseId) {
           console.log('Scrolling to verse:', scrollToVerseId);
           await nextTick();
@@ -1127,6 +1292,9 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
       // Setup intersection observer for new content
       await nextTick();
       setupIntersectionObserver();
+      
+      // Reset scroll tracking
+      lastScrollY.value = window.scrollY;
       
     } catch (err: any) {
       error.value = err.message || 'Failed to load chapters';
@@ -1155,11 +1323,18 @@ onUnmounted(() => {
   if (intersectionObserver.value) {
     intersectionObserver.value.disconnect();
   }
+  if (bottomObserver.value) {
+    bottomObserver.value.disconnect();
+  }
+  if (topObserver.value) {
+    topObserver.value.disconnect();
+  }
   // Clear highlight timeout
   if (highlightTimeout.value) {
     clearTimeout(highlightTimeout.value);
   }
   // Remove event listeners
+  window.removeEventListener('scroll', handleScroll);
   document.removeEventListener('click', handleVerseRefClick);
   document.removeEventListener('click', closeContextMenu);
 });
