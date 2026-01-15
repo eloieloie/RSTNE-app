@@ -15,11 +15,6 @@ const router = createRouter({
       component: BooksView
     },
     {
-      path: '/chapters/:id',
-      name: 'chapters',
-      component: ChaptersView
-    },
-    {
       path: '/admin',
       name: 'admin',
       component: AdminDashboard
@@ -38,6 +33,16 @@ const router = createRouter({
       path: '/admin/chapters/:id',
       name: 'chapter-editor',
       component: ChapterEditor
+    },
+    {
+      path: '/chapters/:id',
+      name: 'chapters',
+      component: ChaptersView
+    },
+    {
+      path: '/:bookName/:chapterNumber?/:verseNumber?',
+      name: 'book-chapter-verse',
+      component: ChaptersView
     }
   ]
 });

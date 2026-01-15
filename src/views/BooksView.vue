@@ -21,7 +21,7 @@
           <router-link 
             v-for="book in firstCovenantBooks" 
             :key="book.book_id"
-            :to="`/chapters/${book.book_id}`" 
+            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
             class="book-button first-covenant-book"
           >
             <div class="book-name">{{ book.book_name }}</div>
@@ -37,7 +37,7 @@
           <router-link 
             v-for="book in newCovenantBooks" 
             :key="book.book_id"
-            :to="`/chapters/${book.book_id}`" 
+            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
             class="book-button new-covenant-book"
           >
             <div class="book-name">{{ book.book_name }}</div>
@@ -53,7 +53,7 @@
           <router-link 
             v-for="book in apocryphalBooks" 
             :key="book.book_id"
-            :to="`/chapters/${book.book_id}`" 
+            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
             class="book-button apocryphal-book"
           >
             <div class="book-name">{{ book.book_name }}</div>

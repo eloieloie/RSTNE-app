@@ -65,6 +65,7 @@
             <div 
               v-for="chapterData in orderedLoadedChapters" 
               :key="chapterData.chapter.chapter_id"
+              :id="`chapter-${chapterData.chapter.chapter_id}`"
               :ref="el => setChapterRef(chapterData.chapter.chapter_id, el as HTMLElement)"
               :data-chapter-id="chapterData.chapter.chapter_id"
               class="chapter-section"
@@ -85,7 +86,8 @@
               <div v-else class="verses-list">
                 <div 
                   v-for="verse in chapterData.verses" 
-                  :key="verse.verse_id" 
+                  :key="verse.verse_id"
+                  :id="`verse-${verse.verse_id}`"
                   :data-verse-id="verse.verse_id"
                   class="verse-item"
                 >
@@ -235,6 +237,7 @@ import VerseSearch from '@/components/VerseSearch.vue';
 interface Book {
   book_id: number;
   book_name: string;
+  book_abbr?: string | null;
   book_description?: string | null;
   book_header?: string | null;
   book_footer?: string | null;
@@ -299,6 +302,7 @@ const showSearchModal = ref(false);
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
+const isNavigatingToVerse = ref(false);
 
 // Context menu state for verse reference links
 const contextMenu = ref<{
@@ -416,7 +420,7 @@ async function loadAdjacentChapters(chapterId: number): Promise<void> {
 }
 
 // Select chapter and load it
-async function selectChapter(chapter: Chapter) {
+async function selectChapter(chapter: Chapter, skipScroll: boolean = false) {
   selectedChapter.value = chapter;
   selectedChapterId.value = chapter.chapter_id;
   
@@ -426,22 +430,25 @@ async function selectChapter(chapter: Chapter) {
   // Load adjacent chapters
   await loadAdjacentChapters(chapter.chapter_id);
   
-  // Scroll to chapter after DOM updates
-  await nextTick();
-  scrollToChapter(chapter.chapter_id);
+  // Scroll to chapter after DOM updates (unless skipScroll is true)
+  if (!skipScroll) {
+    await nextTick();
+    scrollToChapter(chapter.chapter_id);
+  }
 }
 
 // Scroll to chapter
 function scrollToChapter(chapterId: number) {
-  const element = chapterRefs.value.get(chapterId);
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  // Use anchor navigation for reliable scrolling
+  window.location.hash = `chapter-${chapterId}`;
 }
 
 // Scroll to verse
 function scrollToVerse(verseId: number) {
   console.log('scrollToVerse: Looking for verse with id:', verseId);
+  
+  // Set flag to prevent intersection observer from loading adjacent chapters
+  isNavigatingToVerse.value = true;
   
   // Clear any existing highlight timeout
   if (highlightTimeout.value) {
@@ -457,52 +464,41 @@ function scrollToVerse(verseId: number) {
     }
   }
   
-  let attempts = 0;
-  const maxAttempts = 20; // Try for up to 2 seconds
+  // Use anchor navigation for reliable scrolling
+  window.location.hash = `verse-${verseId}`;
   
-  const tryScroll = () => {
+  // Apply highlight after a short delay to ensure element is rendered and scrolled to
+  setTimeout(() => {
     const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
     
     if (verseElement) {
-      console.log('scrollToVerse: Found element, scrolling and highlighting...');
-      console.log('scrollToVerse: Element classes before adding highlight:', verseElement.className);
-      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      console.log('scrollToVerse: Found element, applying highlight...');
+      
+      // Check which chapter this verse is actually in
+      const chapterElement = verseElement.closest('[data-chapter-id]');
+      if (chapterElement) {
+        const actualChapterId = chapterElement.getAttribute('data-chapter-id');
+        console.log('scrollToVerse: Verse is in chapter with ID:', actualChapterId);
+        const actualChapter = chapters.value.find(ch => ch.chapter_id === Number(actualChapterId));
+        console.log('scrollToVerse: Verse is in chapter number:', actualChapter?.chapter_number);
+      }
+      
       verseElement.classList.add('highlight-verse');
-      console.log('scrollToVerse: Element classes after adding highlight:', verseElement.className);
-      console.log('scrollToVerse: Has highlight class?', verseElement.classList.contains('highlight-verse'));
       
       // Track this verse as highlighted
       highlightedVerseId.value = verseId;
       
-      // Check immediately after 100ms
-      setTimeout(() => {
-        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
-        console.log('scrollToVerse: After 100ms - Element exists?', !!el);
-        if (el) {
-          console.log('scrollToVerse: After 100ms - Classes:', el.className);
-          console.log('scrollToVerse: After 100ms - Has highlight?', el.classList.contains('highlight-verse'));
-        }
-      }, 100);
-      
-      // Check after 1 second
-      setTimeout(() => {
-        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
-        console.log('scrollToVerse: After 1 second - Element exists?', !!el);
-        if (el) {
-          console.log('scrollToVerse: After 1 second - Classes:', el.className);
-          console.log('scrollToVerse: After 1 second - Has highlight?', el.classList.contains('highlight-verse'));
-        }
-      }, 1000);
-      
-      // Use MutationObserver to watch for class changes
+      // Set up a MutationObserver to watch for class changes
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-            const element = mutation.target as HTMLElement;
-            console.warn('scrollToVerse: Class changed! Old:', mutation.oldValue, 'New:', element.className);
-            if (!element.classList.contains('highlight-verse')) {
-              console.warn('scrollToVerse: Highlight class was removed by something! Re-applying...');
-              element.classList.add('highlight-verse');
+            const target = mutation.target as HTMLElement;
+            const hasHighlight = target.classList.contains('highlight-verse');
+            
+            // If highlight was removed, add it back
+            if (!hasHighlight && target.getAttribute('data-verse-id') === String(verseId)) {
+              console.log('scrollToVerse: Re-adding highlight class that was removed');
+              target.classList.add('highlight-verse');
             }
           }
         });
@@ -510,55 +506,39 @@ function scrollToVerse(verseId: number) {
       
       observer.observe(verseElement, {
         attributes: true,
-        attributeFilter: ['class'],
-        attributeOldValue: true
+        attributeFilter: ['class']
       });
       
-      // Also periodically check the element exists and has the class
-      const checkInterval = setInterval(() => {
-        const element = document.querySelector(`[data-verse-id="${verseId}"]`);
-        if (element) {
-          if (!element.classList.contains('highlight-verse')) {
-            console.warn('scrollToVerse: Re-applying highlight (element exists but class missing)');
-            element.classList.add('highlight-verse');
-            // Re-observe if element was recreated
-            observer.disconnect();
-            observer.observe(element, {
-              attributes: true,
-              attributeFilter: ['class'],
-              attributeOldValue: true
-            });
-          }
-        } else {
-          console.warn('scrollToVerse: Verse element disappeared from DOM!');
+      // Also set up an interval to check and re-apply the class if needed
+      const intervalId = setInterval(() => {
+        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
+        if (el && !el.classList.contains('highlight-verse')) {
+          console.log('scrollToVerse: Interval detected missing highlight, re-applying');
+          el.classList.add('highlight-verse');
         }
       }, 500);
       
-      // Set timeout to remove highlight after 30 seconds
+      // Remove highlight after 30 seconds
       highlightTimeout.value = window.setTimeout(() => {
-        clearInterval(checkInterval);
-        observer.disconnect();
-        const element = document.querySelector(`[data-verse-id="${verseId}"]`);
-        console.log('scrollToVerse: 30 seconds elapsed - Element exists?', !!element);
-        if (element) {
-          console.log('scrollToVerse: 30 seconds elapsed - Has highlight?', element.classList.contains('highlight-verse'));
-          console.log('scrollToVerse: Removing highlight after 30 seconds');
-          element.classList.remove('highlight-verse');
-          console.log('scrollToVerse: After removal - Classes:', element.className);
+        console.log('scrollToVerse: Removing highlight after 30 seconds');
+        const el = document.querySelector(`[data-verse-id="${verseId}"]`);
+        if (el) {
+          el.classList.remove('highlight-verse');
         }
         highlightedVerseId.value = null;
-        highlightTimeout.value = null;
+        observer.disconnect();
+        clearInterval(intervalId);
       }, 30000);
-    } else if (attempts < maxAttempts) {
-      attempts++;
-      console.log(`scrollToVerse: Verse not found yet, retrying (${attempts}/${maxAttempts})...`);
-      setTimeout(tryScroll, 100);
+      
+      // Clear navigation flag after a delay to allow scroll to complete
+      setTimeout(() => {
+        isNavigatingToVerse.value = false;
+      }, 1000);
     } else {
-      console.warn('scrollToVerse: Verse element not found after', maxAttempts, 'attempts');
+      console.warn('scrollToVerse: Could not find verse element');
+      isNavigatingToVerse.value = false;
     }
-  };
-  
-  tryScroll();
+  }, 300); // Wait 300ms for anchor scroll to complete
 }
 
 // Handle verse selection from VersePicker
@@ -586,12 +566,19 @@ function getCurrentVerseIndex(): string {
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
   console.log('navigateToVerse: Starting navigation with:', { bookId, chapterId, verseId });
   console.log('navigateToVerse: Current route bookId:', route.params.id);
+  console.log('navigateToVerse: Current route bookName:', route.params.bookName);
   console.log('navigateToVerse: chapters.value:', chapters.value);
   console.log('navigateToVerse: chapters.value length:', chapters.value.length);
   console.log('navigateToVerse: Looking for chapterId:', chapterId);
   
+  // Check if we're on the same book (handle both old and new URL formats)
+  const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
+  const isSameBook = currentBookId === bookId;
+  
+  console.log('navigateToVerse: currentBookId:', currentBookId, 'targetBookId:', bookId, 'isSameBook:', isSameBook);
+  
   // If same book, just select the chapter and scroll
-  if (Number(route.params.id) === bookId) {
+  if (isSameBook) {
     console.log('navigateToVerse: Same book, finding chapter...');
     
     // Log all chapter IDs in the array
@@ -649,12 +636,35 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
       console.warn('navigateToVerse: Available IDs:', chapters.value.map(ch => `${ch.chapter_id} (${typeof ch.chapter_id})`));
     }
   } else {
-    // Navigate to other book
-    console.log('navigateToVerse: Different book, routing to:', `/chapters/${bookId}`);
-    router.push({
-      path: `/chapters/${bookId}`,
-      query: { chapterId: String(chapterId), verseId: String(verseId) }
-    });
+    // Navigate to other book with new URL format
+    const targetBook = allBooks.value.find(b => b.book_id === bookId);
+    const targetChapterData = await getChaptersByBookId(bookId);
+    const targetChapter = targetChapterData.find(ch => ch.chapter_id === chapterId);
+    
+    if (targetBook && targetChapter) {
+      const bookSlug = targetBook.book_name.toLowerCase().replace(/\s+/g, '-');
+      
+      // IMPORTANT: Use chapter_number from database, but let's verify it's correct
+      console.log('navigateToVerse: targetChapter:', targetChapter);
+      console.log('navigateToVerse: chapter_number:', targetChapter.chapter_number);
+      
+      const chapterNum = targetChapter.chapter_number;
+      
+      // Find verse number by getting verses
+      const verses = await getVersesByChapterId(chapterId);
+      const verse = verses.find(v => v.verse_id === verseId);
+      const verseNum = verse ? verse.verse_index : 1;
+      
+      console.log('navigateToVerse: Different book, routing to:', `/${bookSlug}/${chapterNum}/${verseNum}`);
+      router.push(`/${bookSlug}/${chapterNum}/${verseNum}`);
+    } else {
+      // Fallback to old format
+      console.log('navigateToVerse: Different book, routing to:', `/chapters/${bookId}`);
+      router.push({
+        path: `/chapters/${bookId}`,
+        query: { chapterId: String(chapterId), verseId: String(verseId) }
+      });
+    }
   }
 }
 
@@ -830,8 +840,10 @@ function setupIntersectionObserver() {
             }
           }
           
-          // Load adjacent chapters when a chapter becomes visible
-          loadAdjacentChapters(chapterId);
+          // Load adjacent chapters when a chapter becomes visible (unless we're navigating to a verse)
+          if (!isNavigatingToVerse.value) {
+            loadAdjacentChapters(chapterId);
+          }
         }
       }
     });
@@ -857,13 +869,6 @@ onMounted(async () => {
   loading.value = true;
   error.value = null;
   
-  const bookId = Number(route.params.id);
-  if (isNaN(bookId)) {
-    error.value = 'Invalid book ID';
-    loading.value = false;
-    return;
-  }
-
   try {
     // Load all books for abbreviation mapping
     allBooks.value = await getAllBooks();
@@ -875,22 +880,124 @@ onMounted(async () => {
     });
     console.log('Loaded book abbreviations:', bookAbbreviations.value);
     
+    // Determine book ID from route
+    let bookId: number;
+    let targetChapterNumber: string | null = null;
+    let targetVerseNumber: number | null = null;
+    
+    if (route.params.bookName) {
+      // New URL format: /:bookName/:chapterNumber/:verseNumber
+      console.log('Parsing new URL format:', route.params);
+      const bookName = String(route.params.bookName).replace(/-/g, ' ');
+      const foundBook = allBooks.value.find(b => 
+        b.book_name.toLowerCase() === bookName.toLowerCase()
+      );
+      
+      if (!foundBook) {
+        error.value = `Book not found: ${bookName}`;
+        loading.value = false;
+        return;
+      }
+      
+      bookId = foundBook.book_id;
+      targetChapterNumber = route.params.chapterNumber ? String(route.params.chapterNumber) : null;
+      targetVerseNumber = route.params.verseNumber ? Number(route.params.verseNumber) : null;
+      console.log('Found book:', foundBook.book_name, 'ID:', bookId, 'Chapter:', targetChapterNumber, 'Verse:', targetVerseNumber);
+    } else if (route.params.id) {
+      // Old URL format: /chapters/:id
+      bookId = Number(route.params.id);
+      if (isNaN(bookId)) {
+        error.value = 'Invalid book ID';
+        loading.value = false;
+        return;
+      }
+    } else {
+      error.value = 'No book specified';
+      loading.value = false;
+      return;
+    }
+    
     // Load book and chapters
     book.value = await getBookById(bookId);
     chapters.value = await getChaptersByBookId(bookId);
     
-    // Check for query parameters (for cross-references)
+    // Check for query parameters (for old format cross-references)
     const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
     const queryVerseId = route.query.verseId ? Number(route.query.verseId) : null;
     
-    if (queryChapterId) {
-      const chapter = chapters.value.find(ch => ch.chapter_id === queryChapterId);
-      if (chapter) {
-        await selectChapter(chapter);
-        if (queryVerseId) {
-          await nextTick();
-          scrollToVerse(queryVerseId);
+    // Determine which chapter to select
+    let targetChapter: Chapter | null = null;
+    let scrollToVerseId: number | null = null;
+    
+    if (targetChapterNumber) {
+      // New URL format with chapter number
+      console.log('onMounted: Looking for chapter number:', targetChapterNumber, 'verse number:', targetVerseNumber);
+      console.log('onMounted: Available chapters:', chapters.value.map(ch => ({ id: ch.chapter_id, number: ch.chapter_number })));
+      console.log('onMounted: First 5 chapters:', chapters.value.slice(0, 5).map(ch => `ID:${ch.chapter_id} Num:${ch.chapter_number}`));
+      
+      // IMPORTANT: chapter_number should match, but let's see all matches
+      const allMatches = chapters.value.filter(ch => ch.chapter_number === targetChapterNumber);
+      console.log('onMounted: All chapters matching number', targetChapterNumber, ':', allMatches);
+      
+      targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
+      console.log('onMounted: Selected target chapter:', targetChapter);
+      
+      if (!targetChapter) {
+        console.error('onMounted: Could not find chapter with chapter_number:', targetChapterNumber);
+        console.error('onMounted: Trying to parse as number and find by position...');
+        const chapterIndex = parseInt(targetChapterNumber) - 1; // Try 0-indexed
+        if (sortedChapters.value[chapterIndex]) {
+          console.log('onMounted: Found chapter at index', chapterIndex, ':', sortedChapters.value[chapterIndex]);
         }
+      }
+      
+      if (targetChapter && targetVerseNumber) {
+        // Pre-load the chapter verses
+        await loadChapterVerses(targetChapter.chapter_id);
+        
+        // Find the verse by index
+        const verses = await getVersesByChapterId(targetChapter.chapter_id);
+        const verse = verses.find(v => v.verse_index === targetVerseNumber);
+        console.log('onMounted: Found verse:', verse);
+        
+        if (verse) {
+          scrollToVerseId = verse.verse_id;
+        }
+      }
+    } else if (queryChapterId) {
+      // Old URL format with query params
+      targetChapter = chapters.value.find(ch => ch.chapter_id === queryChapterId) ?? null;
+      scrollToVerseId = queryVerseId;
+    }
+    
+    if (targetChapter) {
+      // Skip chapter scroll if we're going to scroll to a specific verse
+      await selectChapter(targetChapter, !!scrollToVerseId);
+      
+      console.log('onMounted: After selectChapter, loaded chapters:', Array.from(loadedChapters.value.keys()));
+      console.log('onMounted: Looking for verse in loaded chapters...');
+      
+      // Verify the verse is in one of the loaded chapters
+      if (scrollToVerseId) {
+        let foundInChapter = null;
+        for (const [chId, chData] of loadedChapters.value.entries()) {
+          const verse = chData.verses.find(v => v.verse_id === scrollToVerseId);
+          if (verse) {
+            foundInChapter = chId;
+            console.log('onMounted: Found verse', scrollToVerseId, 'in loaded chapter', chId, 'with chapter_number:', chData.chapter.chapter_number);
+            break;
+          }
+        }
+        if (!foundInChapter) {
+          console.error('onMounted: ERROR - Verse', scrollToVerseId, 'not found in any loaded chapter!');
+          console.error('onMounted: Target chapter was:', targetChapter.chapter_id, 'with number:', targetChapter.chapter_number);
+        }
+      }
+      
+      if (scrollToVerseId) {
+        console.log('onMounted: Scrolling to verse:', scrollToVerseId);
+        await nextTick();
+        scrollToVerse(scrollToVerseId);
       }
     } else if (chapters.value.length > 0) {
       // Select first chapter by default
@@ -916,20 +1023,50 @@ onMounted(async () => {
 });
 
 // Watch for route changes (when navigating to different book via verse picker)
-watch(() => route.params.id, async (newBookId, oldBookId) => {
-  if (newBookId && newBookId !== oldBookId) {
-    console.log('Route changed from book', oldBookId, 'to book', newBookId);
+watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber, route.params.verseNumber] as const, 
+  async ([newId, newBookName, newChapterNumber, newVerseNumber], [oldId, oldBookName]) => {
+  // Only react if book changed
+  const bookChanged = (newId && newId !== oldId) || (newBookName && newBookName !== oldBookName);
+  
+  if (bookChanged) {
+    console.log('Route changed - new params:', { newId, newBookName, newChapterNumber, newVerseNumber });
     loading.value = true;
     error.value = null;
     
-    const bookId = Number(newBookId);
-    if (isNaN(bookId)) {
-      error.value = 'Invalid book ID';
-      loading.value = false;
-      return;
-    }
-
     try {
+      // Determine book ID from route
+      let bookId: number;
+      let targetChapterNumber: string | null = null;
+      let targetVerseNumber: number | null = null;
+      
+      if (newBookName) {
+        // New URL format
+        const bookName = String(newBookName).replace(/-/g, ' ');
+        const foundBook = allBooks.value.find(b => 
+          b.book_name.toLowerCase() === bookName.toLowerCase()
+        );
+        
+        if (!foundBook) {
+          error.value = `Book not found: ${bookName}`;
+          loading.value = false;
+          return;
+        }
+        
+        bookId = foundBook.book_id;
+        targetChapterNumber = newChapterNumber ? String(newChapterNumber) : null;
+        targetVerseNumber = newVerseNumber ? Number(newVerseNumber) : null;
+      } else if (newId) {
+        // Old URL format
+        bookId = Number(newId);
+        if (isNaN(bookId)) {
+          error.value = 'Invalid book ID';
+          loading.value = false;
+          return;
+        }
+      } else {
+        return;
+      }
+
       // Clear previous data
       loadedChapters.value.clear();
       selectedChapter.value = null;
@@ -940,24 +1077,47 @@ watch(() => route.params.id, async (newBookId, oldBookId) => {
       chapters.value = await getChaptersByBookId(bookId);
       
       console.log('New book loaded:', book.value?.book_name);
-      console.log('Query params:', route.query);
       
-      // Check for query parameters (from verse picker navigation)
-      const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
-      const queryVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+      // Determine which chapter to select
+      let targetChapter: Chapter | null = null;
+      let scrollToVerseId: number | null = null;
       
-      console.log('Looking for chapter:', queryChapterId, 'verse:', queryVerseId);
-      
-      if (queryChapterId) {
-        const chapter = chapters.value.find(ch => ch.chapter_id === queryChapterId);
-        console.log('Found chapter:', chapter);
+      if (targetChapterNumber) {
+        // New URL format with chapter number
+        console.log('Looking for chapter number:', targetChapterNumber, 'verse number:', targetVerseNumber);
+        targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
+        console.log('Found target chapter:', targetChapter);
         
-        if (chapter) {
-          await selectChapter(chapter);
-          if (queryVerseId) {
-            await nextTick();
-            scrollToVerse(queryVerseId);
+        if (targetChapter && targetVerseNumber) {
+          // Pre-load the chapter verses before selecting
+          await loadChapterVerses(targetChapter.chapter_id);
+          
+          const verses = await getVersesByChapterId(targetChapter.chapter_id);
+          const verse = verses.find(v => v.verse_index === targetVerseNumber);
+          console.log('Found verse:', verse);
+          
+          if (verse) {
+            scrollToVerseId = verse.verse_id;
           }
+        }
+      } else {
+        // Check for query parameters (old format)
+        const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
+        const queryVerseId = route.query.verseId ? Number(route.query.verseId) : null;
+        
+        if (queryChapterId) {
+          targetChapter = chapters.value.find(ch => ch.chapter_id === queryChapterId) ?? null;
+          scrollToVerseId = queryVerseId;
+        }
+      }
+      
+      if (targetChapter) {
+        // Skip chapter scroll if we're going to scroll to a specific verse
+        await selectChapter(targetChapter, !!scrollToVerseId);
+        if (scrollToVerseId) {
+          console.log('Scrolling to verse:', scrollToVerseId);
+          await nextTick();
+          scrollToVerse(scrollToVerseId);
         }
       } else if (chapters.value.length > 0) {
         // Select first chapter by default

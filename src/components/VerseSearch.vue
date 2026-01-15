@@ -40,6 +40,11 @@
                 {{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}
               </div>
               <div class="result-text" v-html="highlightSearchTerms(result.verse)"></div>
+              <div v-if="result.telugu_verse" class="result-telugu" v-html="highlightSearchTerms(result.telugu_verse)"></div>
+              <div v-if="result.note_content" class="result-note">
+                <span class="note-label">Note:</span>
+                <span v-html="highlightSearchTerms(result.note_content)"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -63,6 +68,8 @@ interface SearchResult {
   chapter_number: string;
   verse_index: number;
   verse: string;
+  telugu_verse?: string | null;
+  note_content?: string | null;
 }
 
 const props = defineProps<{
@@ -328,7 +335,33 @@ function close() {
   line-height: 1.6;
 }
 
-.result-text :deep(mark) {
+.result-telugu {
+  color: #555;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.result-note {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-left: 3px solid #42b983;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.note-label {
+  font-weight: 600;
+  color: #42b983;
+  margin-right: 0.5rem;
+}
+
+.result-text :deep(mark),
+.result-telugu :deep(mark),
+.result-note :deep(mark) {
   background: #fff3cd;
   color: #856404;
   padding: 0.1em 0.2em;

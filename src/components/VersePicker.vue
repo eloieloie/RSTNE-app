@@ -73,11 +73,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import { getAllBooks } from '@/api/books';
-import { getChaptersByBookId } from '@/api/chapters';
-import { getVersesByChapterId } from '@/api/verses';
-import type { Book, Chapter, Verse } from '@/utils/collectionReferences';
+import { ref, watch, nextTick, onMounted } from 'vue';
+import { BOOKS_DATA } from '@/utils/versePickerData';
+
+interface Book {
+  book_id: number;
+  book_name: string;
+  book_abbr: string | null;
+}
+
+interface Chapter {
+  chapter_id: number;
+  chapter_number: number;
+}
+
+interface Verse {
+  verse_id: number;
+  verse_index: number;
+}
 
 const props = defineProps<{
   isOpen: boolean;
@@ -91,7 +104,15 @@ const emit = defineEmits<{
   select: [bookId: number, chapterId: number, verseId: number];
 }>();
 
-const books = ref<Book[]>([]);
+// Use hardcoded data for instant loading
+const books = ref<Book[]>(
+  BOOKS_DATA.map(b => ({
+    book_id: b.book_id,
+    book_name: b.book_name,
+    book_abbr: b.book_abbr
+  }))
+);
+
 const chapters = ref<Chapter[]>([]);
 const verses = ref<Verse[]>([]);
 
@@ -105,34 +126,24 @@ const verseWheel = ref<HTMLElement | null>(null);
 
 const ITEM_HEIGHT = 40;
 
-// Cache for chapters and verses to avoid repeated API calls
-const chaptersCache = new Map<number, Chapter[]>();
-const versesCache = new Map<number, Verse[]>();
-
-// Load books on mount
+// Load initial selection on mount
 onMounted(async () => {
-  try {
-    books.value = await getAllBooks();
+  // Set initial selection if provided
+  if (props.initialBookId) {
+    selectedBookId.value = props.initialBookId;
+    loadChapters(props.initialBookId);
     
-    // Set initial selection if provided
-    if (props.initialBookId) {
-      selectedBookId.value = props.initialBookId;
-      await loadChapters(props.initialBookId);
+    if (props.initialChapterId) {
+      selectedChapterId.value = props.initialChapterId;
+      loadVerses(props.initialChapterId);
       
-      if (props.initialChapterId) {
-        selectedChapterId.value = props.initialChapterId;
-        await loadVerses(props.initialChapterId);
-        
-        if (props.initialVerseId) {
-          selectedVerseId.value = props.initialVerseId;
-        }
+      if (props.initialVerseId) {
+        selectedVerseId.value = props.initialVerseId;
       }
-    } else if (books.value.length > 0) {
-      // Default to first book
-      await selectBook(books.value[0].book_id);
     }
-  } catch (error) {
-    console.error('Error loading books:', error);
+  } else if (books.value.length > 0) {
+    // Default to first book
+    selectBook(books.value[0].book_id);
   }
 });
 
@@ -148,11 +159,11 @@ watch(() => props.isOpen, async (isOpen) => {
     // Reload data to match current book/chapter/verse
     if (props.initialBookId) {
       selectedBookId.value = props.initialBookId;
-      await loadChapters(props.initialBookId);
+      loadChapters(props.initialBookId);
       
       if (props.initialChapterId) {
         selectedChapterId.value = props.initialChapterId;
-        await loadVerses(props.initialChapterId);
+        loadVerses(props.initialChapterId);
         
         if (props.initialVerseId) {
           selectedVerseId.value = props.initialVerseId;
@@ -165,41 +176,43 @@ watch(() => props.isOpen, async (isOpen) => {
   }
 });
 
-async function selectBook(bookId: number) {
+function selectBook(bookId: number) {
   selectedBookId.value = bookId;
   selectedChapterId.value = null;
   selectedVerseId.value = null;
-  await loadChapters(bookId);
+  loadChapters(bookId);
   
   // Scroll to selected book
-  await nextTick();
-  if (bookWheel.value) {
-    const index = books.value.findIndex(b => b.book_id === bookId);
-    if (index >= 0) {
-      bookWheel.value.scrollTo({
-        top: index * ITEM_HEIGHT,
-        behavior: 'smooth'
-      });
+  nextTick(() => {
+    if (bookWheel.value) {
+      const index = books.value.findIndex(b => b.book_id === bookId);
+      if (index >= 0) {
+        bookWheel.value.scrollTo({
+          top: index * ITEM_HEIGHT,
+          behavior: 'smooth'
+        });
+      }
     }
-  }
+  });
 }
 
-async function selectChapter(chapterId: number) {
+function selectChapter(chapterId: number) {
   selectedChapterId.value = chapterId;
   selectedVerseId.value = null;
-  await loadVerses(chapterId);
+  loadVerses(chapterId);
   
   // Scroll to selected chapter
-  await nextTick();
-  if (chapterWheel.value) {
-    const index = chapters.value.findIndex(c => c.chapter_id === chapterId);
-    if (index >= 0) {
-      chapterWheel.value.scrollTo({
-        top: index * ITEM_HEIGHT,
-        behavior: 'smooth'
-      });
+  nextTick(() => {
+    if (chapterWheel.value) {
+      const index = chapters.value.findIndex(c => c.chapter_id === chapterId);
+      if (index >= 0) {
+        chapterWheel.value.scrollTo({
+          top: index * ITEM_HEIGHT,
+          behavior: 'smooth'
+        });
+      }
     }
-  }
+  });
 }
 
 function selectVerse(verseId: number) {
@@ -219,48 +232,43 @@ function selectVerse(verseId: number) {
   });
 }
 
-async function loadChapters(bookId: number) {
-  try {
-    // Check cache first
-    if (chaptersCache.has(bookId)) {
-      console.log('Loading chapters from cache for book:', bookId);
-      chapters.value = chaptersCache.get(bookId)!;
-    } else {
-      console.log('Fetching chapters from API for book:', bookId);
-      chapters.value = await getChaptersByBookId(bookId);
-      chaptersCache.set(bookId, chapters.value);
-    }
+function loadChapters(bookId: number) {
+  const bookData = BOOKS_DATA.find(b => b.book_id === bookId);
+  if (bookData) {
+    chapters.value = bookData.chapters.map(ch => ({
+      chapter_id: ch.chapter_id,
+      chapter_number: ch.chapter_number
+    }));
     
-    console.log('Loaded chapters:', chapters.value.map(ch => ch.chapter_id));
+    console.log('Loaded chapters from hardcoded data:', chapters.value.map(ch => ch.chapter_id));
     
-    // Don't auto-select first chapter if we have an initial chapter
+    // Auto-select first chapter if no chapter selected
     if (!selectedChapterId.value && chapters.value.length > 0) {
       selectedChapterId.value = chapters.value[0].chapter_id;
-      await loadVerses(chapters.value[0].chapter_id);
+      loadVerses(chapters.value[0].chapter_id);
     }
-  } catch (error) {
-    console.error('Error loading chapters:', error);
   }
 }
 
-async function loadVerses(chapterId: number) {
-  try {
-    // Check cache first
-    if (versesCache.has(chapterId)) {
-      console.log('Loading verses from cache for chapter:', chapterId);
-      verses.value = versesCache.get(chapterId)!;
-    } else {
-      console.log('Fetching verses from API for chapter:', chapterId);
-      verses.value = await getVersesByChapterId(chapterId);
-      versesCache.set(chapterId, verses.value);
+function loadVerses(chapterId: number) {
+  // Find the book and chapter in hardcoded data
+  for (const book of BOOKS_DATA) {
+    const chapterData = book.chapters.find(ch => ch.chapter_id === chapterId);
+    if (chapterData) {
+      // Use actual verse IDs from hardcoded data
+      verses.value = chapterData.verse_ids.map(v => ({
+        verse_id: v.verse_id,
+        verse_index: v.verse_index
+      }));
+      
+      console.log('Loaded verses from hardcoded data:', verses.value.length);
+      
+      // Auto-select first verse if no verse selected
+      if (!selectedVerseId.value && verses.value.length > 0) {
+        selectedVerseId.value = verses.value[0].verse_id;
+      }
+      break;
     }
-    
-    // Don't auto-select first verse if we have an initial verse
-    if (!selectedVerseId.value && verses.value.length > 0) {
-      selectedVerseId.value = verses.value[0].verse_id;
-    }
-  } catch (error) {
-    console.error('Error loading verses:', error);
   }
 }
 

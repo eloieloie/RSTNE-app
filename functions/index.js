@@ -261,18 +261,20 @@ app.get("/api/verses/search", async (req, res) => {
       // Search for verses containing this reference pattern
       const searchPattern = `%${query}%`;
 
-      const sql = `SELECT v.verse_id, v.chapter_id, v.verse_index,
+      const sql = `SELECT DISTINCT v.verse_id, v.chapter_id, v.verse_index,
            v.verse, v.telugu_verse,
            c.chapter_number, c.chapter_id,
            b.book_name, b.book_id
            FROM verses_tbl v
            INNER JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
            INNER JOIN books_tbl b ON c.book_id = b.book_id
-           WHERE v.verse LIKE ? OR v.telugu_verse LIKE ?
+           LEFT JOIN verse_notes_tbl vn ON v.verse_id = vn.verse_id
+           LEFT JOIN notes_tbl n ON vn.note_id = n.note_id
+           WHERE v.verse LIKE ? OR v.telugu_verse LIKE ? OR n.note_content LIKE ?
            ORDER BY b.book_id, CAST(c.chapter_number AS UNSIGNED), v.verse_index
            LIMIT 100`;
 
-      const [verses] = await pool.execute(sql, [searchPattern, searchPattern]);
+      const [verses] = await pool.execute(sql, [searchPattern, searchPattern, searchPattern]);
       res.json(verses);
     } else {
       // Original search by book name and chapter
@@ -322,29 +324,34 @@ app.get("/api/verses/text-search", async (req, res) => {
       return res.status(400).json({error: "Search query is required"});
     }
 
-    // Build the LIKE pattern: "not My people" -> "%not%My%people%"
-    const terms = q.trim().split(/\s+/);
-    const pattern = "%" + terms.join("%") + "%";
+    // Build the LIKE pattern: "not My people" -> "%not My people%"
+    const pattern = "%" + q.trim() + "%";
 
     console.log("Searching for query:", q);
     console.log("LIKE pattern:", pattern);
 
     const [results] = await pool.execute(
-        `SELECT
+        `SELECT DISTINCT
            v.verse_id,
            v.chapter_id,
            v.verse_index,
            v.verse,
+           v.telugu_verse,
            c.chapter_number,
            c.book_id,
-           b.book_name
+           b.book_name,
+           n.note_content
          FROM verses_tbl v
          JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
          JOIN books_tbl b ON c.book_id = b.book_id
+         LEFT JOIN verse_notes_tbl vn ON v.verse_id = vn.verse_id
+         LEFT JOIN notes_tbl n ON vn.note_id = n.note_id
          WHERE LOWER(v.verse) LIKE LOWER(?)
+            OR LOWER(v.telugu_verse) LIKE LOWER(?)
+            OR LOWER(n.note_content) LIKE LOWER(?)
          ORDER BY b.book_index, c.chapter_number, v.verse_index
          LIMIT 500`,
-        [pattern],
+        [pattern, pattern, pattern],
     );
 
     console.log(`Found ${results.length} verses`);
