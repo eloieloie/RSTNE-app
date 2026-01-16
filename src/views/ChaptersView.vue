@@ -52,6 +52,22 @@
           </div>
           
           <div v-else class="continuous-scroll-container">
+            <!-- Navigation Buttons -->
+            <div class="chapter-nav-buttons top">
+              <button 
+                v-if="getPreviousChapter(Array.from(loadedChapters.keys()).sort((a, b) => {
+                  const chA = chapters.find(ch => ch.chapter_id === a);
+                  const chB = chapters.find(ch => ch.chapter_id === b);
+                  return parseInt(chA?.chapter_number || '0') - parseInt(chB?.chapter_number || '0');
+                })[0])"
+                @click="loadPreviousChapterManually"
+                class="nav-btn prev-btn"
+                :disabled="isLoadingChapter"
+                title="Load Previous Chapter"
+              >
+                <i class="bi bi-chevron-up"></i>
+              </button>
+            </div>
             <!-- Book Header (Introduction) -->
             <div v-if="book?.book_header" class="book-header-section">
               <div 
@@ -132,6 +148,23 @@
             <!-- Loading indicator for adjacent chapters -->
             <div v-if="isLoadingAdjacentChapter" class="loading-adjacent">
               Loading more chapters...
+            </div>
+            
+            <!-- Bottom Navigation Button -->
+            <div class="chapter-nav-buttons bottom">
+              <button 
+                v-if="getNextChapter(Array.from(loadedChapters.keys()).sort((a, b) => {
+                  const chA = chapters.find(ch => ch.chapter_id === a);
+                  const chB = chapters.find(ch => ch.chapter_id === b);
+                  return parseInt(chA?.chapter_number || '0') - parseInt(chB?.chapter_number || '0');
+                })[Array.from(loadedChapters.keys()).length - 1])"
+                @click="loadNextChapterManually"
+                class="nav-btn next-btn"
+                :disabled="isLoadingChapter"
+                title="Load Next Chapter"
+              >
+                <i class="bi bi-chevron-down"></i>
+              </button>
             </div>
           </div>
         </main>
@@ -821,6 +854,75 @@ function closeContextMenu(event: Event) {
   
   if (contextMenu.value.show) {
     contextMenu.value.show = false;
+  }
+}
+
+// Manually load next chapter
+function loadNextChapterManually() {
+  if (isLoadingChapter.value) return;
+  
+  const loadedChapterIds = Array.from(loadedChapters.value.keys()).sort((a, b) => {
+    const chA = chapters.value.find(ch => ch.chapter_id === a);
+    const chB = chapters.value.find(ch => ch.chapter_id === b);
+    const numA = parseInt(chA?.chapter_number || '0');
+    const numB = parseInt(chB?.chapter_number || '0');
+    return numA - numB;
+  });
+  
+  if (loadedChapterIds.length === 0) return;
+  
+  const lastLoadedChapterId = loadedChapterIds[loadedChapterIds.length - 1];
+  const nextChapter = getNextChapter(lastLoadedChapterId);
+  
+  if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
+    console.log('Manual: Loading next chapter:', nextChapter.chapter_number);
+    isLoadingChapter.value = true;
+    loadChapterVerses(nextChapter.chapter_id).then(() => {
+      // Scroll to the newly loaded chapter
+      nextTick().then(() => {
+        scrollToChapter(nextChapter.chapter_id);
+        isLoadingChapter.value = false;
+      });
+    }).catch(() => {
+      isLoadingChapter.value = false;
+    });
+  }
+}
+
+// Manually load previous chapter
+function loadPreviousChapterManually() {
+  if (isLoadingChapter.value) return;
+  
+  const loadedChapterIds = Array.from(loadedChapters.value.keys()).sort((a, b) => {
+    const chA = chapters.value.find(ch => ch.chapter_id === a);
+    const chB = chapters.value.find(ch => ch.chapter_id === b);
+    const numA = parseInt(chA?.chapter_number || '0');
+    const numB = parseInt(chB?.chapter_number || '0');
+    return numA - numB;
+  });
+  
+  if (loadedChapterIds.length === 0) return;
+  
+  const firstLoadedChapterId = loadedChapterIds[0];
+  const prevChapter = getPreviousChapter(firstLoadedChapterId);
+  
+  if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
+    console.log('Manual: Loading previous chapter:', prevChapter.chapter_number);
+    isLoadingChapter.value = true;
+    
+    // Get current scroll position
+    const scrollBeforeLoad = window.scrollY;
+    
+    loadChapterVerses(prevChapter.chapter_id).then(async () => {
+      await nextTick();
+      // Maintain scroll position by calculating offset
+      const newScrollY = window.scrollY;
+      const offset = newScrollY - scrollBeforeLoad;
+      window.scrollTo({ top: scrollBeforeLoad + offset, behavior: 'instant' });
+      isLoadingChapter.value = false;
+    }).catch(() => {
+      isLoadingChapter.value = false;
+    });
   }
 }
 
@@ -1593,6 +1695,64 @@ onUnmounted(() => {
   padding: 1rem;
   color: #999;
   font-style: italic;
+}
+
+.chapter-nav-buttons {
+  position: fixed;
+  right: 1rem;
+  z-index: 900;
+}
+
+.chapter-nav-buttons.top {
+  top: 7rem; /* Below the sticky header */
+}
+
+.chapter-nav-buttons.bottom {
+  bottom: 2rem;
+}
+
+.nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #42b983;
+  color: #42b983;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+  font-size: 24px;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #42b983;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
+}
+
+.nav-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .chapter-nav-buttons {
+    right: 0.5rem;
+  }
+  
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
 }
 
 .verses-list {

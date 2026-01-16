@@ -9,21 +9,24 @@
       <div class="verse-picker-body">
         <div class="picker-wheels">
           <!-- Book Picker -->
-          <div class="picker-column">
+          <div class="picker-column book-column">
             <div class="picker-label">Book</div>
             <div class="picker-wheel" ref="bookWheel" @scroll="onBookScroll">
-              <div class="picker-spacer"></div>
+              <div class="picker-spacer book-spacer"></div>
               <div
                 v-for="book in books"
                 :key="book.book_id"
-                :class="['picker-item', { selected: selectedBookId === book.book_id }]"
+                :class="['picker-item', 'book-item', { selected: selectedBookId === book.book_id }]"
                 @click="selectBook(book.book_id)"
               >
-                {{ book.book_name }}
+                <div class="book-name-container">
+                  <div v-if="book.hebrew_book_name" class="book-name-hebrew">{{ book.hebrew_book_name }}</div>
+                  <div class="book-name-english">{{ book.book_name }}</div>
+                </div>
               </div>
-              <div class="picker-spacer"></div>
+              <div class="picker-spacer book-spacer"></div>
             </div>
-            <div class="picker-highlight"></div>
+            <div class="picker-highlight book-highlight"></div>
           </div>
 
           <!-- Chapter Picker -->
@@ -80,6 +83,7 @@ interface Book {
   book_id: number;
   book_name: string;
   book_abbr: string | null;
+  hebrew_book_name: string | null;
 }
 
 interface Chapter {
@@ -109,7 +113,8 @@ const books = ref<Book[]>(
   BOOKS_DATA.map(b => ({
     book_id: b.book_id,
     book_name: b.book_name,
-    book_abbr: b.book_abbr
+    book_abbr: b.book_abbr,
+    hebrew_book_name: b.hebrew_book_name
   }))
 );
 
@@ -124,7 +129,12 @@ const bookWheel = ref<HTMLElement | null>(null);
 const chapterWheel = ref<HTMLElement | null>(null);
 const verseWheel = ref<HTMLElement | null>(null);
 
-const ITEM_HEIGHT = 40;
+const BOOK_ITEM_HEIGHT = 60; // Height for book items with Hebrew + English names
+const ITEM_HEIGHT = 40; // Height for chapter and verse items
+const BOOK_SPACER_HEIGHT = 140; // Spacer height for book column
+const SPACER_HEIGHT = 110; // Spacer height for chapter/verse columns
+const VIEWPORT_HEIGHT = 260; // Height of picker-wheels
+const VIEWPORT_CENTER = VIEWPORT_HEIGHT / 2; // Center point where items align
 
 // Load initial selection on mount
 onMounted(async () => {
@@ -187,8 +197,12 @@ function selectBook(bookId: number) {
     if (bookWheel.value) {
       const index = books.value.findIndex(b => b.book_id === bookId);
       if (index >= 0) {
+        // Calculate scrollTop to position item center at viewport center
+        // itemCenterPosition = BOOK_SPACER_HEIGHT + (index * BOOK_ITEM_HEIGHT) + (BOOK_ITEM_HEIGHT / 2)
+        // scrollTop = itemCenterPosition - VIEWPORT_CENTER
+        const scrollTop = BOOK_SPACER_HEIGHT + (index * BOOK_ITEM_HEIGHT) + (BOOK_ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
         bookWheel.value.scrollTo({
-          top: index * ITEM_HEIGHT,
+          top: scrollTop,
           behavior: 'smooth'
         });
       }
@@ -206,8 +220,10 @@ function selectChapter(chapterId: number) {
     if (chapterWheel.value) {
       const index = chapters.value.findIndex(c => c.chapter_id === chapterId);
       if (index >= 0) {
+        // Calculate scrollTop to position item center at viewport center
+        const scrollTop = SPACER_HEIGHT + (index * ITEM_HEIGHT) + (ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
         chapterWheel.value.scrollTo({
-          top: index * ITEM_HEIGHT,
+          top: scrollTop,
           behavior: 'smooth'
         });
       }
@@ -223,8 +239,10 @@ function selectVerse(verseId: number) {
     if (verseWheel.value) {
       const index = verses.value.findIndex(v => v.verse_id === verseId);
       if (index >= 0) {
+        // Calculate scrollTop to position item center at viewport center
+        const scrollTop = SPACER_HEIGHT + (index * ITEM_HEIGHT) + (ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
         verseWheel.value.scrollTo({
-          top: index * ITEM_HEIGHT,
+          top: scrollTop,
           behavior: 'smooth'
         });
       }
@@ -282,7 +300,11 @@ function onBookScroll() {
   
   bookScrollTimeout = setTimeout(() => {
     const scrollTop = bookWheel.value!.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    // Calculate which item's center is at the viewport center
+    // itemCenterPosition = scrollTop + VIEWPORT_CENTER
+    // index = (itemCenterPosition - BOOK_SPACER_HEIGHT - BOOK_ITEM_HEIGHT/2) / BOOK_ITEM_HEIGHT
+    const itemCenterPosition = scrollTop + VIEWPORT_CENTER;
+    const index = Math.round((itemCenterPosition - BOOK_SPACER_HEIGHT - BOOK_ITEM_HEIGHT / 2) / BOOK_ITEM_HEIGHT);
     if (books.value[index] && selectedBookId.value !== books.value[index].book_id) {
       selectBook(books.value[index].book_id);
     }
@@ -295,7 +317,9 @@ function onChapterScroll() {
   
   chapterScrollTimeout = setTimeout(() => {
     const scrollTop = chapterWheel.value!.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    // Calculate which item's center is at the viewport center
+    const itemCenterPosition = scrollTop + VIEWPORT_CENTER;
+    const index = Math.round((itemCenterPosition - SPACER_HEIGHT - ITEM_HEIGHT / 2) / ITEM_HEIGHT);
     if (chapters.value[index] && selectedChapterId.value !== chapters.value[index].chapter_id) {
       selectChapter(chapters.value[index].chapter_id);
     }
@@ -308,7 +332,9 @@ function onVerseScroll() {
   
   verseScrollTimeout = setTimeout(() => {
     const scrollTop = verseWheel.value!.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    // Calculate which item's center is at the viewport center
+    const itemCenterPosition = scrollTop + VIEWPORT_CENTER;
+    const index = Math.round((itemCenterPosition - SPACER_HEIGHT - ITEM_HEIGHT / 2) / ITEM_HEIGHT);
     if (verses.value[index] && selectedVerseId.value !== verses.value[index].verse_id) {
       selectVerse(verses.value[index].verse_id);
     }
@@ -319,21 +345,24 @@ function scrollToSelected() {
   if (selectedBookId.value && bookWheel.value) {
     const index = books.value.findIndex(b => b.book_id === selectedBookId.value);
     if (index >= 0) {
-      bookWheel.value.scrollTop = index * ITEM_HEIGHT;
+      const scrollTop = BOOK_SPACER_HEIGHT + (index * BOOK_ITEM_HEIGHT) + (BOOK_ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
+      bookWheel.value.scrollTop = scrollTop;
     }
   }
   
   if (selectedChapterId.value && chapterWheel.value) {
     const index = chapters.value.findIndex(c => c.chapter_id === selectedChapterId.value);
     if (index >= 0) {
-      chapterWheel.value.scrollTop = index * ITEM_HEIGHT;
+      const scrollTop = SPACER_HEIGHT + (index * ITEM_HEIGHT) + (ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
+      chapterWheel.value.scrollTop = scrollTop;
     }
   }
   
   if (selectedVerseId.value && verseWheel.value) {
     const index = verses.value.findIndex(v => v.verse_id === selectedVerseId.value);
     if (index >= 0) {
-      verseWheel.value.scrollTop = index * ITEM_HEIGHT;
+      const scrollTop = SPACER_HEIGHT + (index * ITEM_HEIGHT) + (ITEM_HEIGHT / 2) - VIEWPORT_CENTER;
+      verseWheel.value.scrollTop = scrollTop;
     }
   }
 }
@@ -473,6 +502,10 @@ function confirm() {
   flex-shrink: 0;
 }
 
+.picker-spacer.book-spacer {
+  height: 140px;
+}
+
 .picker-item {
   height: 40px;
   display: flex;
@@ -491,14 +524,61 @@ function confirm() {
   font-weight: 400;
 }
 
+.picker-item.book-item {
+  height: 60px;
+  white-space: normal;
+  overflow: visible;
+}
+
+.book-name-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  height: 100%;
+}
+
+.book-name-hebrew {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.book-name-english {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.8;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.picker-item.selected .book-name-hebrew {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.picker-item.selected .book-name-english {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 .picker-item:hover {
   color: #777;
 }
 
 .picker-item.selected {
   color: #1a1a1a;
-  font-weight: 600;
-  font-size: 1.1rem;
 }
 
 .picker-highlight {
@@ -514,6 +594,10 @@ function confirm() {
   border-radius: 8px;
   pointer-events: none;
   z-index: 1;
+}
+
+.picker-highlight.book-highlight {
+  height: 60px;
 }
 
 .verse-picker-footer {
