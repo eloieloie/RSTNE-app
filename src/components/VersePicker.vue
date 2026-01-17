@@ -30,8 +30,8 @@
           </div>
 
           <!-- Chapter Picker -->
-          <div class="picker-column">
-            <div class="picker-label">Chapter</div>
+          <div class="picker-column chapter-column">
+            <div class="picker-label">Ch</div>
             <div class="picker-wheel" ref="chapterWheel" @scroll="onChapterScroll">
               <div class="picker-spacer"></div>
               <div
@@ -48,8 +48,8 @@
           </div>
 
           <!-- Verse Picker -->
-          <div class="picker-column">
-            <div class="picker-label">Verse</div>
+          <div class="picker-column verse-column">
+            <div class="picker-label">Vs</div>
             <div class="picker-wheel" ref="verseWheel" @scroll="onVerseScroll">
               <div class="picker-spacer"></div>
               <div
@@ -478,11 +478,22 @@ function confirm() {
 }
 
 .picker-column {
-  flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
   min-width: 0;
+}
+
+.picker-column.book-column {
+  flex: 0 0 70%;
+}
+
+.picker-column.chapter-column {
+  flex: 0 0 15%;
+}
+
+.picker-column.verse-column {
+  flex: 0 0 15%;
 }
 
 .picker-label {
