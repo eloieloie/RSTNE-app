@@ -205,6 +205,12 @@
       </button>
     </div>
 
+    <!-- Loading Overlay for Verse Reference Navigation -->
+    <div v-if="isNavigatingToVerseRef" class="verse-nav-loading-overlay">
+      <div class="verse-nav-loading-spinner"></div>
+      <p>Loading verse...</p>
+    </div>
+
     <!-- Settings Modal -->
     <div v-if="showSettingsModal" class="modal-overlay" @click="showSettingsModal = false">
       <div class="modal-content" @click.stop>
@@ -336,6 +342,7 @@ const showNotes = ref(true);
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
+const isNavigatingToVerseRef = ref(false);
 
 // Preview state for live verse picker updates
 const previewBookId = ref<number | null>(null);
@@ -815,11 +822,12 @@ function formatVerseWithPaleoBora(text: string): string {
     formatted = formatted.replace(pattern.search, pattern.replace);
   });
   
-  // Convert inline verse references like #Yoch1:3 to clickable links
+  // Convert inline verse references like #Yech18 4 to clickable links
+  // Pattern: #[4-char-abbr][chapter-number] [verse-number]
   // Using book abbreviations from allBooks
-  formatted = formatted.replace(/#([a-z]+)(\d+):(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
     const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
-    console.log('Found verse ref:', match, 'bookAbbr:', bookAbbr, 'bookId:', bookId);
+    //console.log('Found verse ref:', match, 'bookAbbr:', bookAbbr, 'bookId:', bookId);
     if (bookId) {
       return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
     }
@@ -842,14 +850,12 @@ function handleVerseRefClick(event: Event) {
     const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
     const verseNum = parseInt(target.getAttribute('data-verse') || '0');
     
-    console.log('Verse ref clicked:', { bookId, chapterNum, verseNum });
-    
-    // Show context menu
+    // Show context menu (position: fixed uses viewport coordinates, no scrollY needed)
     const rect = target.getBoundingClientRect();
     contextMenu.value = {
       show: true,
       x: rect.left,
-      y: rect.bottom + window.scrollY + 5,
+      y: rect.bottom + 5,
       bookId,
       chapterNum,
       verseNum
@@ -861,9 +867,11 @@ function handleVerseRefClick(event: Event) {
 async function handleGoToVerse() {
   const { bookId, chapterNum, verseNum } = contextMenu.value;
   contextMenu.value.show = false;
+  isNavigatingToVerseRef.value = true;
   
-  // If same book, find chapter and navigate
-  if (Number(route.params.id) === bookId) {
+  try {
+    // If same book, find chapter and navigate
+    if (Number(route.params.id) === bookId) {
     const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
     if (targetChapter) {
       // Check if the target chapter is already loaded
@@ -880,12 +888,11 @@ async function handleGoToVerse() {
       }
       
       if (targetVerse) {
-        navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+        await navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
       }
     }
-  } else {
-    // Different book - need to load that book's chapters first
-    try {
+    } else {
+      // Different book - need to load that book's chapters first
       const targetBookChapters = await getChaptersByBookId(bookId);
       const targetChapter = targetBookChapters.find(ch => ch.chapter_number === String(chapterNum));
       
@@ -894,12 +901,14 @@ async function handleGoToVerse() {
         const targetVerse = versesData.find(v => v.verse_index === verseNum);
         
         if (targetVerse) {
-          navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
+          await navigateToVerse(bookId, targetChapter.chapter_id, targetVerse.verse_id);
         }
       }
-    } catch (err) {
-      console.error('Error loading target book chapters:', err);
     }
+  } catch (err) {
+    console.error('Error navigating to verse:', err);
+  } finally {
+    isNavigatingToVerseRef.value = false;
   }
 }
 
@@ -911,7 +920,7 @@ function handleSearch() {
   // Get book abbreviation for search
   const book = allBooks.value.find(b => b.book_id === bookId);
   const bookAbbr = book?.book_abbr || '';
-  const searchText = `#${bookAbbr}${chapterNum}:${verseNum}`;
+  const searchText = `#${bookAbbr}${chapterNum} ${verseNum}`;
   
   // Open search modal with the reference
   showSearchModal.value = true;
@@ -1922,16 +1931,19 @@ onUnmounted(() => {
 }
 
 /* Inline verse references within text */
-.inline-verse-ref {
+:deep(.inline-verse-ref) {
   color: #0366d6;
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
   border-bottom: 1px dotted #0366d6;
   transition: all 0.2s;
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
 }
 
-.inline-verse-ref:hover {
+:deep(.inline-verse-ref:hover) {
   color: #0056b3;
   border-bottom: 1px solid #0056b3;
 }
@@ -1963,11 +1975,45 @@ onUnmounted(() => {
   background: #f5f5f5;
 }
 
+/* Loading Overlay for Verse Reference Navigation */
+.verse-nav-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+.verse-nav-loading-overlay p {
+  color: white;
+  font-size: 18px;
+  margin-top: 1rem;
+}
+
+.verse-nav-loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .verse-notes {
   margin-top: 0.75rem;
   padding: 0.75rem;
-  background: #fffbeb;
-  border-left: 3px solid #f59e0b;
+  background: linear-gradient(to left, #fffbeb, transparent);
+  border-right: 3px solid #f59e0b;
   border-radius: 4px;
 }
 
