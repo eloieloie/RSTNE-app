@@ -172,6 +172,13 @@ export interface VerseTagInsert {
   tag_id: number;
 }
 
+export interface BookCategory {
+  category_id: number;
+  category_name: string;
+  category_order: number;
+  dt_added: Date;
+}
+
 // Column Names
 export const BOOK_COLUMNS = {
   ID: 'book_id',

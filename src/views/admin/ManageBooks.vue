@@ -23,6 +23,7 @@
                 <th>Abbr</th>
                 <th>Hebrew Name</th>
                 <th>Telugu Name</th>
+                <th>Category</th>
                 <th>Index</th>
                 <th>Actions</th>
               </tr>
@@ -34,6 +35,7 @@
                 <td>{{ book.book_abbr || 'N/A' }}</td>
                 <td>{{ book.hebrew_book_name || 'N/A' }}</td>
                 <td>{{ book.telugu_book_name || 'N/A' }}</td>
+                <td>{{ getCategoryName(book.category_id) }}</td>
                 <td>{{ book.book_index || 'N/A' }}</td>
                 <td class="actions">
                   <button @click="openEditModal(book)" class="btn-icon btn-edit" title="Edit">
@@ -96,6 +98,24 @@
               placeholder="Enter Telugu book name"
             />
           </div>
+
+          <div class="form-group">
+            <label for="categoryId">Category *</label>
+            <select
+              id="categoryId"
+              v-model.number="formData.category_id"
+              required
+            >
+              <option :value="undefined" disabled>Select a category</option>
+              <option
+                v-for="category in categories"
+                :key="category.category_id"
+                :value="category.category_id"
+              >
+                {{ category.category_name }}
+              </option>
+            </select>
+          </div>
           
           <div class="form-group">
             <label for="bookDescription">Description</label>
@@ -150,9 +170,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { getAllBooks, updateBook } from '@/api/books';
-import type { Book, BookInsert } from '@/utils/collectionReferences';
+import { getAllBookCategories } from '@/api/bookCategories';
+import type { Book, BookInsert, BookCategory } from '@/utils/collectionReferences';
 
 const booksData = ref<Book[]>([]);
+const categories = ref<BookCategory[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showEditModal = ref(false);
@@ -180,6 +202,7 @@ const formData = ref<BookInsert>({
 
 onMounted(() => {
   loadBooks();
+  loadCategories();
 });
 
 async function loadBooks() {
@@ -191,6 +214,20 @@ async function loadBooks() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadCategories() {
+  try {
+    categories.value = await getAllBookCategories();
+  } catch (e) {
+    console.error('Failed to load categories:', e);
+  }
+}
+
+function getCategoryName(categoryId: number | null): string {
+  if (!categoryId) return 'N/A';
+  const category = categories.value.find(c => c.category_id === categoryId);
+  return category ? category.category_name : 'N/A';
 }
 
 async function saveBook() {
@@ -431,7 +468,8 @@ td {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -440,7 +478,8 @@ td {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #667eea;
 }

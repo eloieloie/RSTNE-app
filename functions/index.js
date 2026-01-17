@@ -162,6 +162,21 @@ app.delete("/api/books/:id", async (req, res) => {
   }
 });
 
+// ============= BOOK CATEGORIES ENDPOINTS =============
+
+// Get all book categories
+app.get("/api/book-categories", async (req, res) => {
+  try {
+    const [categories] = await pool.execute(
+        "SELECT * FROM book_categories_tbl ORDER BY category_order ASC",
+    );
+    res.json(categories);
+  } catch (error) {
+    console.error("Error fetching book categories:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
 // ============= CHAPTERS ENDPOINTS =============
 
 // Get all chapters
