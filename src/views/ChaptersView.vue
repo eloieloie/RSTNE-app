@@ -110,12 +110,14 @@
                   :data-verse-id="verse.verse_id"
                   class="verse-item"
                 >
-                  <span class="verse-number">{{ verse.verse_index }}</span>
-                  <div class="verse-content">
-                    <div v-if="showEnglish" class="verse-text" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
-                    <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
-                    
-                    <div v-if="verse.links && verse.links.length > 0" class="verse-links">
+                  <div class="verse-main">
+                    <span class="verse-number">{{ verse.verse_index }}</span>
+                    <span v-if="showEnglish" class="verse-text" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
+                  </div>
+                  
+                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  
+                  <div v-if="verse.links && verse.links.length > 0" class="verse-links">
                       <a 
                         v-for="link in verse.links" 
                         :key="link.target_verse_id"
@@ -130,11 +132,10 @@
                     
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
-                        <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
+                        <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
                         <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
                       </div>
                     </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1867,8 +1868,6 @@ onUnmounted(() => {
 }
 
 .verse-item {
-  display: flex;
-  gap: 1rem;
   line-height: 1.8;
   padding: 0.5rem 0;
   transition: background-color 0.3s;
@@ -1880,32 +1879,44 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
+.verse-main {
+  display: block;
+}
+
 .verse-number {
-  flex-shrink: 0;
+  display: inline;
   font-weight: 700;
   color: #42b983;
   font-size: 0.9rem;
-  min-width: 30px;
-}
-
-.verse-content {
-  flex: 1;
+  margin-right: 0.5rem;
 }
 
 .verse-text {
+  display: inline;
   color: #333;
-  margin-bottom: 0.125rem;
-  text-align: left;
+}
+
+:deep(.verse-text p) {
+  display: inline;
+  margin: 0;
+  padding: 0;
 }
 
 .verse-telugu {
+  display: block;
   color: #666;
   font-size: 0.95rem;
   margin-top: 0.125rem;
   text-align: left;
 }
 
+:deep(.verse-telugu p) {
+  margin: 0;
+  padding: 0;
+}
+
 .verse-links {
+  display: block;
   margin-top: 0.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -2010,6 +2021,7 @@ onUnmounted(() => {
 }
 
 .verse-notes {
+  display: block;
   margin-top: 0.75rem;
   padding: 0.75rem;
   background: linear-gradient(to left, #fffbeb, transparent);
@@ -2018,6 +2030,7 @@ onUnmounted(() => {
 }
 
 .note-item {
+  display: block;
   margin-bottom: 0.5rem;
 }
 
