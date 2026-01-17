@@ -147,10 +147,26 @@ async function performSearch() {
 }
 
 function highlightSearchTerms(verseText: string): string {
-  const terms = searchQuery.value.trim().split(/\s+/);
-  let highlighted = verseText;
+  if (!verseText) return '';
   
-  // Highlight each search term
+  // First, apply PaleoBora formatting for Hebrew names
+  const paleoboraPatterns = [
+    { search: /HWHY/g, replace: '<span class="paleobora-text">HWHY</span>' },
+    { search: /hwhy/g, replace: '<span class="paleobora-text">hwhy</span>' },
+    { search: /OSWHY/g, replace: '<span class="paleobora-text">OSWHY</span>' },
+    { search: /oswhy/g, replace: '<span class="paleobora-text">oswhy</span>' },
+    { search: /MYHLA/g, replace: '<span class="paleobora-text">MYHLA</span>' },
+    { search: /Myhla/g, replace: '<span class="paleobora-text">Myhla</span>' },
+    { search: /myhla/g, replace: '<span class="paleobora-text">myhla</span>' }
+  ];
+  
+  let highlighted = verseText;
+  paleoboraPatterns.forEach(pattern => {
+    highlighted = highlighted.replace(pattern.search, pattern.replace);
+  });
+  
+  // Then, highlight search terms
+  const terms = searchQuery.value.trim().split(/\s+/);
   terms.forEach(term => {
     const regex = new RegExp(`(${term})`, 'gi');
     highlighted = highlighted.replace(regex, '<mark>$1</mark>');
@@ -333,13 +349,14 @@ function close() {
 .result-text {
   color: #2c3e50;
   line-height: 1.6;
+  text-align: left;
 }
 
 .result-telugu {
   color: #555;
   line-height: 1.6;
   margin-top: 0.5rem;
-  font-style: italic;
+  text-align: left;
 }
 
 .result-note {
@@ -374,6 +391,14 @@ function close() {
   padding: 3rem 1rem;
   color: #999;
   font-size: 1rem;
+}
+
+.result-text :deep(.paleobora-text),
+.result-telugu :deep(.paleobora-text),
+.result-note :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif;
+  font-weight: normal;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 768px) {

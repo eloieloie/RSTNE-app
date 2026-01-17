@@ -18,9 +18,12 @@
           </router-link>
           
           <button class="verse-picker-button" @click="showVersePicker = true">
-            <span class="book-name">{{ book?.book_name }}</span>
-            <span v-if="selectedChapter" class="chapter-verse">
-              {{ selectedChapter.chapter_number }}:{{ getCurrentVerseIndex() }}
+            <div class="book-names">
+              <span v-if="displayHebrewBookName" class="hebrew-book-name">{{ displayHebrewBookName }}</span>
+              <span class="book-name">{{ displayBookName }}</span>
+            </div>
+            <span v-if="displayChapterNumber" class="chapter-verse">
+              {{ displayChapterNumber }}:{{ displayVerseIndex }}
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -128,7 +131,7 @@
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
                         <div v-if="note.note_title" class="note-title">{{ note.note_title }}</div>
-                        <div class="note-content" v-html="note.note_content"></div>
+                        <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
                       </div>
                     </div>
                   </div>
@@ -178,6 +181,7 @@
       :initial-chapter-id="selectedChapterId ?? undefined"
       @close="showVersePicker = false"
       @select="handleVerseSelection"
+      @update="handleVersePickerUpdate"
     />
 
     <!-- Verse Search -->
@@ -266,6 +270,7 @@ import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
+import { BOOKS_DATA } from '@/utils/versePickerData';
 
 interface Book {
   book_id: number;
@@ -332,6 +337,11 @@ const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
 
+// Preview state for live verse picker updates
+const previewBookId = ref<number | null>(null);
+const previewChapterId = ref<number | null>(null);
+const previewVerseId = ref<number | null>(null);
+
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
@@ -371,6 +381,58 @@ const sortedChapters = computed(() => {
     const numB = parseInt(b.chapter_number) || 0;
     return numA - numB;
   });
+});
+
+// Computed properties for verse picker button display
+const displayBookName = computed(() => {
+  if (showVersePicker.value && previewBookId.value) {
+    const previewBook = allBooks.value.find(b => b.book_id === previewBookId.value);
+    return previewBook?.book_name || book.value?.book_name || '';
+  }
+  return book.value?.book_name || '';
+});
+
+const displayHebrewBookName = computed(() => {
+  if (showVersePicker.value && previewBookId.value) {
+    const previewBook = BOOKS_DATA.find(b => b.book_id === previewBookId.value);
+    return previewBook?.hebrew_book_name || null;
+  }
+  const currentBook = BOOKS_DATA.find(b => b.book_id === book.value?.book_id);
+  return currentBook?.hebrew_book_name || null;
+});
+
+const displayChapterNumber = computed(() => {
+  if (showVersePicker.value && previewChapterId.value) {
+    const previewChapter = chapters.value.find(c => c.chapter_id === previewChapterId.value);
+    return previewChapter?.chapter_number || selectedChapter.value?.chapter_number || '';
+  }
+  return selectedChapter.value?.chapter_number || '';
+});
+
+const displayVerseIndex = computed(() => {
+  if (showVersePicker.value && previewVerseId.value) {
+    console.log('Looking for verse ID:', previewVerseId.value);
+    // Find verse index from loaded chapters first
+    for (const [chapterId, chapterData] of loadedChapters.value.entries()) {
+      const verse = chapterData.verses.find(v => v.verse_id === previewVerseId.value);
+      if (verse) {
+        console.log('Found in loaded chapters:', verse.verse_index);
+        return String(verse.verse_index || 1);
+      }
+    }
+    // If not found in loaded chapters, try from BOOKS_DATA
+    for (const bookData of BOOKS_DATA) {
+      for (const chapterData of bookData.chapters) {
+        const verse = chapterData.verse_ids.find(v => v.verse_id === previewVerseId.value);
+        if (verse) {
+          console.log('Found in BOOKS_DATA:', verse.verse_index);
+          return String(verse.verse_index);
+        }
+      }
+    }
+    console.log('Verse not found, defaulting to 1');
+  }
+  return getCurrentVerseIndex();
 });
 
 // Ordered loaded chapters for rendering
@@ -584,9 +646,21 @@ function scrollToVerse(verseId: number) {
 async function handleVerseSelection(bookId: number, chapterId: number, verseId: number) {
   console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId });
   showVersePicker.value = false;
+  // Clear preview values
+  previewBookId.value = null;
+  previewChapterId.value = null;
+  previewVerseId.value = null;
   console.log('ChaptersView: Calling navigateToVerse...');
   await navigateToVerse(bookId, chapterId, verseId);
   console.log('ChaptersView: navigateToVerse completed');
+}
+
+// Handle live updates from VersePicker while scrolling
+function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: number) {
+  console.log('Preview update:', { bookId, chapterId, verseId });
+  previewBookId.value = bookId;
+  previewChapterId.value = chapterId;
+  previewVerseId.value = verseId;
 }
 
 // Get current visible verse index for display
@@ -1510,11 +1584,32 @@ onUnmounted(() => {
   transform: scale(0.98);
 }
 
-.book-name {
-  font-weight: 600;
+.book-names {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.hebrew-book-name {
+  font-size: 1.1rem;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+}
+
+.book-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  opacity: 0.8;
 }
 
 .chapter-verse {
@@ -1907,6 +2002,18 @@ onUnmounted(() => {
 }
 
 .verse-telugu :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.note-content :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.book-header-content :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.book-footer-content :deep(.paleobora-text) {
   font-family: 'PaleoBora', serif !important;
 }
 

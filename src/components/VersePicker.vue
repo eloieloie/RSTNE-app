@@ -106,6 +106,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   select: [bookId: number, chapterId: number, verseId: number];
+  update: [bookId: number, chapterId: number, verseId: number];
 }>();
 
 // Use hardcoded data for instant loading
@@ -250,6 +251,13 @@ function selectVerse(verseId: number) {
   });
 }
 
+function emitUpdate() {
+  // Emit live updates while scrolling
+  if (selectedBookId.value && selectedChapterId.value && selectedVerseId.value) {
+    emit('update', selectedBookId.value, selectedChapterId.value, selectedVerseId.value);
+  }
+}
+
 function loadChapters(bookId: number) {
   const bookData = BOOKS_DATA.find(b => b.book_id === bookId);
   if (bookData) {
@@ -307,6 +315,7 @@ function onBookScroll() {
     const index = Math.round((itemCenterPosition - BOOK_SPACER_HEIGHT - BOOK_ITEM_HEIGHT / 2) / BOOK_ITEM_HEIGHT);
     if (books.value[index] && selectedBookId.value !== books.value[index].book_id) {
       selectBook(books.value[index].book_id);
+      emitUpdate();
     }
   }, 150);
 }
@@ -322,6 +331,7 @@ function onChapterScroll() {
     const index = Math.round((itemCenterPosition - SPACER_HEIGHT - ITEM_HEIGHT / 2) / ITEM_HEIGHT);
     if (chapters.value[index] && selectedChapterId.value !== chapters.value[index].chapter_id) {
       selectChapter(chapters.value[index].chapter_id);
+      emitUpdate();
     }
   }, 150);
 }
@@ -337,6 +347,7 @@ function onVerseScroll() {
     const index = Math.round((itemCenterPosition - SPACER_HEIGHT - ITEM_HEIGHT / 2) / ITEM_HEIGHT);
     if (verses.value[index] && selectedVerseId.value !== verses.value[index].verse_id) {
       selectVerse(verses.value[index].verse_id);
+      emitUpdate();
     }
   }, 150);
 }
