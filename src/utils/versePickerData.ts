@@ -1,4 +1,4 @@
-// Auto-generated from database on 2026-01-16T19:19:18.073Z
+// Auto-generated from database on 2026-01-20T01:11:56.328Z
 // Do not edit manually - run mjs-scripts/export-books-data.mjs to regenerate
 
 export interface VerseInfo {
@@ -49570,7 +49570,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 14,
     "book_name": "Jeremiah",
-    "book_abbr": "yarm",
+    "book_abbr": "yara",
     "hebrew_book_name": "Yarmeyahu",
     "book_index": 14,
     "chapter_count": 52,
@@ -64375,7 +64375,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_id": 20,
     "book_name": "Obadiah",
     "book_abbr": "obad",
-    "hebrew_book_name": "Obadyah",
+    "hebrew_book_name": "Ovadyah",
     "book_index": 20,
     "chapter_count": 1,
     "chapters": [
@@ -93099,7 +93099,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_id": 38,
     "book_name": "First Chronicles",
     "book_abbr": "Adiv",
-    "hebrew_book_name": "DIbre HaYamim Alef",
+    "hebrew_book_name": "DIvre HaYamim Alef",
     "book_index": 38,
     "chapter_count": 29,
     "chapters": [
@@ -97109,7 +97109,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_id": 39,
     "book_name": "Second Chronicles",
     "book_abbr": "Bdiv",
-    "hebrew_book_name": "DIbre HaYamim Bet",
+    "hebrew_book_name": "DIvre HaYamim Bet",
     "book_index": 39,
     "chapter_count": 36,
     "chapters": [
@@ -105212,8 +105212,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 41,
     "book_name": "Mark",
-    "book_abbr": "Ymos",
-    "hebrew_book_name": "Mark-Yochanan Mosha",
+    "book_abbr": "Yocm",
+    "hebrew_book_name": "Yochanan Mosha",
     "book_index": 41,
     "chapter_count": 16,
     "chapters": [
@@ -108062,8 +108062,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 42,
     "book_name": "Luke",
-    "book_abbr": "luqa",
-    "hebrew_book_name": "Luqas",
+    "book_abbr": "Luka",
+    "hebrew_book_name": "Luka",
     "book_index": 42,
     "chapter_count": 24,
     "chapters": [
@@ -121306,8 +121306,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 46,
     "book_name": "Hebrews",
-    "book_abbr": "ivri",
-    "hebrew_book_name": "Ivrim",
+    "book_abbr": null,
+    "hebrew_book_name": "Avrim",
     "book_index": 46,
     "chapter_count": 13,
     "chapters": [
@@ -125982,8 +125982,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 54,
     "book_name": "First Corinthians",
-    "book_abbr": "aqor",
-    "hebrew_book_name": "Qorintim Aleph",
+    "book_abbr": "Aqor",
+    "hebrew_book_name": "Qorintyah Aleph",
     "book_index": 54,
     "chapter_count": 16,
     "chapters": [
@@ -127868,8 +127868,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 55,
     "book_name": "Second Corinthians",
-    "book_abbr": "bqor",
-    "hebrew_book_name": "Qorintim Bet",
+    "book_abbr": "Bqor",
+    "hebrew_book_name": "Qorintyah Bet",
     "book_index": 55,
     "chapter_count": 13,
     "chapters": [
@@ -129664,8 +129664,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 57,
     "book_name": "Ephesians",
-    "book_abbr": "ephe",
-    "hebrew_book_name": "Ephesim",
+    "book_abbr": "Ephs",
+    "hebrew_book_name": "Ephsiyah",
     "book_index": 57,
     "chapter_count": 6,
     "chapters": [
@@ -130342,8 +130342,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 58,
     "book_name": "Philippians",
-    "book_abbr": "phil",
-    "hebrew_book_name": "Philippim",
+    "book_abbr": "Phyl",
+    "hebrew_book_name": "Phylypsiyah",
     "book_index": 58,
     "chapter_count": 4,
     "chapters": [
@@ -130800,8 +130800,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 59,
     "book_name": "Colossians",
-    "book_abbr": "qolo",
-    "hebrew_book_name": "Qolossim",
+    "book_abbr": "Qole",
+    "hebrew_book_name": "Qolesayah",
     "book_index": 59,
     "chapter_count": 4,
     "chapters": [
@@ -131222,8 +131222,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 60,
     "book_name": "First Thessalonians",
-    "book_abbr": "athe",
-    "hebrew_book_name": "Thessaloniqim Aleph",
+    "book_abbr": "Ates",
+    "hebrew_book_name": "Tesloniqyah Aleph",
     "book_index": 60,
     "chapter_count": 5,
     "chapters": [
@@ -131628,8 +131628,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 61,
     "book_name": "Second Thessalonians",
-    "book_abbr": "bthe",
-    "hebrew_book_name": "Thessaloniqim Bet",
+    "book_abbr": "Btes",
+    "hebrew_book_name": "Tesloniqyah Bet",
     "book_index": 61,
     "chapter_count": 3,
     "chapters": [
@@ -131850,8 +131850,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 62,
     "book_name": "Philemon",
-    "book_abbr": "phlo",
-    "hebrew_book_name": "Philemon",
+    "book_abbr": "Phil",
+    "hebrew_book_name": "Phileymon",
     "book_index": 62,
     "chapter_count": 1,
     "chapters": [
@@ -131968,8 +131968,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 63,
     "book_name": "First Timothy",
-    "book_abbr": "atim",
-    "hebrew_book_name": "Timotheos Aleph",
+    "book_abbr": null,
+    "hebrew_book_name": "Timtheous Alef",
     "book_index": 63,
     "chapter_count": 6,
     "chapters": [
@@ -132478,8 +132478,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 64,
     "book_name": "Second Timothy",
-    "book_abbr": "btim",
-    "hebrew_book_name": "Timotheos Bet",
+    "book_abbr": null,
+    "hebrew_book_name": "Timtheous Bet",
     "book_index": 64,
     "chapter_count": 4,
     "chapters": [
@@ -133070,8 +133070,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 66,
     "book_name": "Revelation",
-    "book_abbr": "sodo",
-    "hebrew_book_name": "Chazon-Sodot",
+    "book_abbr": "Sodo",
+    "hebrew_book_name": "Sodot",
     "book_index": 66,
     "chapter_count": 22,
     "chapters": [
@@ -134873,7 +134873,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_id": 67,
     "book_name": "Baruch",
     "book_abbr": "Baru",
-    "hebrew_book_name": "బారుకు",
+    "hebrew_book_name": "Baruch",
     "book_index": 67,
     "chapter_count": 6,
     "chapters": [
@@ -148226,8 +148226,8 @@ export const BOOKS_DATA: VersePickerBook[] = [
   },
   {
     "book_id": 79,
-    "book_name": "1 Clement",
-    "book_abbr": null,
+    "book_name": "Clement",
+    "book_abbr": "Clem",
     "hebrew_book_name": null,
     "book_index": 79,
     "chapter_count": 65,
@@ -150232,8 +150232,5193 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Enoc",
     "hebrew_book_name": null,
     "book_index": 80,
-    "chapter_count": 0,
-    "chapters": []
+    "chapter_count": 109,
+    "chapters": [
+      {
+        "chapter_id": 3989,
+        "chapter_number": 1,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 139030,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139031,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139032,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139033,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139034,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139035,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139036,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139037,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139038,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 3990,
+        "chapter_number": 2,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139039,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139040,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139041,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 3991,
+        "chapter_number": 3,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 139042,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 3992,
+        "chapter_number": 4,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 139043,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 3993,
+        "chapter_number": 5,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139044,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139045,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139046,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139047,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139048,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139049,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139050,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139051,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139052,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139053,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 3994,
+        "chapter_number": 6,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139054,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139055,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139056,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139057,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139058,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139059,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139060,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 3995,
+        "chapter_number": 7,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139061,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139062,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139063,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139064,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139065,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 3996,
+        "chapter_number": 8,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139066,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139067,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139068,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139069,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 3997,
+        "chapter_number": 9,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 139070,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139071,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139072,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139073,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139074,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139075,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139076,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139077,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139078,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139079,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139080,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139081,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 3998,
+        "chapter_number": 10,
+        "verse_count": 23,
+        "max_verse_index": 23,
+        "verse_ids": [
+          {
+            "verse_id": 139082,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139083,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139084,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139085,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139086,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139087,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139088,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139089,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139090,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139091,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139092,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139093,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139094,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139095,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139096,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139097,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139098,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139099,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139100,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139101,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139102,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139103,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139104,
+            "verse_index": 23
+          }
+        ]
+      },
+      {
+        "chapter_id": 3999,
+        "chapter_number": 11,
+        "verse_count": 2,
+        "max_verse_index": 2,
+        "verse_ids": [
+          {
+            "verse_id": 139105,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139106,
+            "verse_index": 2
+          }
+        ]
+      },
+      {
+        "chapter_id": 4000,
+        "chapter_number": 12,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139107,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139108,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139109,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139110,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139111,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139112,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139113,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4001,
+        "chapter_number": 13,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139114,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139115,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139116,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139117,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139118,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139119,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139120,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139121,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139122,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139123,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 4002,
+        "chapter_number": 14,
+        "verse_count": 26,
+        "max_verse_index": 26,
+        "verse_ids": [
+          {
+            "verse_id": 139124,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139125,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139126,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139127,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139128,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139129,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139130,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139131,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139132,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139133,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139134,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139135,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139136,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139137,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139138,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139139,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139140,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139141,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139142,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139143,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139144,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139145,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139146,
+            "verse_index": 23
+          },
+          {
+            "verse_id": 139147,
+            "verse_index": 24
+          },
+          {
+            "verse_id": 139148,
+            "verse_index": 25
+          },
+          {
+            "verse_id": 139149,
+            "verse_index": 26
+          }
+        ]
+      },
+      {
+        "chapter_id": 4003,
+        "chapter_number": 15,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 139150,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139151,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139152,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139153,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139154,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139155,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139156,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139157,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139158,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139159,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139160,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139161,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 4004,
+        "chapter_number": 16,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139162,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139163,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139164,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139165,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4005,
+        "chapter_number": 17,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139166,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139167,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139168,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139169,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139170,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139171,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139172,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139173,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4006,
+        "chapter_number": 18,
+        "verse_count": 16,
+        "max_verse_index": 16,
+        "verse_ids": [
+          {
+            "verse_id": 139174,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139175,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139176,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139177,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139178,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139179,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139180,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139181,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139182,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139183,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139184,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139185,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139186,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139187,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139188,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139189,
+            "verse_index": 16
+          }
+        ]
+      },
+      {
+        "chapter_id": 4007,
+        "chapter_number": 19,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139190,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139191,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139192,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4008,
+        "chapter_number": 20,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139193,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139194,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139195,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139196,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139197,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139198,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139199,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139200,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4009,
+        "chapter_number": 21,
+        "verse_count": 11,
+        "max_verse_index": 11,
+        "verse_ids": [
+          {
+            "verse_id": 139201,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139202,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139203,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139204,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139205,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139206,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139207,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139208,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139209,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139210,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139211,
+            "verse_index": 11
+          }
+        ]
+      },
+      {
+        "chapter_id": 4010,
+        "chapter_number": 22,
+        "verse_count": 14,
+        "max_verse_index": 14,
+        "verse_ids": [
+          {
+            "verse_id": 139212,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139213,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139214,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139215,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139216,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139217,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139218,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139219,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139220,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139221,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139222,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139223,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139224,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139225,
+            "verse_index": 14
+          }
+        ]
+      },
+      {
+        "chapter_id": 4011,
+        "chapter_number": 23,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139226,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139227,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139228,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139229,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4012,
+        "chapter_number": 24,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139230,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139231,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139232,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139233,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139234,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4013,
+        "chapter_number": 25,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139235,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139236,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139237,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139238,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139239,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139240,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139241,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4014,
+        "chapter_number": 26,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139242,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139243,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139244,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139245,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139246,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139247,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4015,
+        "chapter_number": 27,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139248,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139249,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139250,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139251,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139252,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4016,
+        "chapter_number": 28,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139253,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139254,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139255,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4017,
+        "chapter_number": 29,
+        "verse_count": 2,
+        "max_verse_index": 2,
+        "verse_ids": [
+          {
+            "verse_id": 139256,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139257,
+            "verse_index": 2
+          }
+        ]
+      },
+      {
+        "chapter_id": 4018,
+        "chapter_number": 30,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139258,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139259,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139260,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4019,
+        "chapter_number": 31,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139261,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139262,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139263,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4020,
+        "chapter_number": 32,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139264,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139265,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139266,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139267,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139268,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139269,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139270,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4021,
+        "chapter_number": 33,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139271,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139272,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139273,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139274,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4022,
+        "chapter_number": 34,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139275,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139276,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139277,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4023,
+        "chapter_number": 35,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 139278,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4024,
+        "chapter_number": 36,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139279,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139280,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139281,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139282,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139283,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139284,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4025,
+        "chapter_number": 37,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139285,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139286,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139287,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139288,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139289,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4026,
+        "chapter_number": 38,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139290,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139291,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139292,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139293,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139294,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139295,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4027,
+        "chapter_number": 39,
+        "verse_count": 13,
+        "max_verse_index": 13,
+        "verse_ids": [
+          {
+            "verse_id": 139296,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139297,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139298,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139299,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139300,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139301,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139302,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139303,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139304,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139305,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139306,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139307,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139308,
+            "verse_index": 13
+          }
+        ]
+      },
+      {
+        "chapter_id": 4028,
+        "chapter_number": 40,
+        "verse_count": 11,
+        "max_verse_index": 11,
+        "verse_ids": [
+          {
+            "verse_id": 139309,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139310,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139311,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139312,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139313,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139314,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139315,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139316,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139317,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139318,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139319,
+            "verse_index": 11
+          }
+        ]
+      },
+      {
+        "chapter_id": 4029,
+        "chapter_number": 41,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 139320,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139321,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139322,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139323,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139324,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139325,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139326,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139327,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139328,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 4030,
+        "chapter_number": 42,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139329,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139330,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139331,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4031,
+        "chapter_number": 43,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139332,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139333,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139334,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139335,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4032,
+        "chapter_number": 44,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 139336,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4033,
+        "chapter_number": 45,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139337,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139338,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139339,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139340,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139341,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139342,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4034,
+        "chapter_number": 46,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139343,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139344,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139345,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139346,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139347,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139348,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139349,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139350,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4035,
+        "chapter_number": 47,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139351,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139352,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139353,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139354,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4036,
+        "chapter_number": 48,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139355,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139356,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139357,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139358,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139359,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139360,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139361,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139362,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139363,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139364,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 4037,
+        "chapter_number": 49,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139365,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139366,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139367,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139368,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4038,
+        "chapter_number": 50,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139369,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139370,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139371,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139372,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139373,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4039,
+        "chapter_number": 51,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139374,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139375,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139376,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139377,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139378,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4040,
+        "chapter_number": 52,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 139379,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139380,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139381,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139382,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139383,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139384,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139385,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139386,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139387,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 4041,
+        "chapter_number": 53,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139388,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139389,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139390,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139391,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139392,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139393,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139394,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4042,
+        "chapter_number": 54,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139395,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139396,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139397,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139398,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139399,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139400,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139401,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139402,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139403,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139404,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 4043,
+        "chapter_number": 55,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139405,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139406,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139407,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139408,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4044,
+        "chapter_number": 56,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139409,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139410,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139411,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139412,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139413,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139414,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139415,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139416,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4045,
+        "chapter_number": 57,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139417,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139418,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139419,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4046,
+        "chapter_number": 58,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139420,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139421,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139422,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139423,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139424,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139425,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4047,
+        "chapter_number": 59,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139426,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139427,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139428,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4048,
+        "chapter_number": 60,
+        "verse_count": 23,
+        "max_verse_index": 23,
+        "verse_ids": [
+          {
+            "verse_id": 139429,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139430,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139431,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139432,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139433,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139434,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139435,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139436,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139437,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139438,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139439,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139440,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139441,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139442,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139443,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139444,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139445,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139446,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139447,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139448,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139449,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139450,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139451,
+            "verse_index": 23
+          }
+        ]
+      },
+      {
+        "chapter_id": 4049,
+        "chapter_number": 61,
+        "verse_count": 13,
+        "max_verse_index": 13,
+        "verse_ids": [
+          {
+            "verse_id": 139452,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139453,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139454,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139455,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139456,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139457,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139458,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139459,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139460,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139461,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139462,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139463,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139464,
+            "verse_index": 13
+          }
+        ]
+      },
+      {
+        "chapter_id": 4050,
+        "chapter_number": 62,
+        "verse_count": 16,
+        "max_verse_index": 16,
+        "verse_ids": [
+          {
+            "verse_id": 139465,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139466,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139467,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139468,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139469,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139470,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139471,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139472,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139473,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139474,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139475,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139476,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139477,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139478,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139479,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139480,
+            "verse_index": 16
+          }
+        ]
+      },
+      {
+        "chapter_id": 4051,
+        "chapter_number": 63,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 139481,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139482,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139483,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139484,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139485,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139486,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139487,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139488,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139489,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139490,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139491,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139492,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 4052,
+        "chapter_number": 64,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 139493,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4053,
+        "chapter_number": 65,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 139494,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139495,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139496,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139497,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139498,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139499,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139500,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139501,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139502,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139503,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139504,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139505,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 4054,
+        "chapter_number": 66,
+        "verse_count": 3,
+        "max_verse_index": 3,
+        "verse_ids": [
+          {
+            "verse_id": 139506,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139507,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139508,
+            "verse_index": 3
+          }
+        ]
+      },
+      {
+        "chapter_id": 4055,
+        "chapter_number": 67,
+        "verse_count": 13,
+        "max_verse_index": 13,
+        "verse_ids": [
+          {
+            "verse_id": 139509,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139510,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139511,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139512,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139513,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139514,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139515,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139516,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139517,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139518,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139519,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139520,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139521,
+            "verse_index": 13
+          }
+        ]
+      },
+      {
+        "chapter_id": 4056,
+        "chapter_number": 68,
+        "verse_count": 5,
+        "max_verse_index": 5,
+        "verse_ids": [
+          {
+            "verse_id": 139522,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139523,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139524,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139525,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139526,
+            "verse_index": 5
+          }
+        ]
+      },
+      {
+        "chapter_id": 4057,
+        "chapter_number": 69,
+        "verse_count": 29,
+        "max_verse_index": 29,
+        "verse_ids": [
+          {
+            "verse_id": 139527,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139528,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139529,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139530,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139531,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139532,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139533,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139534,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139535,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139536,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139537,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139538,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139539,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139540,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139541,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139542,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139543,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139544,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139545,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139546,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139547,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139548,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139549,
+            "verse_index": 23
+          },
+          {
+            "verse_id": 139550,
+            "verse_index": 24
+          },
+          {
+            "verse_id": 139551,
+            "verse_index": 25
+          },
+          {
+            "verse_id": 139552,
+            "verse_index": 26
+          },
+          {
+            "verse_id": 139553,
+            "verse_index": 27
+          },
+          {
+            "verse_id": 139554,
+            "verse_index": 28
+          },
+          {
+            "verse_id": 139555,
+            "verse_index": 29
+          }
+        ]
+      },
+      {
+        "chapter_id": 4058,
+        "chapter_number": 70,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139556,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139557,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139558,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139559,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4059,
+        "chapter_number": 71,
+        "verse_count": 18,
+        "max_verse_index": 18,
+        "verse_ids": [
+          {
+            "verse_id": 139560,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139561,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139562,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139563,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139564,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139565,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139566,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139567,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139568,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139569,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139570,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139571,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139572,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139573,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139574,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139575,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139576,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139577,
+            "verse_index": 18
+          }
+        ]
+      },
+      {
+        "chapter_id": 4060,
+        "chapter_number": 72,
+        "verse_count": 38,
+        "max_verse_index": 38,
+        "verse_ids": [
+          {
+            "verse_id": 139578,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139579,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139580,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139581,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139582,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139583,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139584,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139585,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139586,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139587,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139588,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139589,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139590,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139591,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139592,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139593,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139594,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139595,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139596,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139597,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139598,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139599,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139600,
+            "verse_index": 23
+          },
+          {
+            "verse_id": 139601,
+            "verse_index": 24
+          },
+          {
+            "verse_id": 139602,
+            "verse_index": 25
+          },
+          {
+            "verse_id": 139603,
+            "verse_index": 26
+          },
+          {
+            "verse_id": 139604,
+            "verse_index": 27
+          },
+          {
+            "verse_id": 139605,
+            "verse_index": 28
+          },
+          {
+            "verse_id": 139606,
+            "verse_index": 29
+          },
+          {
+            "verse_id": 139607,
+            "verse_index": 30
+          },
+          {
+            "verse_id": 139608,
+            "verse_index": 31
+          },
+          {
+            "verse_id": 139609,
+            "verse_index": 32
+          },
+          {
+            "verse_id": 139610,
+            "verse_index": 33
+          },
+          {
+            "verse_id": 139611,
+            "verse_index": 34
+          },
+          {
+            "verse_id": 139612,
+            "verse_index": 35
+          },
+          {
+            "verse_id": 139613,
+            "verse_index": 36
+          },
+          {
+            "verse_id": 139614,
+            "verse_index": 37
+          },
+          {
+            "verse_id": 139615,
+            "verse_index": 38
+          }
+        ]
+      },
+      {
+        "chapter_id": 4061,
+        "chapter_number": 73,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139616,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139617,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139618,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139619,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139620,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139621,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139622,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139623,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4062,
+        "chapter_number": 74,
+        "verse_count": 17,
+        "max_verse_index": 17,
+        "verse_ids": [
+          {
+            "verse_id": 139624,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139625,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139626,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139627,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139628,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139629,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139630,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139631,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139632,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139633,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139634,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139635,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139636,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139637,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139638,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139639,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139640,
+            "verse_index": 17
+          }
+        ]
+      },
+      {
+        "chapter_id": 4063,
+        "chapter_number": 75,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 139641,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139642,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139643,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139644,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139645,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139646,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139647,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139648,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139649,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 4064,
+        "chapter_number": 76,
+        "verse_count": 14,
+        "max_verse_index": 14,
+        "verse_ids": [
+          {
+            "verse_id": 139650,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139651,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139652,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139653,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139654,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139655,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139656,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139657,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139658,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139659,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139660,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139661,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139662,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139663,
+            "verse_index": 14
+          }
+        ]
+      },
+      {
+        "chapter_id": 4065,
+        "chapter_number": 77,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139664,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139665,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139666,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139667,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139668,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139669,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139670,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139671,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4066,
+        "chapter_number": 78,
+        "verse_count": 17,
+        "max_verse_index": 17,
+        "verse_ids": [
+          {
+            "verse_id": 139672,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139673,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139674,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139675,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139676,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139677,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139678,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139679,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139680,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139681,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139682,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139683,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139684,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139685,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139686,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139687,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139688,
+            "verse_index": 17
+          }
+        ]
+      },
+      {
+        "chapter_id": 4067,
+        "chapter_number": 79,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139689,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139690,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139691,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139692,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139693,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139694,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4068,
+        "chapter_number": 80,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139695,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139696,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139697,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139698,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139699,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139700,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139701,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139702,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4069,
+        "chapter_number": 81,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139703,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139704,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139705,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139706,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139707,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139708,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139709,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139710,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139711,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139712,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 4070,
+        "chapter_number": 82,
+        "verse_count": 20,
+        "max_verse_index": 20,
+        "verse_ids": [
+          {
+            "verse_id": 139713,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139714,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139715,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139716,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139717,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139718,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139719,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139720,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139721,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139722,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139723,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139724,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139725,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139726,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139727,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139728,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139729,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139730,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139731,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139732,
+            "verse_index": 20
+          }
+        ]
+      },
+      {
+        "chapter_id": 4071,
+        "chapter_number": 83,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 139733,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139734,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139735,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139736,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139737,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139738,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139739,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139740,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139741,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139742,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139743,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139744,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 4072,
+        "chapter_number": 84,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139745,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139746,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139747,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139748,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139749,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139750,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4073,
+        "chapter_number": 85,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 139751,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139752,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139753,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139754,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139755,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139756,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139757,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139758,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139759,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 4074,
+        "chapter_number": 86,
+        "verse_count": 6,
+        "max_verse_index": 6,
+        "verse_ids": [
+          {
+            "verse_id": 139760,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139761,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139762,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139763,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139764,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139765,
+            "verse_index": 6
+          }
+        ]
+      },
+      {
+        "chapter_id": 4075,
+        "chapter_number": 87,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139766,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139767,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139768,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139769,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4076,
+        "chapter_number": 88,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 139770,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139771,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139772,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139773,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4077,
+        "chapter_number": 89,
+        "verse_count": 77,
+        "max_verse_index": 77,
+        "verse_ids": [
+          {
+            "verse_id": 139774,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139775,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139776,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139777,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139778,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139779,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139780,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139781,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139782,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139783,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139784,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139785,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139786,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139787,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139788,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139789,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139790,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139791,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139792,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139793,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139794,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139795,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139796,
+            "verse_index": 23
+          },
+          {
+            "verse_id": 139797,
+            "verse_index": 24
+          },
+          {
+            "verse_id": 139798,
+            "verse_index": 25
+          },
+          {
+            "verse_id": 139799,
+            "verse_index": 26
+          },
+          {
+            "verse_id": 139800,
+            "verse_index": 27
+          },
+          {
+            "verse_id": 139801,
+            "verse_index": 28
+          },
+          {
+            "verse_id": 139802,
+            "verse_index": 29
+          },
+          {
+            "verse_id": 139803,
+            "verse_index": 30
+          },
+          {
+            "verse_id": 139804,
+            "verse_index": 31
+          },
+          {
+            "verse_id": 139805,
+            "verse_index": 32
+          },
+          {
+            "verse_id": 139806,
+            "verse_index": 33
+          },
+          {
+            "verse_id": 139807,
+            "verse_index": 34
+          },
+          {
+            "verse_id": 139808,
+            "verse_index": 35
+          },
+          {
+            "verse_id": 139809,
+            "verse_index": 36
+          },
+          {
+            "verse_id": 139810,
+            "verse_index": 37
+          },
+          {
+            "verse_id": 139811,
+            "verse_index": 38
+          },
+          {
+            "verse_id": 139812,
+            "verse_index": 39
+          },
+          {
+            "verse_id": 139813,
+            "verse_index": 40
+          },
+          {
+            "verse_id": 139814,
+            "verse_index": 41
+          },
+          {
+            "verse_id": 139815,
+            "verse_index": 42
+          },
+          {
+            "verse_id": 139816,
+            "verse_index": 43
+          },
+          {
+            "verse_id": 139817,
+            "verse_index": 44
+          },
+          {
+            "verse_id": 139818,
+            "verse_index": 45
+          },
+          {
+            "verse_id": 139819,
+            "verse_index": 46
+          },
+          {
+            "verse_id": 139820,
+            "verse_index": 47
+          },
+          {
+            "verse_id": 139821,
+            "verse_index": 48
+          },
+          {
+            "verse_id": 139822,
+            "verse_index": 49
+          },
+          {
+            "verse_id": 139823,
+            "verse_index": 50
+          },
+          {
+            "verse_id": 139824,
+            "verse_index": 51
+          },
+          {
+            "verse_id": 139825,
+            "verse_index": 52
+          },
+          {
+            "verse_id": 139826,
+            "verse_index": 53
+          },
+          {
+            "verse_id": 139827,
+            "verse_index": 54
+          },
+          {
+            "verse_id": 139828,
+            "verse_index": 55
+          },
+          {
+            "verse_id": 139829,
+            "verse_index": 56
+          },
+          {
+            "verse_id": 139830,
+            "verse_index": 57
+          },
+          {
+            "verse_id": 139831,
+            "verse_index": 58
+          },
+          {
+            "verse_id": 139832,
+            "verse_index": 59
+          },
+          {
+            "verse_id": 139833,
+            "verse_index": 60
+          },
+          {
+            "verse_id": 139834,
+            "verse_index": 61
+          },
+          {
+            "verse_id": 139835,
+            "verse_index": 62
+          },
+          {
+            "verse_id": 139836,
+            "verse_index": 63
+          },
+          {
+            "verse_id": 139837,
+            "verse_index": 64
+          },
+          {
+            "verse_id": 139838,
+            "verse_index": 65
+          },
+          {
+            "verse_id": 139839,
+            "verse_index": 66
+          },
+          {
+            "verse_id": 139840,
+            "verse_index": 67
+          },
+          {
+            "verse_id": 139841,
+            "verse_index": 68
+          },
+          {
+            "verse_id": 139842,
+            "verse_index": 69
+          },
+          {
+            "verse_id": 139843,
+            "verse_index": 70
+          },
+          {
+            "verse_id": 139844,
+            "verse_index": 71
+          },
+          {
+            "verse_id": 139845,
+            "verse_index": 72
+          },
+          {
+            "verse_id": 139846,
+            "verse_index": 73
+          },
+          {
+            "verse_id": 139847,
+            "verse_index": 74
+          },
+          {
+            "verse_id": 139848,
+            "verse_index": 75
+          },
+          {
+            "verse_id": 139849,
+            "verse_index": 76
+          },
+          {
+            "verse_id": 139850,
+            "verse_index": 77
+          }
+        ]
+      },
+      {
+        "chapter_id": 4078,
+        "chapter_number": 90,
+        "verse_count": 42,
+        "max_verse_index": 42,
+        "verse_ids": [
+          {
+            "verse_id": 139851,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139852,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139853,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139854,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139855,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139856,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139857,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139858,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139859,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139860,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139861,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139862,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139863,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139864,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139865,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139866,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139867,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139868,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139869,
+            "verse_index": 19
+          },
+          {
+            "verse_id": 139870,
+            "verse_index": 20
+          },
+          {
+            "verse_id": 139871,
+            "verse_index": 21
+          },
+          {
+            "verse_id": 139872,
+            "verse_index": 22
+          },
+          {
+            "verse_id": 139873,
+            "verse_index": 23
+          },
+          {
+            "verse_id": 139874,
+            "verse_index": 24
+          },
+          {
+            "verse_id": 139875,
+            "verse_index": 25
+          },
+          {
+            "verse_id": 139876,
+            "verse_index": 26
+          },
+          {
+            "verse_id": 139877,
+            "verse_index": 27
+          },
+          {
+            "verse_id": 139878,
+            "verse_index": 28
+          },
+          {
+            "verse_id": 139879,
+            "verse_index": 29
+          },
+          {
+            "verse_id": 139880,
+            "verse_index": 30
+          },
+          {
+            "verse_id": 139881,
+            "verse_index": 31
+          },
+          {
+            "verse_id": 139882,
+            "verse_index": 32
+          },
+          {
+            "verse_id": 139883,
+            "verse_index": 33
+          },
+          {
+            "verse_id": 139884,
+            "verse_index": 34
+          },
+          {
+            "verse_id": 139885,
+            "verse_index": 35
+          },
+          {
+            "verse_id": 139886,
+            "verse_index": 36
+          },
+          {
+            "verse_id": 139887,
+            "verse_index": 37
+          },
+          {
+            "verse_id": 139888,
+            "verse_index": 38
+          },
+          {
+            "verse_id": 139889,
+            "verse_index": 39
+          },
+          {
+            "verse_id": 139890,
+            "verse_index": 40
+          },
+          {
+            "verse_id": 139891,
+            "verse_index": 41
+          },
+          {
+            "verse_id": 139892,
+            "verse_index": 42
+          }
+        ]
+      },
+      {
+        "chapter_id": 4079,
+        "chapter_number": 91,
+        "verse_count": 19,
+        "max_verse_index": 19,
+        "verse_ids": [
+          {
+            "verse_id": 139893,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139894,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139895,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139896,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139897,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139898,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139899,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139900,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139901,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139902,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139903,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139904,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139905,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139906,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139907,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139908,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139909,
+            "verse_index": 17
+          },
+          {
+            "verse_id": 139910,
+            "verse_index": 18
+          },
+          {
+            "verse_id": 139911,
+            "verse_index": 19
+          }
+        ]
+      },
+      {
+        "chapter_id": 4080,
+        "chapter_number": 92,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139912,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139913,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139914,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139915,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139916,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139917,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139918,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4081,
+        "chapter_number": 93,
+        "verse_count": 17,
+        "max_verse_index": 17,
+        "verse_ids": [
+          {
+            "verse_id": 139919,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139920,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139921,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139922,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139923,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139924,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139925,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139926,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139927,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139928,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139929,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139930,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139931,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139932,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139933,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 139934,
+            "verse_index": 16
+          },
+          {
+            "verse_id": 139935,
+            "verse_index": 17
+          }
+        ]
+      },
+      {
+        "chapter_id": 4082,
+        "chapter_number": 94,
+        "verse_count": 10,
+        "max_verse_index": 10,
+        "verse_ids": [
+          {
+            "verse_id": 139936,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139937,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139938,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139939,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139940,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139941,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139942,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139943,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139944,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139945,
+            "verse_index": 10
+          }
+        ]
+      },
+      {
+        "chapter_id": 4083,
+        "chapter_number": 95,
+        "verse_count": 11,
+        "max_verse_index": 11,
+        "verse_ids": [
+          {
+            "verse_id": 139946,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139947,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139948,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139949,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139950,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139951,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139952,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139953,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139954,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139955,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139956,
+            "verse_index": 11
+          }
+        ]
+      },
+      {
+        "chapter_id": 4084,
+        "chapter_number": 96,
+        "verse_count": 7,
+        "max_verse_index": 7,
+        "verse_ids": [
+          {
+            "verse_id": 139957,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139958,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139959,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139960,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139961,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139962,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139963,
+            "verse_index": 7
+          }
+        ]
+      },
+      {
+        "chapter_id": 4085,
+        "chapter_number": 97,
+        "verse_count": 8,
+        "max_verse_index": 8,
+        "verse_ids": [
+          {
+            "verse_id": 139964,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139965,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139966,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139967,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139968,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139969,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139970,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139971,
+            "verse_index": 8
+          }
+        ]
+      },
+      {
+        "chapter_id": 4086,
+        "chapter_number": 98,
+        "verse_count": 15,
+        "max_verse_index": 15,
+        "verse_ids": [
+          {
+            "verse_id": 139972,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139973,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139974,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139975,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139976,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139977,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139978,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139979,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139980,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139981,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139982,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139983,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139984,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 139985,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 139986,
+            "verse_index": 15
+          }
+        ]
+      },
+      {
+        "chapter_id": 4087,
+        "chapter_number": 99,
+        "verse_count": 16,
+        "max_verse_index": 16,
+        "verse_ids": [
+          {
+            "verse_id": 139987,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 139988,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 139989,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 139990,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 139991,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 139992,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 139993,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 139994,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 139995,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 139996,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 139997,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 139998,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 139999,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 140000,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 140001,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 140002,
+            "verse_index": 16
+          }
+        ]
+      },
+      {
+        "chapter_id": 4088,
+        "chapter_number": 100,
+        "verse_count": 16,
+        "max_verse_index": 16,
+        "verse_ids": [
+          {
+            "verse_id": 140003,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140004,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140005,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140006,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140007,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140008,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140009,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140010,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140011,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140012,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140013,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 140014,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 140015,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 140016,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 140017,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 140018,
+            "verse_index": 16
+          }
+        ]
+      },
+      {
+        "chapter_id": 4089,
+        "chapter_number": 101,
+        "verse_count": 13,
+        "max_verse_index": 13,
+        "verse_ids": [
+          {
+            "verse_id": 140019,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140020,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140021,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140022,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140023,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140024,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140025,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140026,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140027,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140028,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140029,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 140030,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 140031,
+            "verse_index": 13
+          }
+        ]
+      },
+      {
+        "chapter_id": 4090,
+        "chapter_number": 102,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 140032,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140033,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140034,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140035,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140036,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140037,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140038,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140039,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140040,
+            "verse_index": 9
+          }
+        ]
+      },
+      {
+        "chapter_id": 4091,
+        "chapter_number": 103,
+        "verse_count": 11,
+        "max_verse_index": 11,
+        "verse_ids": [
+          {
+            "verse_id": 140041,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140042,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140043,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140044,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140045,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140046,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140047,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140048,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140049,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140050,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140051,
+            "verse_index": 11
+          }
+        ]
+      },
+      {
+        "chapter_id": 4092,
+        "chapter_number": 104,
+        "verse_count": 16,
+        "max_verse_index": 16,
+        "verse_ids": [
+          {
+            "verse_id": 140052,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140053,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140054,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140055,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140056,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140057,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140058,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140059,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140060,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140061,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140062,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 140063,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 140064,
+            "verse_index": 13
+          },
+          {
+            "verse_id": 140065,
+            "verse_index": 14
+          },
+          {
+            "verse_id": 140066,
+            "verse_index": 15
+          },
+          {
+            "verse_id": 140067,
+            "verse_index": 16
+          }
+        ]
+      },
+      {
+        "chapter_id": 4093,
+        "chapter_number": 105,
+        "verse_count": 13,
+        "max_verse_index": 13,
+        "verse_ids": [
+          {
+            "verse_id": 140068,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140069,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140070,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140071,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140072,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140073,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140074,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140075,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140076,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140077,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140078,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 140079,
+            "verse_index": 12
+          },
+          {
+            "verse_id": 140080,
+            "verse_index": 13
+          }
+        ]
+      },
+      {
+        "chapter_id": 4094,
+        "chapter_number": 106,
+        "verse_count": 2,
+        "max_verse_index": 2,
+        "verse_ids": [
+          {
+            "verse_id": 140081,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140082,
+            "verse_index": 2
+          }
+        ]
+      },
+      {
+        "chapter_id": 4095,
+        "chapter_number": 107,
+        "verse_count": 12,
+        "max_verse_index": 12,
+        "verse_ids": [
+          {
+            "verse_id": 140083,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140084,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140085,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140086,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140087,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140088,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140089,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140090,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140091,
+            "verse_index": 9
+          },
+          {
+            "verse_id": 140092,
+            "verse_index": 10
+          },
+          {
+            "verse_id": 140093,
+            "verse_index": 11
+          },
+          {
+            "verse_id": 140094,
+            "verse_index": 12
+          }
+        ]
+      },
+      {
+        "chapter_id": 4096,
+        "chapter_number": 108,
+        "verse_count": 4,
+        "max_verse_index": 4,
+        "verse_ids": [
+          {
+            "verse_id": 140095,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140096,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140097,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140098,
+            "verse_index": 4
+          }
+        ]
+      },
+      {
+        "chapter_id": 4097,
+        "chapter_number": 109,
+        "verse_count": 9,
+        "max_verse_index": 9,
+        "verse_ids": [
+          {
+            "verse_id": 140099,
+            "verse_index": 1
+          },
+          {
+            "verse_id": 140100,
+            "verse_index": 2
+          },
+          {
+            "verse_id": 140101,
+            "verse_index": 3
+          },
+          {
+            "verse_id": 140102,
+            "verse_index": 4
+          },
+          {
+            "verse_id": 140103,
+            "verse_index": 5
+          },
+          {
+            "verse_id": 140104,
+            "verse_index": 6
+          },
+          {
+            "verse_id": 140105,
+            "verse_index": 7
+          },
+          {
+            "verse_id": 140106,
+            "verse_index": 8
+          },
+          {
+            "verse_id": 140107,
+            "verse_index": 9
+          }
+        ]
+      }
+    ]
   },
   {
     "book_id": 81,
@@ -150250,8 +155435,105 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 82,
-    "chapter_count": 0,
-    "chapters": []
+    "chapter_count": 8,
+    "chapters": [
+      {
+        "chapter_id": 4098,
+        "chapter_number": 1,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140108,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4099,
+        "chapter_number": 2,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140109,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4100,
+        "chapter_number": 3,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140110,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4101,
+        "chapter_number": 4,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140111,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4102,
+        "chapter_number": 5,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140112,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4103,
+        "chapter_number": 6,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140113,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4104,
+        "chapter_number": 7,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140114,
+            "verse_index": 1
+          }
+        ]
+      },
+      {
+        "chapter_id": 4105,
+        "chapter_number": 8,
+        "verse_count": 1,
+        "max_verse_index": 1,
+        "verse_ids": [
+          {
+            "verse_id": 140115,
+            "verse_index": 1
+          }
+        ]
+      }
+    ]
   },
   {
     "book_id": 83,
