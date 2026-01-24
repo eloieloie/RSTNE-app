@@ -487,6 +487,7 @@ function initializeEditors() {
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline'],
+          [{ 'script': 'sub'}, { 'script': 'super' }],
           [{ 'color': [] }, { 'background': [] }],
           ['clean']
         ]
@@ -501,6 +502,7 @@ function initializeEditors() {
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline'],
+          [{ 'script': 'sub'}, { 'script': 'super' }],
           [{ 'color': [] }, { 'background': [] }],
           ['clean']
         ]
@@ -686,6 +688,7 @@ function setupNewNoteEditor(element: HTMLElement) {
     modules: {
       toolbar: [
         ['bold', 'italic', 'underline'],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         ['link'],
         ['clean']
@@ -704,6 +707,7 @@ function setupNoteEditor(element: HTMLElement) {
     modules: {
       toolbar: [
         ['bold', 'italic', 'underline'],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         ['link'],
         ['clean']
