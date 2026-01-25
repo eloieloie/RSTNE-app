@@ -75,6 +75,7 @@
             <div v-if="book?.book_header" class="book-header-section">
               <div 
                 class="book-header-content"
+                :class="{ 'hide-superscript': !showSuperscript }"
                 :style="{ fontSize: fontSize + 'px' }"
                 v-html="formatVerseWithPaleoBora(book.book_header)"
               ></div>
@@ -112,10 +113,10 @@
                 >
                   <div class="verse-main">
                     <span class="verse-number">{{ verse.verse_index }}</span>
-                    <span v-if="showEnglish" class="verse-text" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
+                    <span v-if="showEnglish" class="verse-text" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
                   </div>
                   
-                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   
                   <div v-if="verse.links && verse.links.length > 0" class="verse-links">
                       <a 
@@ -132,8 +133,8 @@
                     
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
-                        <div v-if="note.note_title" class="note-title" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
-                        <div class="note-content" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
+                        <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
+                        <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
                       </div>
                     </div>
                 </div>
@@ -144,6 +145,7 @@
             <div v-if="book?.book_footer" class="book-footer-section">
               <div 
                 class="book-footer-content"
+                :class="{ 'hide-superscript': !showSuperscript }"
                 :style="{ fontSize: fontSize + 'px' }"
                 v-html="formatVerseWithPaleoBora(book.book_footer)"
               ></div>
@@ -250,6 +252,15 @@
                   <span class="toggle-slider"></span>
                 </button>
               </label>
+              <label class="setting-item">
+                <span>Show Superscript</span>
+                <button 
+                  @click="showSuperscript = !showSuperscript" 
+                  :class="['toggle-switch', { active: showSuperscript }]"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              </label>
             </div>
           </div>
           
@@ -340,6 +351,7 @@ const isLoadingAdjacentChapter = ref(false);
 const showEnglish = ref(true);
 const showTelugu = ref(true);
 const showNotes = ref(true);
+const showSuperscript = ref(true);
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
@@ -1889,6 +1901,10 @@ onUnmounted(() => {
   color: #42b983;
   font-size: 0.9rem;
   margin-right: 0.5rem;
+}
+
+.hide-superscript :deep(sup) {
+  display: none;
 }
 
 .verse-text {
