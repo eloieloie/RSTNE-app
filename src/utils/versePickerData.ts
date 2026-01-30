@@ -1,4 +1,4 @@
-// Auto-generated from database on 2026-01-20T01:11:56.328Z
+// Auto-generated from database on 2026-01-30T16:24:07.478Z
 // Do not edit manually - run mjs-scripts/export-books-data.mjs to regenerate
 
 export interface VerseInfo {
@@ -20,6 +20,7 @@ export interface VersePickerBook {
   book_abbr: string | null;
   hebrew_book_name: string | null;
   book_index: number;
+  category_id: number | null;
   chapter_count: number;
   chapters: VersePickerChapter[];
 }
@@ -31,6 +32,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "bare",
     "hebrew_book_name": "Baresheeth",
     "book_index": 1,
+    "category_id": 1,
     "chapter_count": 50,
     "chapters": [
       {
@@ -6573,6 +6575,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "shem",
     "hebrew_book_name": "Shemoth",
     "book_index": 2,
+    "category_id": 1,
     "chapter_count": 40,
     "chapters": [
       {
@@ -11755,6 +11758,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "uyiq",
     "hebrew_book_name": "Uyiqra",
     "book_index": 3,
+    "category_id": 1,
     "chapter_count": 27,
     "chapters": [
       {
@@ -15417,6 +15421,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "bami",
     "hebrew_book_name": "Bamidbar",
     "book_index": 4,
+    "category_id": 1,
     "chapter_count": 36,
     "chapters": [
       {
@@ -20867,6 +20872,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "daba",
     "hebrew_book_name": "Dabarim",
     "book_index": 5,
+    "category_id": 1,
     "chapter_count": 34,
     "chapters": [
       {
@@ -24985,6 +24991,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yahu",
     "hebrew_book_name": "Yahusha",
     "book_index": 6,
+    "category_id": 1,
     "chapter_count": 24,
     "chapters": [
       {
@@ -27819,6 +27826,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "shop",
     "hebrew_book_name": "Shophtim",
     "book_index": 7,
+    "category_id": 1,
     "chapter_count": 21,
     "chapters": [
       {
@@ -30469,6 +30477,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "root",
     "hebrew_book_name": "Root",
     "book_index": 8,
+    "category_id": 1,
     "chapter_count": 4,
     "chapters": [
       {
@@ -30851,6 +30860,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Ashm",
     "hebrew_book_name": "Shmuel Alef",
     "book_index": 9,
+    "category_id": 1,
     "chapter_count": 31,
     "chapters": [
       {
@@ -34349,6 +34359,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Bshm",
     "hebrew_book_name": "Shmuel Bet",
     "book_index": 10,
+    "category_id": 1,
     "chapter_count": 24,
     "chapters": [
       {
@@ -37331,6 +37342,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Amel",
     "hebrew_book_name": "Melechim Alef",
     "book_index": 11,
+    "category_id": 1,
     "chapter_count": 22,
     "chapters": [
       {
@@ -40781,6 +40793,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Bmel",
     "hebrew_book_name": "Melechim Bet",
     "book_index": 12,
+    "category_id": 1,
     "chapter_count": 25,
     "chapters": [
       {
@@ -43867,6 +43880,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yash",
     "hebrew_book_name": "Yashayahu",
     "book_index": 13,
+    "category_id": 1,
     "chapter_count": 66,
     "chapters": [
       {
@@ -49573,6 +49587,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yara",
     "hebrew_book_name": "Yarmeyahu",
     "book_index": 14,
+    "category_id": 1,
     "chapter_count": 52,
     "chapters": [
       {
@@ -55455,6 +55470,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yech",
     "hebrew_book_name": "Yechezkel",
     "book_index": 15,
+    "category_id": 1,
     "chapter_count": 48,
     "chapters": [
       {
@@ -60941,6 +60957,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "dani",
     "hebrew_book_name": "Daniyel",
     "book_index": 16,
+    "category_id": 1,
     "chapter_count": 12,
     "chapters": [
       {
@@ -62475,6 +62492,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "hush",
     "hebrew_book_name": "Husha",
     "book_index": 17,
+    "category_id": 1,
     "chapter_count": 14,
     "chapters": [
       {
@@ -63385,6 +63403,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yahu",
     "hebrew_book_name": "Yahual",
     "book_index": 18,
+    "category_id": 1,
     "chapter_count": 3,
     "chapters": [
       {
@@ -63711,6 +63730,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "ahmo",
     "hebrew_book_name": "Ahmos",
     "book_index": 19,
+    "category_id": 1,
     "chapter_count": 9,
     "chapters": [
       {
@@ -64377,6 +64397,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "obad",
     "hebrew_book_name": "Ovadyah",
     "book_index": 20,
+    "category_id": 1,
     "chapter_count": 1,
     "chapters": [
       {
@@ -64479,6 +64500,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yona",
     "hebrew_book_name": "Yonah",
     "book_index": 21,
+    "category_id": 1,
     "chapter_count": 4,
     "chapters": [
       {
@@ -64713,6 +64735,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "mikh",
     "hebrew_book_name": "Mikha",
     "book_index": 22,
+    "category_id": 1,
     "chapter_count": 7,
     "chapters": [
       {
@@ -65199,6 +65222,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "nach",
     "hebrew_book_name": "Nachum",
     "book_index": 23,
+    "category_id": 1,
     "chapter_count": 3,
     "chapters": [
       {
@@ -65421,6 +65445,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "tzep",
     "hebrew_book_name": "Tzephanyah",
     "book_index": 24,
+    "category_id": 1,
     "chapter_count": 3,
     "chapters": [
       {
@@ -65667,6 +65692,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "chab",
     "hebrew_book_name": "Chabakook",
     "book_index": 25,
+    "category_id": 1,
     "chapter_count": 3,
     "chapters": [
       {
@@ -65925,6 +65951,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "chag",
     "hebrew_book_name": "Chaggai",
     "book_index": 26,
+    "category_id": 1,
     "chapter_count": 2,
     "chapters": [
       {
@@ -66103,6 +66130,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "zech",
     "hebrew_book_name": "Zecharyah",
     "book_index": 27,
+    "category_id": 1,
     "chapter_count": 14,
     "chapters": [
       {
@@ -67069,6 +67097,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "mala",
     "hebrew_book_name": "Malaki",
     "book_index": 28,
+    "category_id": 1,
     "chapter_count": 4,
     "chapters": [
       {
@@ -67331,6 +67360,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "tahi",
     "hebrew_book_name": "Tahillim",
     "book_index": 29,
+    "category_id": 1,
     "chapter_count": 155,
     "chapters": [
       {
@@ -78649,6 +78679,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "mish",
     "hebrew_book_name": "Mishle",
     "book_index": 30,
+    "category_id": 1,
     "chapter_count": 31,
     "chapters": [
       {
@@ -82567,6 +82598,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "ayub",
     "hebrew_book_name": "Ayub",
     "book_index": 31,
+    "category_id": 1,
     "chapter_count": 42,
     "chapters": [
       {
@@ -87193,6 +87225,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Shir",
     "hebrew_book_name": "Shir haShirim",
     "book_index": 32,
+    "category_id": 1,
     "chapter_count": 8,
     "chapters": [
       {
@@ -87735,6 +87768,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "echa",
     "hebrew_book_name": "Echah",
     "book_index": 33,
+    "category_id": 1,
     "chapter_count": 5,
     "chapters": [
       {
@@ -88401,6 +88435,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "kohe",
     "hebrew_book_name": "Koheleth",
     "book_index": 34,
+    "category_id": 1,
     "chapter_count": 12,
     "chapters": [
       {
@@ -89395,6 +89430,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "hada",
     "hebrew_book_name": "Hadasah",
     "book_index": 35,
+    "category_id": 1,
     "chapter_count": 10,
     "chapters": [
       {
@@ -90153,6 +90189,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "ezra",
     "hebrew_book_name": "Ezrah",
     "book_index": 36,
+    "category_id": 1,
     "chapter_count": 10,
     "chapters": [
       {
@@ -91363,6 +91400,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "nech",
     "hebrew_book_name": "Nechemyah",
     "book_index": 37,
+    "category_id": 1,
     "chapter_count": 13,
     "chapters": [
       {
@@ -93101,6 +93139,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Adiv",
     "hebrew_book_name": "DIvre HaYamim Alef",
     "book_index": 38,
+    "category_id": 1,
     "chapter_count": 29,
     "chapters": [
       {
@@ -97111,6 +97150,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Bdiv",
     "hebrew_book_name": "DIvre HaYamim Bet",
     "book_index": 39,
+    "category_id": 1,
     "chapter_count": 36,
     "chapters": [
       {
@@ -100697,6 +100737,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "mati",
     "hebrew_book_name": "Matityahu",
     "book_index": 40,
+    "category_id": 2,
     "chapter_count": 28,
     "chapters": [
       {
@@ -105215,6 +105256,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Yocm",
     "hebrew_book_name": "Yochanan Mosha",
     "book_index": 41,
+    "category_id": 2,
     "chapter_count": 16,
     "chapters": [
       {
@@ -108065,6 +108107,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Luka",
     "hebrew_book_name": "Luka",
     "book_index": 42,
+    "category_id": 2,
     "chapter_count": 24,
     "chapters": [
       {
@@ -112871,6 +112914,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yoch",
     "hebrew_book_name": "Yochanan",
     "book_index": 43,
+    "category_id": 2,
     "chapter_count": 21,
     "chapters": [
       {
@@ -116565,6 +116609,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "maas",
     "hebrew_book_name": "Maaseh Ruach Hachodesh",
     "book_index": 44,
+    "category_id": 2,
     "chapter_count": 28,
     "chapters": [
       {
@@ -120827,6 +120872,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yaaq",
     "hebrew_book_name": "Yaaqov",
     "book_index": 45,
+    "category_id": 2,
     "chapter_count": 5,
     "chapters": [
       {
@@ -121306,9 +121352,10 @@ export const BOOKS_DATA: VersePickerBook[] = [
   {
     "book_id": 46,
     "book_name": "Hebrews",
-    "book_abbr": null,
+    "book_abbr": "Ivri",
     "hebrew_book_name": "Avrim",
     "book_index": 46,
+    "category_id": 2,
     "chapter_count": 13,
     "chapters": [
       {
@@ -122635,6 +122682,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "akep",
     "hebrew_book_name": "Kepha Aleph",
     "book_index": 47,
+    "category_id": 2,
     "chapter_count": 5,
     "chapters": [
       {
@@ -123105,6 +123153,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "bkep",
     "hebrew_book_name": "Kepha Bet",
     "book_index": 48,
+    "category_id": 2,
     "chapter_count": 3,
     "chapters": [
       {
@@ -123383,6 +123432,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Ayoc",
     "hebrew_book_name": "Yochanan Aleph",
     "book_index": 49,
+    "category_id": 2,
     "chapter_count": 5,
     "chapters": [
       {
@@ -123853,6 +123903,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Byoc",
     "hebrew_book_name": "Yochanan Bet",
     "book_index": 50,
+    "category_id": 2,
     "chapter_count": 1,
     "chapters": [
       {
@@ -123923,6 +123974,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Gyoc",
     "hebrew_book_name": "Yochanan Gimel",
     "book_index": 51,
+    "category_id": 2,
     "chapter_count": 1,
     "chapters": [
       {
@@ -123997,6 +124049,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "yhud",
     "hebrew_book_name": "Yahudah",
     "book_index": 52,
+    "category_id": 2,
     "chapter_count": 1,
     "chapters": [
       {
@@ -124115,6 +124168,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "romi",
     "hebrew_book_name": "Romiyah",
     "book_index": 53,
+    "category_id": 2,
     "chapter_count": 16,
     "chapters": [
       {
@@ -125985,6 +126039,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Aqor",
     "hebrew_book_name": "Qorintyah Aleph",
     "book_index": 54,
+    "category_id": 2,
     "chapter_count": 16,
     "chapters": [
       {
@@ -127871,6 +127926,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Bqor",
     "hebrew_book_name": "Qorintyah Bet",
     "book_index": 55,
+    "category_id": 2,
     "chapter_count": 13,
     "chapters": [
       {
@@ -129013,6 +129069,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "galu",
     "hebrew_book_name": "Galutyah",
     "book_index": 56,
+    "category_id": 2,
     "chapter_count": 6,
     "chapters": [
       {
@@ -129667,6 +129724,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Ephs",
     "hebrew_book_name": "Ephsiyah",
     "book_index": 57,
+    "category_id": 2,
     "chapter_count": 6,
     "chapters": [
       {
@@ -130345,6 +130403,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Phyl",
     "hebrew_book_name": "Phylypsiyah",
     "book_index": 58,
+    "category_id": 2,
     "chapter_count": 4,
     "chapters": [
       {
@@ -130803,6 +130862,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Qole",
     "hebrew_book_name": "Qolesayah",
     "book_index": 59,
+    "category_id": 2,
     "chapter_count": 4,
     "chapters": [
       {
@@ -131225,6 +131285,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Ates",
     "hebrew_book_name": "Tesloniqyah Aleph",
     "book_index": 60,
+    "category_id": 2,
     "chapter_count": 5,
     "chapters": [
       {
@@ -131631,6 +131692,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Btes",
     "hebrew_book_name": "Tesloniqyah Bet",
     "book_index": 61,
+    "category_id": 2,
     "chapter_count": 3,
     "chapters": [
       {
@@ -131853,6 +131915,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Phil",
     "hebrew_book_name": "Phileymon",
     "book_index": 62,
+    "category_id": 2,
     "chapter_count": 1,
     "chapters": [
       {
@@ -131971,6 +132034,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": "Timtheous Alef",
     "book_index": 63,
+    "category_id": 2,
     "chapter_count": 6,
     "chapters": [
       {
@@ -132481,6 +132545,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": "Timtheous Bet",
     "book_index": 64,
+    "category_id": 2,
     "chapter_count": 4,
     "chapters": [
       {
@@ -132855,6 +132920,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "teit",
     "hebrew_book_name": "Teitus",
     "book_index": 65,
+    "category_id": 2,
     "chapter_count": 3,
     "chapters": [
       {
@@ -133073,6 +133139,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Sodo",
     "hebrew_book_name": "Sodot",
     "book_index": 66,
+    "category_id": 2,
     "chapter_count": 22,
     "chapters": [
       {
@@ -134875,6 +134942,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Baru",
     "hebrew_book_name": "Baruch",
     "book_index": 67,
+    "category_id": 3,
     "chapter_count": 6,
     "chapters": [
       {
@@ -135785,6 +135853,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 68,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   },
@@ -135794,6 +135863,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 69,
+    "category_id": 3,
     "chapter_count": 1,
     "chapters": [
       {
@@ -135980,6 +136050,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 70,
+    "category_id": 3,
     "chapter_count": 1,
     "chapters": [
       {
@@ -136270,6 +136341,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 71,
+    "category_id": 3,
     "chapter_count": 1,
     "chapters": [
       {
@@ -136544,6 +136616,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 72,
+    "category_id": 3,
     "chapter_count": 51,
     "chapters": [
       {
@@ -142498,6 +142571,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 73,
+    "category_id": 3,
     "chapter_count": 14,
     "chapters": [
       {
@@ -143568,6 +143642,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 74,
+    "category_id": 3,
     "chapter_count": 16,
     "chapters": [
       {
@@ -144862,6 +144937,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 75,
+    "category_id": 3,
     "chapter_count": 19,
     "chapters": [
       {
@@ -146768,6 +146844,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 76,
+    "category_id": 3,
     "chapter_count": 1,
     "chapters": [
       {
@@ -146846,6 +146923,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Dida",
     "hebrew_book_name": null,
     "book_index": 77,
+    "category_id": 3,
     "chapter_count": 16,
     "chapters": [
       {
@@ -147380,6 +147458,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Barn",
     "hebrew_book_name": null,
     "book_index": 78,
+    "category_id": 3,
     "chapter_count": 21,
     "chapters": [
       {
@@ -148230,6 +148309,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Clem",
     "hebrew_book_name": null,
     "book_index": 79,
+    "category_id": 3,
     "chapter_count": 65,
     "chapters": [
       {
@@ -150232,6 +150312,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Enoc",
     "hebrew_book_name": null,
     "book_index": 80,
+    "category_id": 3,
     "chapter_count": 109,
     "chapters": [
       {
@@ -155426,6 +155507,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": "Jubi",
     "hebrew_book_name": null,
     "book_index": 81,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   },
@@ -155435,6 +155517,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 82,
+    "category_id": 3,
     "chapter_count": 8,
     "chapters": [
       {
@@ -155541,6 +155624,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 83,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   },
@@ -155550,6 +155634,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 84,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   },
@@ -155559,6 +155644,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 85,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   },
@@ -155568,6 +155654,7 @@ export const BOOKS_DATA: VersePickerBook[] = [
     "book_abbr": null,
     "hebrew_book_name": null,
     "book_index": 86,
+    "category_id": 3,
     "chapter_count": 0,
     "chapters": []
   }
