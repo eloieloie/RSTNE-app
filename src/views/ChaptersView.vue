@@ -429,32 +429,6 @@ const displayChapterNumber = computed(() => {
   return selectedChapter.value?.chapter_number || '';
 });
 
-const displayVerseIndex = computed(() => {
-  if (showVersePicker.value && previewVerseId.value) {
-    console.log('Looking for verse ID:', previewVerseId.value);
-    // Find verse index from loaded chapters first
-    for (const [chapterId, chapterData] of loadedChapters.value.entries()) {
-      const verse = chapterData.verses.find(v => v.verse_id === previewVerseId.value);
-      if (verse) {
-        console.log('Found in loaded chapters:', verse.verse_index);
-        return String(verse.verse_index || 1);
-      }
-    }
-    // If not found in loaded chapters, try from BOOKS_DATA
-    for (const bookData of BOOKS_DATA) {
-      for (const chapterData of bookData.chapters) {
-        const verse = chapterData.verse_ids.find(v => v.verse_id === previewVerseId.value);
-        if (verse) {
-          console.log('Found in BOOKS_DATA:', verse.verse_index);
-          return String(verse.verse_index);
-        }
-      }
-    }
-    console.log('Verse not found, defaulting to 1');
-  }
-  return getCurrentVerseIndex();
-});
-
 // Ordered loaded chapters for rendering
 const orderedLoadedChapters = computed(() => {
   const sorted = Array.from(loadedChapters.value.values()).sort((a, b) => {
@@ -681,18 +655,6 @@ function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: num
   previewBookId.value = bookId;
   previewChapterId.value = chapterId;
   previewVerseId.value = verseId;
-}
-
-// Get current visible verse index for display
-function getCurrentVerseIndex(): string {
-  // Get the first verse of the currently selected chapter
-  if (!selectedChapterId.value) return '1';
-  
-  const chapterData = loadedChapters.value.get(selectedChapterId.value);
-  if (chapterData && chapterData.verses.length > 0) {
-    return String(chapterData.verses[0].verse_index || 1);
-  }
-  return '1';
 }
 
 // Navigate to verse (for cross-references)

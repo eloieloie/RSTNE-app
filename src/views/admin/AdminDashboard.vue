@@ -23,6 +23,15 @@
           Manage Chapters
         </router-link>
       </div>
+
+      <div class="dashboard-card">
+        <div class="card-icon">🔍</div>
+        <h2>Find & Replace</h2>
+        <p>Search and replace words in verses across all books</p>
+        <router-link to="/admin/find-replace" class="action-btn">
+          Find & Replace
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

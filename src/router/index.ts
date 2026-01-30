@@ -5,6 +5,7 @@ import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ManageBooks from '@/views/admin/ManageBooks.vue';
 import ManageChapters from '@/views/admin/ManageChapters.vue';
 import ChapterEditor from '@/views/admin/ChapterEditor.vue';
+import FindReplace from '@/views/admin/FindReplace.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,11 @@ const router = createRouter({
       path: '/admin/chapters/:id',
       name: 'chapter-editor',
       component: ChapterEditor
+    },
+    {
+      path: '/admin/find-replace',
+      name: 'find-replace',
+      component: FindReplace
     },
     {
       path: '/chapters/:id',

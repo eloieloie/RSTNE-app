@@ -453,6 +453,164 @@ app.get("/api/chapters/:id/verses", async (req, res) => {
   }
 });
 
+// Search for text in verses (for find & replace) - MUST be before /api/verses/:id
+app.get("/api/verses/search-text", async (req, res) => {
+  try {
+    const {searchWord, searchInEnglish, searchInTelugu, caseSensitive} = req.query;
+
+    if (!searchWord) {
+      return res.status(400).json({error: "Search word is required"});
+    }
+
+    const results = [];
+    const searchInEng = searchInEnglish === "true";
+    const searchInTel = searchInTelugu === "true";
+    const isCaseSensitive = caseSensitive === "true";
+
+    // Build SQL query based on options
+    const whereConditions = [];
+    if (searchInEng) {
+      if (isCaseSensitive) {
+        whereConditions.push("BINARY v.verse LIKE ?");
+      } else {
+        whereConditions.push("v.verse LIKE ?");
+      }
+    }
+    if (searchInTel) {
+      if (isCaseSensitive) {
+        whereConditions.push("BINARY v.telugu_verse LIKE ?");
+      } else {
+        whereConditions.push("v.telugu_verse LIKE ?");
+      }
+    }
+
+    if (whereConditions.length === 0) {
+      return res.json([]);
+    }
+
+    const searchPattern = `%${searchWord}%`;
+    const params = [];
+    const fieldsToCheck = [];
+
+    if (searchInEng) {
+      params.push(searchPattern);
+      fieldsToCheck.push("verse");
+    }
+    if (searchInTel) {
+      params.push(searchPattern);
+      fieldsToCheck.push("telugu_verse");
+    }
+
+    const query = `
+      SELECT v.verse_id, v.verse, v.telugu_verse, v.verse_index,
+             c.chapter_number, b.book_name
+      FROM verses_tbl v
+      INNER JOIN chapters_tbl c ON v.chapter_id = c.chapter_id
+      INNER JOIN books_tbl b ON c.book_id = b.book_id
+      WHERE ${whereConditions.join(" OR ")}
+      ORDER BY b.book_index, CAST(c.chapter_number AS UNSIGNED), v.verse_index
+    `;
+
+    const [verses] = await pool.execute(query, params);
+
+    // Separate results by field (verse or telugu_verse)
+    verses.forEach((verse) => {
+      if (searchInEng && verse.verse) {
+        const matches = isCaseSensitive ?
+          verse.verse.includes(searchWord) :
+          verse.verse.toLowerCase().includes(searchWord.toLowerCase());
+
+        if (matches) {
+          results.push({
+            verse_id: verse.verse_id,
+            book_name: verse.book_name,
+            chapter_number: verse.chapter_number,
+            verse_index: verse.verse_index,
+            content: verse.verse,
+            field: "verse",
+          });
+        }
+      }
+
+      if (searchInTel && verse.telugu_verse) {
+        const matches = isCaseSensitive ?
+          verse.telugu_verse.includes(searchWord) :
+          verse.telugu_verse.toLowerCase().includes(searchWord.toLowerCase());
+
+        if (matches) {
+          results.push({
+            verse_id: verse.verse_id,
+            book_name: verse.book_name,
+            chapter_number: verse.chapter_number,
+            verse_index: verse.verse_index,
+            content: verse.telugu_verse,
+            field: "telugu_verse",
+          });
+        }
+      }
+    });
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error searching verses:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Replace text in verses - MUST be before /api/verses/:id
+app.post("/api/verses/replace-text", async (req, res) => {
+  try {
+    const {searchWord, replaceWord, verseIds, caseSensitive} = req.body;
+
+    if (!searchWord || !replaceWord || !verseIds || !Array.isArray(verseIds)) {
+      return res.status(400).json({error: "Invalid request data"});
+    }
+
+    let replacedCount = 0;
+
+    for (const item of verseIds) {
+      const {verse_id, field} = item;
+
+      // Get current verse content
+      const [verses] = await pool.execute(
+          `SELECT ${field} FROM verses_tbl WHERE verse_id = ?`,
+          [verse_id],
+      );
+
+      if (verses.length === 0) continue;
+
+      const currentContent = verses[0][field];
+      if (!currentContent) continue;
+
+      // Perform replacement
+      let newContent;
+      if (caseSensitive) {
+        newContent = currentContent.split(searchWord).join(replaceWord);
+      } else {
+        const regex = new RegExp(searchWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+        newContent = currentContent.replace(regex, replaceWord);
+      }
+
+      // Update verse if content changed
+      if (newContent !== currentContent) {
+        await pool.execute(
+            `UPDATE verses_tbl SET ${field} = ? WHERE verse_id = ?`,
+            [newContent, verse_id],
+        );
+        replacedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      replacedCount,
+    });
+  } catch (error) {
+    console.error("Error replacing text:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
 // Get verse by ID
 app.get("/api/verses/:id", async (req, res) => {
   try {
