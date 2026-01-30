@@ -23,7 +23,7 @@
               <span class="book-name">{{ displayBookName }}</span>
             </div>
             <span v-if="displayChapterNumber" class="chapter-verse">
-              {{ displayChapterNumber }}:{{ displayVerseIndex }}
+              {{ displayChapterNumber }}
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -1540,9 +1540,6 @@ onUnmounted(() => {
 
 <style scoped>
 .chapters-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
   min-height: 100vh;
 }
 
@@ -1550,13 +1547,18 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.content-layout {
+  width: 100%;
+}
+
 .top-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
   background: white;
   padding: 0.5rem 1rem;
-  margin-bottom: 1rem;
   border-bottom: 2px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -1564,6 +1566,21 @@ onUnmounted(() => {
   gap: 0.5rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.top-nav > * {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.chapter-content {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 80px auto 2rem auto;
+  max-width: 1400px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 400px;
 }
 
 .back-link {
@@ -1717,6 +1734,8 @@ onUnmounted(() => {
   background: white;
   border-radius: 8px;
   padding: 2rem;
+  margin: 0 auto 2rem auto;
+  max-width: 1400px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-height: 400px;
 }
@@ -1771,7 +1790,7 @@ onUnmounted(() => {
 }
 
 .book-header-section {
-  margin-top: 0;
+  margin-top: 100px;
   border-bottom: 4px solid #42b983;
 }
 
@@ -1861,6 +1880,15 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .top-nav {
+    padding: 0.5rem;
+  }
+  
+  .chapter-content {
+    padding: 1rem;
+    margin: 0 0.5rem 1rem 0.5rem;
+  }
+  
   .chapter-nav-buttons {
     right: 0.5rem;
   }
@@ -2322,6 +2350,10 @@ onUnmounted(() => {
   .book-footer-section {
     padding: 1rem;
     margin: 1rem 0;
+  }
+
+  .book-header-section {
+    margin-top: 100px;
   }
 
   .section-title {

@@ -63,22 +63,6 @@
               >
                 📝 Notes
               </button>
-              <button 
-                v-if="editingVerseId !== verse.verse_id"
-                @click="toggleLinks(verse.verse_id)" 
-                class="btn btn-sm btn-secondary btn-links"
-                title="Link verses"
-              >
-                🔗 Links
-              </button>
-              <button 
-                v-if="editingVerseId !== verse.verse_id"
-                @click="toggleTags(verse.verse_id)" 
-                class="btn btn-sm btn-warning btn-tags"
-                title="Manage tags"
-              >
-                🏷️ Tags
-              </button>
               <div v-if="editingVerseId === verse.verse_id" class="edit-actions">
                 <button @click="saveVerse(verse.verse_id)" class="btn btn-sm btn-success btn-save">💾 Save</button>
                 <button @click="cancelEdit" class="btn btn-sm btn-secondary btn-cancel">❌ Cancel</button>
@@ -96,14 +80,6 @@
                 <div v-if="note.note_title" class="note-display-title">{{ note.note_title }}</div>
                 <div class="note-display-content" v-html="note.note_content"></div>
               </div>
-            </div>
-            
-            <!-- Always visible links -->
-            <div v-if="verseLinks[verse.verse_id]?.length > 0" class="verse-links-display">
-              <span class="links-label">Related verses:</span>
-              <span v-for="link in verseLinks[verse.verse_id]" :key="link.link_id" class="link-display-badge">
-                Verse #{{ link.target_verse_id }}
-              </span>
             </div>
             
             <!-- Notes Display -->
@@ -169,99 +145,6 @@
                 <div class="note-form-actions">
                   <button @click="saveNote(verse.verse_id)" class="btn btn-sm btn-primary btn-save-note">Save Note</button>
                   <button @click="cancelAddNote" class="btn btn-sm btn-secondary btn-cancel-note">Cancel</button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Links Section -->
-            <div v-if="showLinksForVerse === verse.verse_id" class="links-section">
-              <div class="section-header">
-                <h4>Linked Verses</h4>
-                <button @click="startAddLink(verse.verse_id)" class="btn btn-sm btn-success btn-add-link">+ Add Link</button>
-              </div>
-              
-              <div v-if="loadingLinks" class="loading-links">Loading links...</div>
-              
-              <div v-else-if="verseLinks[verse.verse_id]?.length > 0" class="links-list">
-                <div v-for="link in verseLinks[verse.verse_id]" :key="link.link_id" class="link-item">
-                  <span>Verse #{{ link.target_verse_id }}</span>
-                  <button 
-                    @click="deleteVerseLinkHandler(verse.verse_id, link.link_id)" 
-                    class="btn btn-sm btn-danger btn-delete-link"
-                    title="Delete link"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-              
-              <div v-else class="no-links">No linked verses yet.</div>
-              
-              <!-- Add Link Form -->
-              <div v-if="addingLinkToVerse === verse.verse_id" class="add-link-form">
-                <input 
-                  v-model="linkSearch" 
-                  type="text" 
-                  placeholder="Search verses to link..."
-                  @input="searchVersesToLink"
-                  class="link-search-input"
-                />
-                <div v-if="searchResults.length > 0" class="search-results">
-                  <div 
-                    v-for="result in searchResults" 
-                    :key="result.verse_id" 
-                    @click="selectVerseToLink(verse.verse_id, result.verse_id)"
-                    class="search-result-item"
-                  >
-                    <div class="search-result-ref">{{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}</div>
-                    <div class="search-result-text">{{ result.verse }}</div>
-                  </div>
-                </div>
-                <button @click="cancelAddLink" class="btn btn-sm btn-secondary btn-cancel-link">Cancel</button>
-              </div>
-            </div>
-            
-            <!-- Tags Section -->
-            <div v-if="showTagsForVerse === verse.verse_id" class="tags-section">
-              <div class="section-header">
-                <h4>Tags</h4>
-                <button @click="startAddTag(verse.verse_id)" class="btn btn-sm btn-success btn-add-tag">+ Add Tag</button>
-              </div>
-              
-              <div v-if="loadingTags" class="loading-tags">Loading tags...</div>
-              
-              <div v-else-if="verseTags[verse.verse_id]?.length > 0" class="tags-list">
-                <span v-for="tag in verseTags[verse.verse_id]" :key="tag.tag_id" class="tag-badge">
-                  {{ tag.tag_name }}
-                </span>
-              </div>
-              
-              <div v-else class="no-tags">No tags yet.</div>
-              
-              <!-- Add Tag Form -->
-              <div v-if="addingTagToVerse === verse.verse_id" class="add-tag-form">
-                <select v-model="selectedTagId" class="tag-select">
-                  <option value="">Select existing tag...</option>
-                  <option v-for="tag in allTags" :key="tag.tag_id" :value="tag.tag_id">
-                    {{ tag.tag_name }}
-                  </option>
-                </select>
-                <div class="or-divider">OR</div>
-                <input 
-                  v-model="newTag.name" 
-                  type="text" 
-                  placeholder="Create new tag name"
-                  class="new-tag-input"
-                />
-                <input 
-                  v-model="newTag.description" 
-                  type="text" 
-                  placeholder="Tag description (optional)"
-                  class="new-tag-desc-input"
-                />
-                <div class="tag-form-actions">
-                  <button @click="saveTag(verse.verse_id)" class="btn btn-sm btn-primary btn-save-tag">Save Tag</button>
-                  <button @click="cancelAddTag" class="btn btn-sm btn-secondary btn-cancel-tag">Cancel</button>
                 </div>
               </div>
             </div>
@@ -338,10 +221,9 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import { getChapterById } from '@/api/chapters';
-import { getVersesByChapterId, updateVerse, type VerseWithLinks, type VerseLinkData, type VerseNoteData } from '@/api/verses';
+import { getVersesByChapterId, updateVerse, type VerseWithLinks, type VerseNoteData } from '@/api/verses';
 import { getNotesByVerseId, createNote, linkNoteToVerse, unlinkNoteFromVerse, updateNote } from '@/api/notes';
-import { createVerseLink, getTagsByVerseId, getAllTags, createTag, linkTagToVerse, searchVerses, deleteVerseLink as deleteLink } from '@/api/links-tags';
-import type { Book, Chapter, Verse, VerseUpdate, Tag } from '@/utils/collectionReferences';
+import type { Book, Chapter, Verse, VerseUpdate } from '@/utils/collectionReferences';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '@/assets/fonts/fonts.css';
@@ -381,29 +263,7 @@ const selectingVerseRange = ref<boolean>(false);
 const selectedVerseIds = ref<number[]>([]);
 const rangeNote = ref<{ title: string; content: string }>({ title: '', content: '' });
 
-// Links management
-const showLinksForVerse = ref<number | null>(null);
-const verseLinks = ref<Record<number, VerseLinkData[]>>({});
-const loadingLinks = ref(false);
-const addingLinkToVerse = ref<number | null>(null);
-const linkSearch = ref('');
-const searchResults = ref<Array<{ 
-  verse_id: number, 
-  chapter_id: number, 
-  verse_index: number, 
-  verse: string,
-  chapter_number: string,
-  book_name: string 
-}>>([]);
 
-// Tags management
-const showTagsForVerse = ref<number | null>(null);
-const verseTags = ref<Record<number, Tag[]>>({});
-const loadingTags = ref(false);
-const addingTagToVerse = ref<number | null>(null);
-const allTags = ref<Tag[]>([]);
-const selectedTagId = ref<string>('');
-const newTag = ref({ name: '', description: '' });
 
 const chapterTitle = computed(() => {
   if (!chapter.value) return 'Chapter Editor';
@@ -448,11 +308,8 @@ async function loadData(chapterId: number) {
     chapter.value = chapterData;
     verses.value = versesData;
     
-    // Load notes and links for all verses
-    await Promise.all([
-      loadAllNotesForVerses(),
-      loadAllLinksForVerses()
-    ]);
+    // Load notes for all verses
+    await loadAllNotesForVerses();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load data';
   } finally {
@@ -885,168 +742,7 @@ async function saveNote(verseId: number) {
   }
 }
 
-// Links functions
-async function toggleLinks(verseId: number) {
-  if (showLinksForVerse.value === verseId) {
-    showLinksForVerse.value = null;
-    return;
-  }
-  
-  showLinksForVerse.value = verseId;
-  await loadLinksForVerse(verseId);
-}
 
-async function loadLinksForVerse(verseId: number) {
-  // This function is no longer used - we reload all verse data after changes
-  // Keep for compatibility but don't modify verseLinks here
-  console.log('Loading links for verse', verseId);
-}
-
-async function loadAllLinksForVerses() {
-  // Extract links from verses data (already loaded from backend)
-  for (const verse of verses.value) {
-    if (verse.links && verse.links.length > 0) {
-      verseLinks.value[verse.verse_id] = verse.links;
-    }
-  }
-}
-
-async function deleteVerseLinkHandler(_sourceVerseId: number, linkId: number) {
-  if (!confirm('Are you sure you want to delete this link?')) {
-    return;
-  }
-  
-  try {
-    await deleteLink(linkId);
-    // Reload all verse data to get updated notes/links
-    if (chapter.value) {
-      const versesData = await getVersesByChapterId(chapter.value.chapter_id);
-      verses.value = versesData;
-      await loadAllLinksForVerses();
-    }
-  } catch (e) {
-    alert('Failed to delete link: ' + (e instanceof Error ? e.message : 'Unknown error'));
-  }
-}
-
-function startAddLink(verseId: number) {
-  addingLinkToVerse.value = verseId;
-  linkSearch.value = '';
-  searchResults.value = [];
-}
-
-function cancelAddLink() {
-  addingLinkToVerse.value = null;
-  linkSearch.value = '';
-  searchResults.value = [];
-}
-
-async function searchVersesToLink() {
-  if (linkSearch.value.length < 3) {
-    searchResults.value = [];
-    return;
-  }
-  
-  try {
-    searchResults.value = await searchVerses(linkSearch.value);
-  } catch (e) {
-    console.error('Failed to search verses:', e);
-  }
-}
-
-async function selectVerseToLink(sourceVerseId: number, targetVerseId: number) {
-  try {
-    await createVerseLink({
-      source_verse_id: sourceVerseId,
-      target_verse_id: targetVerseId
-    });
-    
-    await loadLinksForVerse(sourceVerseId);
-    cancelAddLink();
-  } catch (e) {
-    alert('Failed to link verse: ' + (e instanceof Error ? e.message : 'Unknown error'));
-  }
-}
-
-// Tags functions
-async function toggleTags(verseId: number) {
-  if (showTagsForVerse.value === verseId) {
-    showTagsForVerse.value = null;
-    return;
-  }
-  
-  showTagsForVerse.value = verseId;
-  await loadTagsForVerse(verseId);
-  await loadAllTags();
-}
-
-async function loadTagsForVerse(verseId: number) {
-  try {
-    loadingTags.value = true;
-    const tags = await getTagsByVerseId(verseId);
-    verseTags.value[verseId] = tags;
-  } catch (e) {
-    console.error('Failed to load tags:', e);
-  } finally {
-    loadingTags.value = false;
-  }
-}
-
-async function loadAllTags() {
-  try {
-    allTags.value = await getAllTags();
-  } catch (e) {
-    console.error('Failed to load all tags:', e);
-  }
-}
-
-function startAddTag(verseId: number) {
-  addingTagToVerse.value = verseId;
-  selectedTagId.value = '';
-  newTag.value = { name: '', description: '' };
-}
-
-function cancelAddTag() {
-  addingTagToVerse.value = null;
-  selectedTagId.value = '';
-  newTag.value = { name: '', description: '' };
-}
-
-async function saveTag(verseId: number) {
-  let tagIdToLink = selectedTagId.value;
-  
-  // Create new tag if name is provided
-  if (newTag.value.name.trim()) {
-    try {
-      const result = await createTag({
-        tag_name: newTag.value.name,
-        tag_description: newTag.value.description || undefined
-      });
-      tagIdToLink = String(result.tag_id);
-    } catch (e) {
-      alert('Failed to create tag: ' + (e instanceof Error ? e.message : 'Unknown error'));
-      return;
-    }
-  }
-  
-  if (!tagIdToLink) {
-    alert('Please select a tag or create a new one');
-    return;
-  }
-  
-  try {
-    await linkTagToVerse({
-      verse_id: verseId,
-      tag_id: Number(tagIdToLink)
-    });
-    
-    await loadTagsForVerse(verseId);
-    await loadAllTags();
-    cancelAddTag();
-  } catch (e) {
-    alert('Failed to link tag: ' + (e instanceof Error ? e.message : 'Unknown error'));
-  }
-}
 </script>
 
 <style scoped>
@@ -1206,23 +902,6 @@ async function saveTag(verseId: number) {
 
 .btn-notes:hover {
   background: #218838;
-}
-
-.btn-links {
-  background: #17a2b8;
-}
-
-.btn-links:hover {
-  background: #138496;
-}
-
-.btn-tags {
-  background: #ffc107;
-  color: #333;
-}
-
-.btn-tags:hover {
-  background: #e0a800;
 }
 
 .edit-actions {
@@ -1545,202 +1224,6 @@ async function saveTag(verseId: number) {
   background: #5a6268;
 }
 
-/* Links Section */
-.links-section, .tags-section {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-left: 3px solid #17a2b8;
-}
 
-.tags-section {
-  border-left-color: #ffc107;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.section-header h4 {
-  margin: 0;
-  color: #333;
-  font-size: 0.875rem;
-}
-
-.btn-add-link, .btn-add-tag {
-  padding: 0.25rem 0.5rem;
-  background: #17a2b8;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.btn-add-tag {
-  background: #ffc107;
-  color: #333;
-}
-
-.btn-add-link:hover {
-  background: #138496;
-}
-
-.btn-add-tag:hover {
-  background: #e0a800;
-}
-
-.loading-links, .no-links, .loading-tags, .no-tags {
-  text-align: center;
-  padding: 0.75rem;
-  color: #999;
-  font-size: 0.8rem;
-}
-
-.links-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.link-item {
-  background: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  font-size: 0.8rem;
-  color: #17a2b8;
-  font-weight: 600;
-}
-
-.add-link-form {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-
-.link-search-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  margin-bottom: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.search-results {
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.search-result-item {
-  padding: 0.5rem;
-  cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.search-result-item:hover {
-  background: #f8f9fa;
-}
-
-.search-result-ref {
-  font-weight: 600;
-  color: #17a2b8;
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
-}
-
-.search-result-text {
-  font-size: 0.75rem;
-  color: #555;
-}
-
-.btn-cancel-link {
-  padding: 0.375rem 0.75rem;
-  background: #6c757d;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-cancel-link:hover {
-  background: #5a6268;
-}
-
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.tag-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: #ffc107;
-  color: #333;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.add-tag-form {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-
-.tag-select, .new-tag-input, .new-tag-desc-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  margin-bottom: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.or-divider {
-  text-align: center;
-  color: #999;
-  font-size: 0.75rem;
-  margin: 0.5rem 0;
-}
-
-.tag-form-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-save-tag, .btn-cancel-tag {
-  padding: 0.375rem 0.75rem;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-save-tag {
-  background: #ffc107;
-  color: #333;
-}
-
-.btn-save-tag:hover {
-  background: #e0a800;
-}
-
-.btn-cancel-tag {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-cancel-tag:hover {
-  background: #5a6268;
-}
 </style>
 

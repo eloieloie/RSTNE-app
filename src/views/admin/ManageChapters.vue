@@ -3,7 +3,6 @@
     <header class="page-header">
       <h1>Manage Chapters</h1>
       <div class="header-actions">
-        <router-link to="/admin/chapters/new" class="btn btn-primary">+ Add New Chapter</router-link>
         <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
       </div>
     </header>
@@ -16,8 +15,17 @@
       <div v-else class="books-list">
         <div v-for="book in sortedBooks" :key="book.book_id" class="book-section">
           <template v-if="groupedChapters[book.book_id]">
-            <h2 class="book-title">{{ book.book_name }}</h2>
-            <div class="chapters-grid">
+            <div 
+              class="book-title" 
+              :class="{ 'expanded': expandedBookId === book.book_id }"
+              @click="toggleBook(book.book_id)"
+            >
+              <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-english">{{ book.book_name }}</span>
+              <span class="expand-icon">{{ expandedBookId === book.book_id ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="expandedBookId === book.book_id" class="chapters-grid">
               <router-link
                 v-for="chapter in groupedChapters[book.book_id]"
                 :key="chapter.chapter_id"
@@ -44,6 +52,11 @@ const books = ref<Book[]>([]);
 const chapters = ref<Chapter[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const expandedBookId = ref<number | null>(null);
+
+function toggleBook(bookId: number) {
+  expandedBookId.value = expandedBookId.value === bookId ? null : bookId;
+}
 
 // Sort books by book_index
 const sortedBooks = computed(() => {
@@ -200,9 +213,58 @@ function getBookName(bookId: number): string {
 }
 
 .book-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   color: #2c3e50;
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.book-title:hover {
+  background: #e9ecef;
+}
+
+.book-title.expanded {
+  background: #667eea;
+  color: white;
+}
+
+.book-title.expanded .book-hebrew,
+.book-title.expanded .book-english {
+  color: white;
+}
+
+.book-hebrew {
+  text-align: right;
+  color: #667eea;
+}
+
+.book-separator {
+  color: #999;
+  font-weight: 400;
+}
+
+.book-english {
+  text-align: left;
+  color: #2c3e50;
+}
+
+.expand-icon {
+  margin-left: auto;
+  font-size: 1rem;
+  color: #667eea;
+}
+
+.book-title.expanded .expand-icon {
+  color: white;
 }
 
 .chapters-grid {
@@ -239,5 +301,92 @@ function getBookName(bookId: number): string {
 
 .chapter-link:hover .chapter-number {
   color: white;
+}
+
+@media (max-width: 768px) {
+  .manage-chapters {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .chapters-container {
+    padding: 1rem;
+  }
+
+  .book-title {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .book-hebrew,
+  .book-english {
+    font-size: 1rem;
+  }
+
+  .expand-icon {
+    font-size: 0.875rem;
+  }
+
+  .chapters-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .chapter-link {
+    padding: 0.75rem;
+    min-height: 50px;
+  }
+
+  .chapter-number {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .manage-chapters {
+    padding: 0.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .back-link {
+    font-size: 0.875rem;
+  }
+
+  .chapters-container {
+    padding: 0.75rem;
+  }
+
+  .book-title {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+
+  .chapters-grid {
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .chapter-link {
+    padding: 0.5rem;
+    min-height: 45px;
+  }
+
+  .chapter-number {
+    font-size: 0.875rem;
+  }
 }
 </style>

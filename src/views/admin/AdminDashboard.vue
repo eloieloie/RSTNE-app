@@ -23,44 +23,11 @@
           Manage Chapters
         </router-link>
       </div>
-
-      <div class="dashboard-card">
-        <div class="card-icon">📊</div>
-        <h2>Statistics</h2>
-        <p>View library statistics and analytics</p>
-        <div class="stats">
-          <div class="stat-item">
-            <span class="stat-label">Total Books:</span>
-            <span class="stat-value">{{ stats.totalBooks }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Total Chapters:</span>
-            <span class="stat-value">{{ stats.totalChapters }}</span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-
-const stats = ref({
-  totalBooks: 0,
-  totalChapters: 0
-});
-
-onMounted(async () => {
-  try {
-    const response = await fetch('/api/stats');
-    if (response.ok) {
-      stats.value = await response.json();
-    }
-  } catch (error) {
-    console.error('Failed to load stats:', error);
-  }
-});
 </script>
 
 <style scoped>
@@ -150,29 +117,84 @@ onMounted(async () => {
   background: #5568d3;
 }
 
-.stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 1rem;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .admin-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .home-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .dashboard-card {
+    padding: 1.5rem;
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+  }
+
+  .dashboard-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-card p {
+    font-size: 0.9rem;
+  }
+
+  .action-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem 1rem;
+  }
 }
 
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
+@media (max-width: 480px) {
+  .admin-dashboard {
+    padding: 0.75rem;
+  }
 
-.stat-label {
-  color: #666;
-  font-weight: 500;
-}
+  .admin-header h1 {
+    font-size: 1.5rem;
+  }
 
-.stat-value {
-  color: #667eea;
-  font-size: 1.5rem;
-  font-weight: 700;
+  .dashboard-card {
+    padding: 1.25rem;
+  }
+
+  .card-icon {
+    font-size: 2rem;
+  }
+
+  .dashboard-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .dashboard-card p {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .action-btn {
+    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+  }
 }
 </style>

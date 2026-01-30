@@ -11,72 +11,67 @@
       <div class="verse-picker-body">
         <!-- Book Categories View -->
         <div v-if="!selectedBook" class="categories-view">
-          <!-- First Covenant / Old Testament -->
-          <div class="category-section">
+          <!-- Category Tabs -->
+          <div class="category-tabs">
             <button 
-              class="category-header"
-              @click="toggleCategory('first_covenant')"
+              class="category-tab"
+              :class="{ active: activeCategory === 'first_covenant' }"
+              @click="setActiveCategory('first_covenant')"
             >
-              <span class="category-title">תַּנַ״ךְ | First Covenant</span>
-              <span class="category-icon">{{ expandedCategories.first_covenant ? '−' : '+' }}</span>
+              First Covenant
             </button>
-            <div v-if="expandedCategories.first_covenant" class="category-books">
-              <div
-                v-for="book in oldTestamentBooks"
-                :key="book.book_id"
-                class="book-item"
-                @click="selectBook(book)"
-              >
-                <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
-                <span class="book-separator">|</span>
-                <span class="book-english">{{ book.book_name }}</span>
-              </div>
-            </div>
+            <button 
+              class="category-tab"
+              :class="{ active: activeCategory === 'new_covenant' }"
+              @click="setActiveCategory('new_covenant')"
+            >
+              New Covenant
+            </button>
+            <button 
+              class="category-tab"
+              :class="{ active: activeCategory === 'apocrypha' }"
+              @click="setActiveCategory('apocrypha')"
+            >
+              Restored Apocryphal Books
+            </button>
           </div>
 
-          <!-- New Covenant / New Testament -->
-          <div class="category-section">
-            <button 
-              class="category-header"
-              @click="toggleCategory('new_covenant')"
+          <!-- Books List -->
+          <div class="category-books">
+            <div
+              v-if="activeCategory === 'first_covenant'"
+              v-for="book in oldTestamentBooks"
+              :key="book.book_id"
+              class="book-item"
+              @click="selectBook(book)"
             >
-              <span class="category-title">בְּרִית חֲדָשָׁה | New Covenant</span>
-              <span class="category-icon">{{ expandedCategories.new_covenant ? '−' : '+' }}</span>
-            </button>
-            <div v-if="expandedCategories.new_covenant" class="category-books">
-              <div
-                v-for="book in newTestamentBooks"
-                :key="book.book_id"
-                class="book-item"
-                @click="selectBook(book)"
-              >
-                <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
-                <span class="book-separator">|</span>
-                <span class="book-english">{{ book.book_name }}</span>
-              </div>
+              <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-english">{{ book.book_name }}</span>
             </div>
-          </div>
 
-          <!-- Restored Apocryphal Books -->
-          <div class="category-section">
-            <button 
-              class="category-header"
-              @click="toggleCategory('apocrypha')"
+            <div
+              v-if="activeCategory === 'new_covenant'"
+              v-for="book in newTestamentBooks"
+              :key="book.book_id"
+              class="book-item"
+              @click="selectBook(book)"
             >
-              <span class="category-title">ספרים חיצוניים | Restored Apocryphal Books</span>
-              <span class="category-icon">{{ expandedCategories.apocrypha ? '−' : '+' }}</span>
-            </button>
-            <div v-if="expandedCategories.apocrypha" class="category-books">
-              <div
-                v-for="book in apocryphaBooks"
-                :key="book.book_id"
-                class="book-item"
-                @click="selectBook(book)"
-              >
-                <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
-                <span class="book-separator">|</span>
-                <span class="book-english">{{ book.book_name }}</span>
-              </div>
+              <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-english">{{ book.book_name }}</span>
+            </div>
+
+            <div
+              v-if="activeCategory === 'apocrypha'"
+              v-for="book in apocryphaBooks"
+              :key="book.book_id"
+              class="book-item"
+              @click="selectBook(book)"
+            >
+              <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-english">{{ book.book_name }}</span>
             </div>
           </div>
         </div>
@@ -149,11 +144,7 @@ const books = ref<Book[]>(
 
 const chapters = ref<Chapter[]>([]);
 const selectedBook = ref<Book | null>(null);
-const expandedCategories = ref({
-  first_covenant: true,
-  new_covenant: false,
-  apocrypha: false
-});
+const activeCategory = ref<'first_covenant' | 'new_covenant' | 'apocrypha'>('first_covenant');
 
 // Categorize books based on category_id from the API:
 // Category 1: "First Covenant" (Old Testament)
@@ -179,8 +170,8 @@ watch(() => props.isOpen, (isOpen) => {
   }
 });
 
-function toggleCategory(category: 'first_covenant' | 'new_covenant' | 'apocrypha') {
-  expandedCategories.value[category] = !expandedCategories.value[category];
+function setActiveCategory(category: 'first_covenant' | 'new_covenant' | 'apocrypha') {
+  activeCategory.value = category;
 }
 
 function selectBook(book: Book) {
@@ -300,51 +291,46 @@ function close() {
   gap: 1.5rem;
 }
 
-.category-section {
+.category-tabs {
+  display: flex;
+  gap: 1rem;
   background: white;
+  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
 }
 
-.category-header {
-  width: 100%;
-  background: linear-gradient(135deg, #42b983 0%, #35a373 100%);
-  color: white;
-  border: none;
-  padding: 1.25rem 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s;
-  text-align: left;
-}
-
-.category-header:hover {
-  background: linear-gradient(135deg, #3aa876 0%, #2d8a5f 100%);
-}
-
-.category-title {
+.category-tab {
   flex: 1;
+  background: #f8f9fa;
+  color: #2c3e50;
+  border: 2px solid #e0e0e0;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
 }
 
-.category-icon {
-  font-size: 1.5rem;
-  font-weight: 700;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
+.category-tab:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.category-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .category-books {
+  background: white;
   padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -492,15 +478,19 @@ function close() {
     padding: 1rem;
   }
 
-  .category-header {
-    padding: 1rem;
+  .category-tabs {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .category-tab {
+    padding: 0.875rem 1rem;
     font-size: 1rem;
   }
 
-  .category-icon {
-    font-size: 1.25rem;
-    width: 26px;
-    height: 26px;
+  .category-books {
+    padding: 0.75rem;
   }
 
   .book-item {
