@@ -1696,7 +1696,7 @@ onUnmounted(() => {
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  margin: 0 auto 2rem auto;
+  margin: 80px auto 2rem auto;
   max-width: 1400px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-height: 400px;
@@ -1848,7 +1848,7 @@ onUnmounted(() => {
   
   .chapter-content {
     padding: 1rem;
-    margin: 0 0.5rem 1rem 0.5rem;
+    margin: 80px 0.5rem 1rem 0.5rem;
   }
   
   .chapter-nav-buttons {
