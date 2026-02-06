@@ -42,6 +42,12 @@
         </nav>
 
         <main class="chapter-content">
+          <!-- Loading spinner for verse navigation -->
+          <div v-if="isNavigatingToVerseRef" class="content-loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Loading verse...</p>
+          </div>
+          
           <div v-if="chapters.length === 0" class="select-prompt">
             No chapters available for this book.
           </div>
@@ -225,12 +231,6 @@
       <button @click="handleSearch" class="context-menu-item">
         Search
       </button>
-    </div>
-
-    <!-- Loading Overlay for Verse Reference Navigation -->
-    <div v-if="isNavigatingToVerseRef" class="navigation-loading-overlay">
-      <div class="loading-spinner"></div>
-      <p>Loading verse...</p>
     </div>
 
     <!-- Settings Modal -->
@@ -1679,6 +1679,7 @@ onUnmounted(() => {
 }
 
 .chapter-content {
+  position: relative; /* For absolute positioning of content-loading-overlay */
   background: white;
   border-radius: 8px;
   padding: 2rem;
@@ -2096,8 +2097,7 @@ onUnmounted(() => {
 }
 
 /* Loading Overlays */
-.loading-overlay,
-.navigation-loading-overlay {
+.loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -2112,8 +2112,24 @@ onUnmounted(() => {
   backdrop-filter: blur(8px);
 }
 
+.content-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+}
+
 .loading-overlay p,
-.navigation-loading-overlay p {
+.content-loading-overlay p {
   color: #2c3e50;
   font-size: 18px;
   margin-top: 1.5rem;
