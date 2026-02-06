@@ -19,7 +19,7 @@
               <span class="book-name">{{ displayBookName }}</span>
             </div>
             <span v-if="displayChapterNumber" class="chapter-verse">
-              {{ displayChapterNumber }}
+              {{ displayChapterNumber }}{{ displayVerseNumber }}
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -397,6 +397,10 @@ const previewBookId = ref<number | null>(null);
 const previewChapterId = ref<number | null>(null);
 const previewVerseId = ref<number | null>(null);
 
+// Track the first visible verse at the top of the viewport
+const firstVisibleVerseIndex = ref<number | null>(null);
+const firstVisibleChapterNumber = ref<string | null>(null);
+
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
@@ -461,7 +465,18 @@ const displayChapterNumber = computed(() => {
     const previewChapter = chapters.value.find(c => c.chapter_id === previewChapterId.value);
     return previewChapter?.chapter_number || selectedChapter.value?.chapter_number || '';
   }
+  // Show the chapter number of the first visible verse if available
+  if (firstVisibleChapterNumber.value) {
+    return firstVisibleChapterNumber.value;
+  }
   return selectedChapter.value?.chapter_number || '';
+});
+
+const displayVerseNumber = computed(() => {
+  if (firstVisibleVerseIndex.value !== null) {
+    return `:${firstVisibleVerseIndex.value}`;
+  }
+  return '';
 });
 
 // Ordered loaded chapters for rendering
@@ -1076,8 +1091,45 @@ function loadPreviousChapterManually() {
   }
 }
 
+// Track the first visible verse at the top of the viewport
+function trackFirstVisibleVerse() {
+  const navHeight = 90; // Height of the fixed top nav
+  const topThreshold = navHeight + 10; // Small buffer below the nav
+  
+  // Find all verse items
+  const verseItems = document.querySelectorAll('[data-verse-id]');
+  
+  for (const verseItem of Array.from(verseItems)) {
+    const rect = verseItem.getBoundingClientRect();
+    
+    // Check if this verse is at or just below the top nav
+    if (rect.top >= topThreshold && rect.top < topThreshold + 100) {
+      const verseId = (verseItem as HTMLElement).getAttribute('data-verse-id');
+      if (verseId) {
+        // Find the verse in loaded chapters to get its index and chapter
+        for (const chapterData of loadedChapters.value.values()) {
+          const verse = chapterData.verses.find(v => v.verse_id === Number(verseId));
+          if (verse && verse.verse_index !== null) {
+            firstVisibleVerseIndex.value = verse.verse_index;
+            firstVisibleChapterNumber.value = chapterData.chapter.chapter_number;
+            return;
+          }
+        }
+      }
+    }
+    
+    // If verse is past the threshold, stop searching
+    if (rect.top > topThreshold + 100) {
+      break;
+    }
+  }
+}
+
 // Handle scroll for loading adjacent chapters
 function handleScroll() {
+  // Track first visible verse
+  trackFirstVisibleVerse();
+  
   if (isNavigatingToVerse.value || isLoadingChapter.value) {
     return;
   }
