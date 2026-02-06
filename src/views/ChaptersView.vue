@@ -133,6 +133,22 @@
                       </a>
                     </div>
                     
+                    <div v-if="showCrossReferences && verse.crossReferences && verse.crossReferences.length > 0" class="verse-cross-references">
+                      <a 
+                        v-for="crossRef in verse.crossReferences.slice(0, 10)" 
+                        :key="crossRef.cross_ref_id"
+                        href="#"
+                        class="cross-ref-badge"
+                        :title="`Go to ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
+                        @click.prevent="navigateToCrossReference(crossRef)"
+                      >
+                        {{ crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
+                      </a>
+                      <span v-if="verse.crossReferences.length > 10" class="cross-ref-more">
+                        +{{ verse.crossReferences.length - 10 }} more
+                      </span>
+                    </div>
+                    
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
                         <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
@@ -272,6 +288,15 @@
                 </button>
               </label>
               <label class="setting-item">
+                <span>Show Cross References</span>
+                <button 
+                  @click="showCrossReferences = !showCrossReferences" 
+                  :class="['toggle-switch', { active: showCrossReferences }]"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+              </label>
+              <label class="setting-item">
                 <span>Show Superscript</span>
                 <button 
                   @click="showSuperscript = !showSuperscript" 
@@ -305,6 +330,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
+import { getCrossReferences, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
@@ -347,6 +373,7 @@ interface Verse {
     note_title?: string | null;
     note_content: string;
   }>;
+  crossReferences?: CrossReferenceData[];
 }
 
 interface LoadedChapterData {
@@ -382,6 +409,7 @@ const isLoadingAdjacentChapter = ref(false);
 const showEnglish = ref(true);
 const showTelugu = ref(true);
 const showNotes = ref(true);
+const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
@@ -532,13 +560,114 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
 
   try {
     const verses = await getVersesByChapterId(chapterId);
+    
+    // Load cross-references for each verse
+    const versesWithCrossRefs = await Promise.all(
+      verses.map(async (verse) => {
+        try {
+          // Get book abbreviation from book name
+          const bookAbbr = getBookAbbreviation(book.value?.book_name || '');
+          const crossRefs = await getCrossReferences(
+            bookAbbr,
+            chapter.chapter_number,
+            String(verse.verse_index || '')
+          );
+          return {
+            ...verse,
+            crossReferences: crossRefs
+          };
+        } catch (err) {
+          console.error('Error loading cross-references for verse:', verse.verse_id, err);
+          return {
+            ...verse,
+            crossReferences: []
+          };
+        }
+      })
+    );
+    
     loadedChapters.value.set(chapterId, {
       chapter,
-      verses
+      verses: versesWithCrossRefs
     });
   } catch (err) {
     console.error('Error loading chapter verses:', err);
   }
+}
+
+// Helper function to get book abbreviation
+function getBookAbbreviation(bookName: string): string {
+  // Map full book names to abbreviations used in cross-references file
+  const bookMap: Record<string, string> = {
+    'Genesis': 'Gen',
+    'Exodus': 'Exod',
+    'Leviticus': 'Lev',
+    'Numbers': 'Num',
+    'Deuteronomy': 'Deut',
+    'Joshua': 'Josh',
+    'Judges': 'Judg',
+    'Ruth': 'Ruth',
+    '1 Samuel': '1Sam',
+    '2 Samuel': '2Sam',
+    '1 Kings': '1Kgs',
+    '2 Kings': '2Kgs',
+    '1 Chronicles': '1Chr',
+    '2 Chronicles': '2Chr',
+    'Ezra': 'Ezra',
+    'Nehemiah': 'Neh',
+    'Esther': 'Esth',
+    'Job': 'Job',
+    'Psalms': 'Ps',
+    'Proverbs': 'Prov',
+    'Ecclesiastes': 'Eccl',
+    'Song of Solomon': 'Song',
+    'Isaiah': 'Isa',
+    'Jeremiah': 'Jer',
+    'Lamentations': 'Lam',
+    'Ezekiel': 'Ezek',
+    'Daniel': 'Dan',
+    'Hosea': 'Hos',
+    'Joel': 'Joel',
+    'Amos': 'Amos',
+    'Obadiah': 'Obad',
+    'Jonah': 'Jonah',
+    'Micah': 'Mic',
+    'Nahum': 'Nah',
+    'Habakkuk': 'Hab',
+    'Zephaniah': 'Zeph',
+    'Haggai': 'Hag',
+    'Zechariah': 'Zech',
+    'Malachi': 'Mal',
+    'Matthew': 'Matt',
+    'Mark': 'Mark',
+    'Luke': 'Luke',
+    'John': 'John',
+    'Acts': 'Acts',
+    'Romans': 'Rom',
+    '1 Corinthians': '1Cor',
+    '2 Corinthians': '2Cor',
+    'Galatians': 'Gal',
+    'Ephesians': 'Eph',
+    'Philippians': 'Phil',
+    'Colossians': 'Col',
+    '1 Thessalonians': '1Thess',
+    '2 Thessalonians': '2Thess',
+    '1 Timothy': '1Tim',
+    '2 Timothy': '2Tim',
+    'Titus': 'Titus',
+    'Philemon': 'Phlm',
+    'Hebrews': 'Heb',
+    'James': 'Jas',
+    '1 Peter': '1Pet',
+    '2 Peter': '2Pet',
+    '1 John': '1John',
+    '2 John': '2John',
+    '3 John': '3John',
+    'Jude': 'Jude',
+    'Revelation': 'Rev'
+  };
+  
+  return bookMap[bookName] || bookName;
 }
 
 // Load adjacent chapters (previous and next)
@@ -834,6 +963,114 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
         query: { chapterId: String(chapterId), verseId: String(verseId) }
       });
     }
+  }
+}
+
+// Navigate to a cross-reference
+async function navigateToCrossReference(crossRef: CrossReferenceData) {
+  try {
+    // Parse the to_book_name to find the actual book
+    const reverseBookMap: Record<string, string> = {
+      'Gen': 'Genesis',
+      'Exod': 'Exodus',
+      'Lev': 'Leviticus',
+      'Num': 'Numbers',
+      'Deut': 'Deuteronomy',
+      'Josh': 'Joshua',
+      'Judg': 'Judges',
+      'Ruth': 'Ruth',
+      '1Sam': '1 Samuel',
+      '2Sam': '2 Samuel',
+      '1Kgs': '1 Kings',
+      '2Kgs': '2 Kings',
+      '1Chr': '1 Chronicles',
+      '2Chr': '2 Chronicles',
+      'Ezra': 'Ezra',
+      'Neh': 'Nehemiah',
+      'Esth': 'Esther',
+      'Job': 'Job',
+      'Ps': 'Psalms',
+      'Prov': 'Proverbs',
+      'Eccl': 'Ecclesiastes',
+      'Song': 'Song of Solomon',
+      'Isa': 'Isaiah',
+      'Jer': 'Jeremiah',
+      'Lam': 'Lamentations',
+      'Ezek': 'Ezekiel',
+      'Dan': 'Daniel',
+      'Hos': 'Hosea',
+      'Joel': 'Joel',
+      'Amos': 'Amos',
+      'Obad': 'Obadiah',
+      'Jonah': 'Jonah',
+      'Mic': 'Micah',
+      'Nah': 'Nahum',
+      'Hab': 'Habakkuk',
+      'Zeph': 'Zephaniah',
+      'Hag': 'Haggai',
+      'Zech': 'Zechariah',
+      'Mal': 'Malachi',
+      'Matt': 'Matthew',
+      'Mark': 'Mark',
+      'Luke': 'Luke',
+      'John': 'John',
+      'Acts': 'Acts',
+      'Rom': 'Romans',
+      '1Cor': '1 Corinthians',
+      '2Cor': '2 Corinthians',
+      'Gal': 'Galatians',
+      'Eph': 'Ephesians',
+      'Phil': 'Philippians',
+      'Col': 'Colossians',
+      '1Thess': '1 Thessalonians',
+      '2Thess': '2 Thessalonians',
+      '1Tim': '1 Timothy',
+      '2Tim': '2 Timothy',
+      'Titus': 'Titus',
+      'Phlm': 'Philemon',
+      'Heb': 'Hebrews',
+      'Jas': 'James',
+      '1Pet': '1 Peter',
+      '2Pet': '2 Peter',
+      '1John': '1 John',
+      '2John': '2 John',
+      '3John': '3 John',
+      'Jude': 'Jude',
+      'Rev': 'Revelation'
+    };
+    
+    const targetBookName = reverseBookMap[crossRef.to_book_name] || crossRef.to_book_name;
+    const targetBook = allBooks.value.find(b => 
+      b.book_name.toLowerCase() === targetBookName.toLowerCase()
+    );
+    
+    if (!targetBook) {
+      console.error('Book not found:', targetBookName);
+      return;
+    }
+    
+    // Find the chapter
+    const targetChapters = await getChaptersByBookId(targetBook.book_id);
+    const targetChapter = targetChapters.find(ch => ch.chapter_number === crossRef.to_chapter);
+    
+    if (!targetChapter) {
+      console.error('Chapter not found:', crossRef.to_chapter);
+      return;
+    }
+    
+    // Find the verse
+    const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+    const targetVerse = targetVerses.find(v => String(v.verse_index) === crossRef.to_verse);
+    
+    if (!targetVerse) {
+      console.error('Verse not found:', crossRef.to_verse);
+      return;
+    }
+    
+    // Navigate to the verse
+    await navigateToVerse(targetBook.book_id, targetChapter.chapter_id, targetVerse.verse_id);
+  } catch (err) {
+    console.error('Error navigating to cross-reference:', err);
   }
 }
 
@@ -2049,6 +2286,53 @@ onUnmounted(() => {
   background: #0366d6;
   color: white;
   transform: translateY(-1px);
+}
+
+.verse-cross-references {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-left: 3px solid #10b981;
+  border-radius: 4px;
+}
+
+.cross-ref-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.cross-ref-badge {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1px solid #a7f3d0;
+}
+
+.cross-ref-badge:hover {
+  background: #10b981;
+  color: white;
+  transform: translateY(-1px);
+  border-color: #059669;
+}
+
+.cross-ref-more {
+  display: inline-block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-left: 0.25rem;
 }
 
 /* Inline verse references within text */

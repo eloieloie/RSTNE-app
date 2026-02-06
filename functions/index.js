@@ -1030,6 +1030,43 @@ app.delete("/api/verse-tags/:id", async (req, res) => {
   }
 });
 
+// ============= CROSS-REFERENCES ENDPOINTS =============
+
+// Get cross-references for a verse by book name, chapter, and verse
+app.get("/api/cross-references", async (req, res) => {
+  try {
+    const {book, chapter, verse} = req.query;
+
+    if (!book || !chapter || !verse) {
+      return res.status(400).json({error: "book, chapter, and verse parameters are required"});
+    }
+
+    // Query for cross-references matching the from verse
+    const [crossRefs] = await pool.execute(
+        `SELECT 
+          cr.cross_ref_id,
+          cr.from_book_name,
+          cr.from_chapter,
+          cr.from_verse,
+          cr.to_book_name,
+          cr.to_chapter,
+          cr.to_verse,
+          cr.votes
+        FROM cross_references_tbl cr
+        WHERE cr.from_book_name = ? 
+          AND cr.from_chapter = ? 
+          AND cr.from_verse = ?
+        ORDER BY cr.votes DESC`,
+        [book, chapter, verse],
+    );
+
+    res.json(crossRefs);
+  } catch (error) {
+    console.error("Error fetching cross-references:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
 // ============= STATS ENDPOINT =============
 
 app.get("/api/stats", async (req, res) => {

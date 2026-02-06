@@ -9,6 +9,7 @@ export const TABLES = {
   VERSE_LINKS: 'verse_links_tbl',
   TAGS: 'tags_tbl',
   VERSE_TAGS: 'verse_tags_tbl',
+  CROSS_REFERENCES: 'cross_references_tbl',
 } as const;
 
 // Type Definitions
@@ -172,6 +173,28 @@ export interface VerseTagInsert {
   tag_id: number;
 }
 
+export interface CrossReference {
+  cross_ref_id: number;
+  from_book_name: string;
+  from_chapter: string;
+  from_verse: string;
+  to_book_name: string;
+  to_chapter: string;
+  to_verse: string;
+  votes: number;
+  dt_added: Date;
+}
+
+export interface CrossReferenceInsert {
+  from_book_name: string;
+  from_chapter: string;
+  from_verse: string;
+  to_book_name: string;
+  to_chapter: string;
+  to_verse: string;
+  votes: number;
+}
+
 export interface BookCategory {
   category_id: number;
   category_name: string;
@@ -245,5 +268,17 @@ export const VERSE_TAG_COLUMNS = {
   ID: 'verse_tag_id',
   VERSE_ID: 'verse_id',
   TAG_ID: 'tag_id',
+  DATE_ADDED: 'dt_added',
+} as const;
+
+export const CROSS_REFERENCE_COLUMNS = {
+  ID: 'cross_ref_id',
+  FROM_BOOK_NAME: 'from_book_name',
+  FROM_CHAPTER: 'from_chapter',
+  FROM_VERSE: 'from_verse',
+  TO_BOOK_NAME: 'to_book_name',
+  TO_CHAPTER: 'to_chapter',
+  TO_VERSE: 'to_verse',
+  VOTES: 'votes',
   DATE_ADDED: 'dt_added',
 } as const;
