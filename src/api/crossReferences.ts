@@ -1,5 +1,3 @@
-import type { CrossReference } from '@/utils/collectionReferences';
-
 const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
 // Type for cross-reference data with target verse details

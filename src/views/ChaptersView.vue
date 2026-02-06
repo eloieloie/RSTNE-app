@@ -572,6 +572,9 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
             chapter.chapter_number,
             String(verse.verse_index || '')
           );
+          if (crossRefs.length > 10) {
+            console.log(`Verse ${verse.verse_index} has ${crossRefs.length} cross-references`);
+          }
           return {
             ...verse,
             crossReferences: crossRefs
@@ -2329,10 +2332,16 @@ onUnmounted(() => {
 
 .cross-ref-more {
   display: inline-block;
-  font-size: 0.7rem;
-  color: #6b7280;
-  font-style: italic;
-  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 600;
+  font-style: normal;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: #f0fdf4;
+  border-radius: 3px;
+  border: 1px solid #bbf7d0;
+  vertical-align: middle;
 }
 
 /* Inline verse references within text */
