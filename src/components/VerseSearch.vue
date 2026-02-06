@@ -78,7 +78,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  select: [bookId: number, chapterId: number, verseId: number];
+  select: [bookId: number, chapterId: number, verseId: number, searchResults?: SearchResult[]];
 }>();
 
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -177,7 +177,7 @@ function highlightSearchTerms(verseText: string): string {
 
 function selectVerse(result: SearchResult) {
   console.log('Selected verse:', result);
-  emit('select', result.book_id, result.chapter_id, result.verse_id);
+  emit('select', result.book_id, result.chapter_id, result.verse_id, searchResults.value);
   close();
 }
 

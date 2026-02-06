@@ -2,7 +2,12 @@
   <div v-if="isOpen" class="verse-picker-overlay" @click="close">
     <div class="verse-picker-modal" @click.stop>
       <div class="verse-picker-header">
-        <h3>{{ selectedBook ? 'Select Chapter' : 'Select Book' }}</h3>
+        <h3>
+          {{ selectedBook && selectedChapter ? `Select Verse` : selectedBook ? 'Select Chapter' : 'Select Book' }}
+          <span v-if="selectedBook && selectedChapter && firstVisibleVerse" class="verse-indicator">
+            - Verse {{ firstVisibleVerse }}
+          </span>
+        </h3>
         <div class="header-controls">
           <button class="close-btn" @click="close">&times;</button>
         </div>
@@ -77,7 +82,7 @@
         </div>
 
         <!-- Chapters View -->
-        <div v-else class="chapters-view">
+        <div v-else-if="selectedBook && !selectedChapter" class="chapters-view">
           <button class="back-btn" @click="selectedBook = null">
             ← Back to Books
           </button>
@@ -97,13 +102,40 @@
             </div>
           </div>
         </div>
+
+        <!-- Verses View -->
+        <div v-else-if="selectedBook && selectedChapter" class="verses-view">
+          <button class="back-btn" @click="selectedChapter = null">
+            ← Back to Chapters
+          </button>
+          <h4 class="chapter-view-title">
+            <span class="title-hebrew">{{ selectedBook.hebrew_book_name || selectedBook.book_name }}</span>
+            <span class="title-separator">|</span>
+            <span class="title-english">{{ selectedBook.book_name }} {{ selectedChapter.chapter_number }}</span>
+          </h4>
+          <div 
+            ref="versesScrollContainer"
+            class="verses-grid"
+            @scroll="handleVersesScroll"
+          >
+            <div
+              v-for="verseRef in verses"
+              :key="verseRef.verse_id"
+              :data-verse-index="verseRef.verse_index"
+              class="verse-card"
+              @click="selectVerse(verseRef)"
+            >
+              {{ verseRef.verse_index }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 
 interface Book {
@@ -117,6 +149,11 @@ interface Book {
 interface Chapter {
   chapter_id: number;
   chapter_number: number;
+}
+
+interface VerseRef {
+  verse_id: number;
+  verse_index: number;
 }
 
 const props = defineProps<{
@@ -143,8 +180,12 @@ const books = ref<Book[]>(
 );
 
 const chapters = ref<Chapter[]>([]);
+const verses = ref<VerseRef[]>([]);
 const selectedBook = ref<Book | null>(null);
+const selectedChapter = ref<Chapter | null>(null);
 const activeCategory = ref<'first_covenant' | 'new_covenant' | 'apocrypha'>('first_covenant');
+const firstVisibleVerse = ref<number | null>(null);
+const versesScrollContainer = ref<HTMLElement | null>(null);
 
 // Categorize books based on category_id from the API:
 // Category 1: "First Covenant" (Old Testament)
@@ -166,7 +207,10 @@ const apocryphaBooks = computed(() =>
 watch(() => props.isOpen, (isOpen) => {
   if (!isOpen) {
     selectedBook.value = null;
+    selectedChapter.value = null;
     chapters.value = [];
+    verses.value = [];
+    firstVisibleVerse.value = null;
   }
 });
 
@@ -190,17 +234,78 @@ function loadChapters(bookId: number) {
 }
 
 function selectChapter(chapter: Chapter) {
-  if (selectedBook.value) {
-    // Get the first verse of the chapter for navigation
-    const bookData = BOOKS_DATA.find(b => b.book_id === selectedBook.value!.book_id);
-    if (bookData) {
-      const chapterData = bookData.chapters.find(ch => ch.chapter_id === chapter.chapter_id);
-      if (chapterData && chapterData.verse_ids.length > 0) {
-        const firstVerseId = chapterData.verse_ids[0].verse_id;
-        emit('select', selectedBook.value.book_id, chapter.chapter_id, firstVerseId);
-        close();
+  selectedChapter.value = chapter;
+  loadVerses(chapter.chapter_id);
+}
+
+function loadVerses(chapterId: number) {
+  if (!selectedBook.value) return;
+  
+  const bookData = BOOKS_DATA.find(b => b.book_id === selectedBook.value!.book_id);
+  if (bookData) {
+    const chapterData = bookData.chapters.find(ch => ch.chapter_id === chapterId);
+    if (chapterData) {
+      verses.value = chapterData.verse_ids.map(v => ({
+        verse_id: v.verse_id,
+        verse_index: v.verse_index
+      }));
+      
+      // Reset scroll position and first visible verse
+      firstVisibleVerse.value = verses.value.length > 0 ? verses.value[0].verse_index : null;
+      
+      // After DOM updates, initialize scroll tracking
+      nextTick(() => {
+        handleVersesScroll();
+      });
+    }
+  }
+}
+
+let scrollTimeout: number | null = null;
+
+function handleVersesScroll() {
+  // Throttle scroll events for better performance
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+  
+  scrollTimeout = window.setTimeout(() => {
+    if (!versesScrollContainer.value) return;
+    
+    const container = versesScrollContainer.value;
+    const verseCards = container.querySelectorAll('[data-verse-index]');
+    
+    if (verseCards.length === 0) return;
+    
+    // Find the first verse that's visible at the top of the scroll container
+    let closestCard = null;
+    let closestDistance = Infinity;
+    
+    for (const card of Array.from(verseCards)) {
+      const rect = card.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      
+      // Calculate distance from top of container
+      const distance = Math.abs(rect.top - containerRect.top);
+      
+      // Find the card closest to the top of the container
+      if (distance < closestDistance && rect.top >= containerRect.top - rect.height) {
+        closestDistance = distance;
+        closestCard = card;
       }
     }
+    
+    if (closestCard) {
+      const verseIndex = parseInt((closestCard as HTMLElement).getAttribute('data-verse-index') || '0');
+      firstVisibleVerse.value = verseIndex;
+    }
+  }, 50); // 50ms throttle
+}
+
+function selectVerse(verseRef: VerseRef) {
+  if (selectedBook.value && selectedChapter.value) {
+    emit('select', selectedBook.value.book_id, selectedChapter.value.chapter_id, verseRef.verse_id);
+    close();
   }
 }
 
@@ -246,6 +351,15 @@ function close() {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verse-indicator {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  font-weight: 600;
 }
 
 .header-controls {
@@ -384,6 +498,12 @@ function close() {
   margin: 0 auto;
 }
 
+/* Verses View */
+.verses-view {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .back-btn {
   background: white;
   border: 2px solid #e0e0e0;
@@ -465,6 +585,47 @@ function close() {
   transform: translateY(-2px);
 }
 
+.verses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.verse-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2c3e50;
+  min-height: 80px;
+}
+
+.verse-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.verse-card:active {
+  transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
   .verse-picker-header {
     padding: 1rem 1.5rem;
@@ -535,7 +696,19 @@ function close() {
     gap: 0.75rem;
   }
 
+  .verses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.75rem;
+    max-height: 50vh;
+  }
+
   .chapter-card {
+    padding: 1rem;
+    min-height: 60px;
+    font-size: 1.1rem;
+  }
+
+  .verse-card {
     padding: 1rem;
     min-height: 60px;
     font-size: 1.1rem;

@@ -1,7 +1,9 @@
 <template>
   <div class="chapters-page">
-    <div v-if="loading" class="loading">
-      <p>Loading chapters...</p>
+    <!-- Initial Loading -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading...</p>
     </div>
 
     <div v-else-if="error" class="error">
@@ -11,12 +13,6 @@
     <div v-else class="content-wrapper">
       <div class="content-layout">
         <nav class="top-nav">
-          <router-link to="/" class="back-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-          </router-link>
-          
           <button class="verse-picker-button" @click="showVersePicker = true">
             <div class="book-names">
               <span v-if="displayHebrewBookName" class="hebrew-book-name">{{ displayHebrewBookName }}</span>
@@ -194,6 +190,29 @@
       @select="handleVerseSelection"
     />
 
+    <!-- Search Results Navigation -->
+    <div v-if="hasSearchResults" class="search-navigation-bar">
+      <button class="clear-search-btn" @click="clearSearchResults" title="Clear search results">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <span class="search-results-text">{{ searchResultsText }}</span>
+      <div class="search-nav-buttons">
+        <button class="search-nav-btn" @click="goToPreviousSearchResult" title="Previous result">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button class="search-nav-btn" @click="goToNextSearchResult" title="Next result">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Context Menu for Verse References -->
     <div 
       v-if="contextMenu.show" 
@@ -209,8 +228,8 @@
     </div>
 
     <!-- Loading Overlay for Verse Reference Navigation -->
-    <div v-if="isNavigatingToVerseRef" class="verse-nav-loading-overlay">
-      <div class="verse-nav-loading-spinner"></div>
+    <div v-if="isNavigatingToVerseRef" class="navigation-loading-overlay">
+      <div class="loading-spinner"></div>
       <p>Loading verse...</p>
     </div>
 
@@ -335,6 +354,18 @@ interface LoadedChapterData {
   verses: Verse[];
 }
 
+interface SearchResult {
+  verse_id: number;
+  book_id: number;
+  chapter_id: number;
+  book_name: string;
+  chapter_number: string;
+  verse_index: number;
+  verse: string;
+  telugu_verse?: string | null;
+  note_content?: string | null;
+}
+
 const route = useRoute();
 const router = useRouter();
 const allBooks = ref<any[]>([]);
@@ -356,6 +387,10 @@ const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
 const isNavigatingToVerseRef = ref(false);
+
+// Search results navigation
+const searchResults = ref<SearchResult[]>([]);
+const currentSearchIndex = ref<number>(-1);
 
 // Preview state for live verse picker updates
 const previewBookId = ref<number | null>(null);
@@ -559,15 +594,12 @@ function scrollToVerse(verseId: number) {
     }
   }
   
-  // Use anchor navigation for reliable scrolling
-  window.location.hash = `verse-${verseId}`;
-  
-  // Apply highlight after a short delay to ensure element is rendered and scrolled to
+  // Apply highlight after a short delay to ensure element is rendered
   setTimeout(() => {
-    const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+    const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`) as HTMLElement;
     
     if (verseElement) {
-      console.log('scrollToVerse: Found element, applying highlight...');
+      console.log('scrollToVerse: Found element, scrolling to top and applying highlight...');
       
       // Check which chapter this verse is actually in
       const chapterElement = verseElement.closest('[data-chapter-id]');
@@ -578,6 +610,17 @@ function scrollToVerse(verseId: number) {
         console.log('scrollToVerse: Verse is in chapter number:', actualChapter?.chapter_number);
       }
       
+      // Scroll the verse to the top of the viewport with smooth scrolling
+      const navHeight = 90; // Height of the fixed top nav
+      const elementTop = verseElement.getBoundingClientRect().top + window.scrollY;
+      const offsetPosition = elementTop - navHeight - 20; // 20px extra padding from top
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      
+      // Apply highlight class
       verseElement.classList.add('highlight-verse');
       
       // Track this verse as highlighted
@@ -637,9 +680,23 @@ function scrollToVerse(verseId: number) {
 }
 
 // Handle verse selection from VersePicker
-async function handleVerseSelection(bookId: number, chapterId: number, verseId: number) {
-  console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId });
+async function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
+  console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId, resultsCount: results?.length });
   showVersePicker.value = false;
+  showSearchModal.value = false;
+  
+  // Store search results if provided
+  if (results && results.length > 0) {
+    searchResults.value = results;
+    // Find current index in search results
+    currentSearchIndex.value = results.findIndex(r => r.verse_id === verseId);
+    console.log('Search results stored, current index:', currentSearchIndex.value);
+  } else {
+    // Clear search results when not from search
+    searchResults.value = [];
+    currentSearchIndex.value = -1;
+  }
+  
   // Clear preview values
   previewBookId.value = null;
   previewChapterId.value = null;
@@ -777,6 +834,41 @@ function decreaseFontSize() {
     fontSize.value -= 2;
   }
 }
+
+// Search results navigation
+async function goToNextSearchResult() {
+  if (searchResults.value.length === 0 || currentSearchIndex.value === -1) return;
+  
+  const nextIndex = (currentSearchIndex.value + 1) % searchResults.value.length;
+  currentSearchIndex.value = nextIndex;
+  
+  const nextResult = searchResults.value[nextIndex];
+  await navigateToVerse(nextResult.book_id, nextResult.chapter_id, nextResult.verse_id);
+}
+
+async function goToPreviousSearchResult() {
+  if (searchResults.value.length === 0 || currentSearchIndex.value === -1) return;
+  
+  const prevIndex = currentSearchIndex.value === 0 
+    ? searchResults.value.length - 1 
+    : currentSearchIndex.value - 1;
+  currentSearchIndex.value = prevIndex;
+  
+  const prevResult = searchResults.value[prevIndex];
+  await navigateToVerse(prevResult.book_id, prevResult.chapter_id, prevResult.verse_id);
+}
+
+function clearSearchResults() {
+  searchResults.value = [];
+  currentSearchIndex.value = -1;
+}
+
+// Computed properties for search navigation
+const hasSearchResults = computed(() => searchResults.value.length > 0);
+const searchResultsText = computed(() => {
+  if (!hasSearchResults.value || currentSearchIndex.value === -1) return '';
+  return `${currentSearchIndex.value + 1} of ${searchResults.value.length}`;
+});
 
 // Format verse with PaleoBora font
 function formatVerseWithPaleoBora(text: string): string {
@@ -1519,13 +1611,12 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-bottom: 2px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #42b983 0%, #35a373 100%);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: row;
-  gap: 0.5rem;
+  gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
 }
@@ -1539,24 +1630,10 @@ onUnmounted(() => {
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  margin: 80px auto 2rem auto;
+  margin: 90px auto 2rem auto;
   max-width: 1400px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   min-height: 400px;
-}
-
-.back-link {
-  color: #42b983;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-}
-
-.back-link:hover {
-  color: #359670;
-  text-decoration: underline;
 }
 
 .verse-picker-button {
@@ -1564,25 +1641,27 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 1rem;
   color: #2c3e50;
   min-width: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .verse-picker-button:hover {
-  border-color: #42b983;
-  background: #f8f9fa;
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .verse-picker-button:active {
-  transform: scale(0.98);
+  transform: translateY(0);
 }
 
 .book-names {
@@ -1632,23 +1711,29 @@ onUnmounted(() => {
 
 .search-icon,
 .settings-icon {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
+  padding: 0.75rem;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
   flex-shrink: 0;
-  color: #666;
+  color: white;
 }
 
 .search-icon:hover,
 .settings-icon:hover {
-  background: #f0f0f0;
-  color: #42b983;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon:active,
+.settings-icon:active {
+  transform: translateY(0);
 }
 
 .search-icon svg,
@@ -1796,49 +1881,7 @@ onUnmounted(() => {
 }
 
 .chapter-nav-buttons {
-  position: fixed;
-  right: 1rem;
-  z-index: 900;
-}
-
-.chapter-nav-buttons.top {
-  top: 7rem; /* Below the sticky header */
-}
-
-.chapter-nav-buttons.bottom {
-  bottom: 2rem;
-}
-
-.nav-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid #42b983;
-  color: #42b983;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s;
-  font-size: 24px;
-}
-
-.nav-btn:hover:not(:disabled) {
-  background: #42b983;
-  color: white;
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.3);
-}
-
-.nav-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.nav-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  display: none; /* Hide the manual navigation buttons for cleaner UI */
 }
 
 @media (max-width: 768px) {
@@ -1849,16 +1892,6 @@ onUnmounted(() => {
   .chapter-content {
     padding: 1rem;
     margin: 80px 0.5rem 1rem 0.5rem;
-  }
-  
-  .chapter-nav-buttons {
-    right: 0.5rem;
-  }
-  
-  .nav-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
   }
 }
 
@@ -1872,13 +1905,31 @@ onUnmounted(() => {
 .verse-item {
   line-height: 1.8;
   padding: 0.5rem 0;
-  transition: background-color 0.3s;
+  transition: all 0.4s ease;
 }
 
 .verse-item.highlight-verse {
-  background-color: #fff3cd;
-  padding: 0.5rem;
-  border-radius: 4px;
+  background: linear-gradient(90deg, #fff3cd 0%, #fffbf0 100%);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  animation: highlightPulse 0.6s ease-out;
+}
+
+@keyframes highlightPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  }
 }
 
 .verse-main {
@@ -1992,34 +2043,38 @@ onUnmounted(() => {
   background: #f5f5f5;
 }
 
-/* Loading Overlay for Verse Reference Navigation */
-.verse-nav-loading-overlay {
+/* Loading Overlays */
+.loading-overlay,
+.navigation-loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 10001;
+  backdrop-filter: blur(8px);
 }
 
-.verse-nav-loading-overlay p {
-  color: white;
+.loading-overlay p,
+.navigation-loading-overlay p {
+  color: #2c3e50;
   font-size: 18px;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  font-weight: 600;
 }
 
-.verse-nav-loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #42b983;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -2330,6 +2385,101 @@ onUnmounted(() => {
   .verse-number {
     min-width: 25px;
     font-size: 0.85rem;
+  }
+}
+
+/* Search Results Navigation Bar */
+.search-navigation-bar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  z-index: 999;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.clear-search-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.clear-search-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.search-results-text {
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: center;
+}
+
+.search-nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.search-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.search-nav-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .search-navigation-bar {
+    bottom: 1rem;
+    padding: 0.5rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .search-results-text {
+    font-size: 0.9rem;
+    min-width: 60px;
   }
 }
 </style>
