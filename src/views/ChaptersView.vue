@@ -139,10 +139,10 @@
                         :key="crossRef.cross_ref_id"
                         href="#"
                         class="cross-ref-badge"
-                        :title="`Go to ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
-                        @click.prevent="navigateToCrossReference(crossRef)"
+                        :title="`Preview ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
+                        @click="showCrossRefTooltip($event, crossRef)"
                       >
-                        {{ crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
+                        {{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
                       </a>
                       <span 
                         v-if="verse.crossReferences.length > 10" 
@@ -236,6 +236,36 @@
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- Cross-Reference Tooltip -->
+    <div 
+      v-if="crossRefTooltip.show" 
+      class="cross-ref-tooltip"
+      :style="{ top: `${crossRefTooltip.y}px`, left: `${crossRefTooltip.x}px` }"
+      @click.stop
+    >
+      <div class="tooltip-header">
+        <span class="tooltip-title">{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}</span>
+        <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+        <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
+      </div>
+      <div class="tooltip-content">
+        <div v-if="crossRefTooltip.loading" class="tooltip-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading verse...</p>
+        </div>
+        <div v-else>
+          <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
+          <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
+        </div>
       </div>
     </div>
 
@@ -441,6 +471,35 @@ const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
 const isNavigatingToVerse = ref(false);
 
+// Cross-reference tooltip state
+const crossRefTooltip = ref<{
+  show: boolean;
+  x: number;
+  y: number;
+  loading: boolean;
+  verseText: string;
+  teluguVerseText: string;
+  bookName: string;
+  chapterNumber: string;
+  verseNumber: string;
+  bookId: number;
+  chapterId: number;
+  verseId: number;
+}>({
+  show: false,
+  x: 0,
+  y: 0,
+  loading: false,
+  verseText: '',
+  teluguVerseText: '',
+  bookName: '',
+  chapterNumber: '',
+  verseNumber: '',
+  bookId: 0,
+  chapterId: 0,
+  verseId: 0
+});
+
 // Context menu state for verse reference links
 const contextMenu = ref<{
   show: boolean;
@@ -572,16 +631,20 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
     const versesWithCrossRefs = await Promise.all(
       verses.map(async (verse) => {
         try {
-          // Get book abbreviation from book name
-          const bookAbbr = getBookAbbreviation(book.value?.book_name || '');
+          // Use book ID from database
+          const bookId = book.value?.book_id;
+          if (!bookId) {
+            console.warn('No book_id available for cross-references');
+            return {
+              ...verse,
+              crossReferences: []
+            };
+          }
           const crossRefs = await getCrossReferences(
-            bookAbbr,
+            bookId,
             chapter.chapter_number,
             String(verse.verse_index || '')
           );
-          if (crossRefs.length > 10) {
-            console.log(`Verse ${verse.verse_index} has ${crossRefs.length} cross-references`);
-          }
           return {
             ...verse,
             crossReferences: crossRefs
@@ -603,81 +666,6 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
   } catch (err) {
     console.error('Error loading chapter verses:', err);
   }
-}
-
-// Helper function to get book abbreviation
-function getBookAbbreviation(bookName: string): string {
-  // Map full book names to abbreviations used in cross-references file
-  const bookMap: Record<string, string> = {
-    'Genesis': 'Gen',
-    'Exodus': 'Exod',
-    'Leviticus': 'Lev',
-    'Numbers': 'Num',
-    'Deuteronomy': 'Deut',
-    'Joshua': 'Josh',
-    'Judges': 'Judg',
-    'Ruth': 'Ruth',
-    '1 Samuel': '1Sam',
-    '2 Samuel': '2Sam',
-    '1 Kings': '1Kgs',
-    '2 Kings': '2Kgs',
-    '1 Chronicles': '1Chr',
-    '2 Chronicles': '2Chr',
-    'Ezra': 'Ezra',
-    'Nehemiah': 'Neh',
-    'Esther': 'Esth',
-    'Job': 'Job',
-    'Psalms': 'Ps',
-    'Proverbs': 'Prov',
-    'Ecclesiastes': 'Eccl',
-    'Song of Solomon': 'Song',
-    'Isaiah': 'Isa',
-    'Jeremiah': 'Jer',
-    'Lamentations': 'Lam',
-    'Ezekiel': 'Ezek',
-    'Daniel': 'Dan',
-    'Hosea': 'Hos',
-    'Joel': 'Joel',
-    'Amos': 'Amos',
-    'Obadiah': 'Obad',
-    'Jonah': 'Jonah',
-    'Micah': 'Mic',
-    'Nahum': 'Nah',
-    'Habakkuk': 'Hab',
-    'Zephaniah': 'Zeph',
-    'Haggai': 'Hag',
-    'Zechariah': 'Zech',
-    'Malachi': 'Mal',
-    'Matthew': 'Matt',
-    'Mark': 'Mark',
-    'Luke': 'Luke',
-    'John': 'John',
-    'Acts': 'Acts',
-    'Romans': 'Rom',
-    '1 Corinthians': '1Cor',
-    '2 Corinthians': '2Cor',
-    'Galatians': 'Gal',
-    'Ephesians': 'Eph',
-    'Philippians': 'Phil',
-    'Colossians': 'Col',
-    '1 Thessalonians': '1Thess',
-    '2 Thessalonians': '2Thess',
-    '1 Timothy': '1Tim',
-    '2 Timothy': '2Tim',
-    'Titus': 'Titus',
-    'Philemon': 'Phlm',
-    'Hebrews': 'Heb',
-    'James': 'Jas',
-    '1 Peter': '1Pet',
-    '2 Peter': '2Pet',
-    '1 John': '1John',
-    '2 John': '2John',
-    '3 John': '3John',
-    'Jude': 'Jude',
-    'Revelation': 'Rev'
-  };
-  
-  return bookMap[bookName] || bookName;
 }
 
 // Load adjacent chapters (previous and next)
@@ -729,8 +717,6 @@ function scrollToChapter(chapterId: number) {
 
 // Scroll to verse
 function scrollToVerse(verseId: number) {
-  console.log('scrollToVerse: Looking for verse with id:', verseId);
-  
   // Set flag to prevent intersection observer from loading adjacent chapters
   isNavigatingToVerse.value = true;
   
@@ -753,16 +739,6 @@ function scrollToVerse(verseId: number) {
     const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`) as HTMLElement;
     
     if (verseElement) {
-      console.log('scrollToVerse: Found element, scrolling to top and applying highlight...');
-      
-      // Check which chapter this verse is actually in
-      const chapterElement = verseElement.closest('[data-chapter-id]');
-      if (chapterElement) {
-        const actualChapterId = chapterElement.getAttribute('data-chapter-id');
-        console.log('scrollToVerse: Verse is in chapter with ID:', actualChapterId);
-        const actualChapter = chapters.value.find(ch => ch.chapter_id === Number(actualChapterId));
-        console.log('scrollToVerse: Verse is in chapter number:', actualChapter?.chapter_number);
-      }
       
       // Scroll the verse to the top of the viewport with smooth scrolling
       const navHeight = 90; // Height of the fixed top nav
@@ -789,7 +765,6 @@ function scrollToVerse(verseId: number) {
             
             // If highlight was removed, add it back
             if (!hasHighlight && target.getAttribute('data-verse-id') === String(verseId)) {
-              console.log('scrollToVerse: Re-adding highlight class that was removed');
               target.classList.add('highlight-verse');
             }
           }
@@ -805,14 +780,12 @@ function scrollToVerse(verseId: number) {
       const intervalId = setInterval(() => {
         const el = document.querySelector(`[data-verse-id="${verseId}"]`);
         if (el && !el.classList.contains('highlight-verse')) {
-          console.log('scrollToVerse: Interval detected missing highlight, re-applying');
           el.classList.add('highlight-verse');
         }
       }, 500);
       
       // Remove highlight after 30 seconds
       highlightTimeout.value = window.setTimeout(() => {
-        console.log('scrollToVerse: Removing highlight after 30 seconds');
         const el = document.querySelector(`[data-verse-id="${verseId}"]`);
         if (el) {
           el.classList.remove('highlight-verse');
@@ -837,7 +810,6 @@ function scrollToVerse(verseId: number) {
 
 // Handle verse selection from VersePicker
 async function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
-  console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId, resultsCount: results?.length });
   showVersePicker.value = false;
   showSearchModal.value = false;
   
@@ -852,7 +824,6 @@ async function handleVerseSelection(bookId: number, chapterId: number, verseId: 
     searchResults.value = results;
     // Find current index in search results
     currentSearchIndex.value = results.findIndex(r => r.verse_id === verseId);
-    console.log('Search results stored, current index:', currentSearchIndex.value);
   } else {
     // Clear search results when not from search
     searchResults.value = [];
@@ -863,14 +834,11 @@ async function handleVerseSelection(bookId: number, chapterId: number, verseId: 
   previewBookId.value = null;
   previewChapterId.value = null;
   previewVerseId.value = null;
-  console.log('ChaptersView: Calling navigateToVerse...');
   await navigateToVerse(bookId, chapterId, verseId);
-  console.log('ChaptersView: navigateToVerse completed');
 }
 
 // Handle live updates from VersePicker while scrolling
 function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: number) {
-  console.log('Preview update:', { bookId, chapterId, verseId });
   previewBookId.value = bookId;
   previewChapterId.value = chapterId;
   previewVerseId.value = verseId;
@@ -878,43 +846,24 @@ function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: num
 
 // Navigate to verse (for cross-references)
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
-  console.log('navigateToVerse: Starting navigation with:', { bookId, chapterId, verseId });
-  console.log('navigateToVerse: Current route bookId:', route.params.id);
-  console.log('navigateToVerse: Current route bookName:', route.params.bookName);
-  console.log('navigateToVerse: chapters.value:', chapters.value);
-  console.log('navigateToVerse: chapters.value length:', chapters.value.length);
-  console.log('navigateToVerse: Looking for chapterId:', chapterId);
-  
   // Check if we're on the same book (handle both old and new URL formats)
   const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
   const isSameBook = currentBookId === bookId;
   
-  console.log('navigateToVerse: currentBookId:', currentBookId, 'targetBookId:', bookId, 'isSameBook:', isSameBook);
-  
   // If same book, just select the chapter and scroll
   if (isSameBook) {
-    console.log('navigateToVerse: Same book, finding chapter...');
-    
-    // Log all chapter IDs in the array
-    console.log('navigateToVerse: Available chapter IDs:', chapters.value.map(ch => ch.chapter_id));
-    
     const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
-    console.log('navigateToVerse: Found chapter:', chapter);
     
     if (chapter) {
       // Check if we're already on this chapter
       if (selectedChapterId.value === chapterId) {
-        console.log('navigateToVerse: Already on this chapter, just scrolling to verse:', verseId);
         await nextTick();
         scrollToVerse(verseId);
       } else {
-        console.log('navigateToVerse: Selecting different chapter...');
-        
         // Clear previously loaded chapters to only show the target chapter
         loadedChapters.value.clear();
         
         // Load only the target chapter (no adjacent chapters)
-        console.log('navigateToVerse: Loading only target chapter:', chapterId);
         await loadChapterVerses(chapterId);
         
         // Select chapter and skip adjacent chapter loading
@@ -930,11 +879,9 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
           const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
           
           if (chapterElement && verseElement) {
-            console.log('navigateToVerse: Chapter and verse loaded, scrolling to verse:', verseId);
             scrollToVerse(verseId);
           } else if (attempts < maxAttempts) {
             attempts++;
-            console.log(`navigateToVerse: Waiting for chapter/verse to load (${attempts}/${maxAttempts})... Chapter exists: ${!!chapterElement}, Verse exists: ${!!verseElement}`);
             setTimeout(waitForChapter, 150);
           } else {
             console.warn('navigateToVerse: Chapter/verse not found in DOM after', maxAttempts, 'attempts');
@@ -945,7 +892,6 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
         
         await waitForChapter();
       }
-      console.log('navigateToVerse: Scroll complete');
     } else {
       console.warn('navigateToVerse: Chapter not found!');
       console.warn('navigateToVerse: Searched for chapterId:', chapterId, 'type:', typeof chapterId);
@@ -961,10 +907,6 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
     if (targetBook && targetChapter) {
       const bookSlug = targetBook.book_name.toLowerCase().replace(/\s+/g, '-');
       
-      // IMPORTANT: Use chapter_number from database, but let's verify it's correct
-      console.log('navigateToVerse: targetChapter:', targetChapter);
-      console.log('navigateToVerse: chapter_number:', targetChapter.chapter_number);
-      
       const chapterNum = targetChapter.chapter_number;
       
       // Find verse number by getting verses
@@ -972,11 +914,9 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
       const verse = verses.find(v => v.verse_id === verseId);
       const verseNum = verse ? verse.verse_index : 1;
       
-      console.log('navigateToVerse: Different book, routing to:', `/${bookSlug}/${chapterNum}/${verseNum}`);
       router.push(`/${bookSlug}/${chapterNum}/${verseNum}`);
     } else {
       // Fallback to old format
-      console.log('navigateToVerse: Different book, routing to:', `/chapters/${bookId}`);
       router.push({
         path: `/chapters/${bookId}`,
         query: { chapterId: String(chapterId), verseId: String(verseId) }
@@ -994,90 +934,37 @@ function toggleCrossRefs(verseId: number) {
   }
 }
 
-// Navigate to a cross-reference
-async function navigateToCrossReference(crossRef: CrossReferenceData) {
-  // Show loading spinner immediately
-  isNavigatingToVerseRef.value = true;
+// Show cross-reference tooltip with verse preview
+async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceData) {
+  event.preventDefault();
+  
+  // Position tooltip near the clicked element
+  const target = event.currentTarget as HTMLElement;
+  const rect = target.getBoundingClientRect();
+  
+  crossRefTooltip.value.show = true;
+  crossRefTooltip.value.x = rect.left;
+  crossRefTooltip.value.y = rect.bottom + 5;
+  crossRefTooltip.value.loading = true;
+  crossRefTooltip.value.bookName = crossRef.to_book_name;
+  crossRefTooltip.value.chapterNumber = crossRef.to_chapter;
+  crossRefTooltip.value.verseNumber = crossRef.to_verse;
   
   try {
-    // Parse the to_book_name to find the actual book
-    const reverseBookMap: Record<string, string> = {
-      'Gen': 'Genesis',
-      'Exod': 'Exodus',
-      'Lev': 'Leviticus',
-      'Num': 'Numbers',
-      'Deut': 'Deuteronomy',
-      'Josh': 'Joshua',
-      'Judg': 'Judges',
-      'Ruth': 'Ruth',
-      '1Sam': '1 Samuel',
-      '2Sam': '2 Samuel',
-      '1Kgs': '1 Kings',
-      '2Kgs': '2 Kings',
-      '1Chr': '1 Chronicles',
-      '2Chr': '2 Chronicles',
-      'Ezra': 'Ezra',
-      'Neh': 'Nehemiah',
-      'Esth': 'Esther',
-      'Job': 'Job',
-      'Ps': 'Psalms',
-      'Prov': 'Proverbs',
-      'Eccl': 'Ecclesiastes',
-      'Song': 'Song of Solomon',
-      'Isa': 'Isaiah',
-      'Jer': 'Jeremiah',
-      'Lam': 'Lamentations',
-      'Ezek': 'Ezekiel',
-      'Dan': 'Daniel',
-      'Hos': 'Hosea',
-      'Joel': 'Joel',
-      'Amos': 'Amos',
-      'Obad': 'Obadiah',
-      'Jonah': 'Jonah',
-      'Mic': 'Micah',
-      'Nah': 'Nahum',
-      'Hab': 'Habakkuk',
-      'Zeph': 'Zephaniah',
-      'Hag': 'Haggai',
-      'Zech': 'Zechariah',
-      'Mal': 'Malachi',
-      'Matt': 'Matthew',
-      'Mark': 'Mark',
-      'Luke': 'Luke',
-      'John': 'John',
-      'Acts': 'Acts',
-      'Rom': 'Romans',
-      '1Cor': '1 Corinthians',
-      '2Cor': '2 Corinthians',
-      'Gal': 'Galatians',
-      'Eph': 'Ephesians',
-      'Phil': 'Philippians',
-      'Col': 'Colossians',
-      '1Thess': '1 Thessalonians',
-      '2Thess': '2 Thessalonians',
-      '1Tim': '1 Timothy',
-      '2Tim': '2 Timothy',
-      'Titus': 'Titus',
-      'Phlm': 'Philemon',
-      'Heb': 'Hebrews',
-      'Jas': 'James',
-      '1Pet': '1 Peter',
-      '2Pet': '2 Peter',
-      '1John': '1 John',
-      '2John': '2 John',
-      '3John': '3 John',
-      'Jude': 'Jude',
-      'Rev': 'Revelation'
-    };
-    
-    const targetBookName = reverseBookMap[crossRef.to_book_name] || crossRef.to_book_name;
-    const targetBook = allBooks.value.find(b => 
-      b.book_name.toLowerCase() === targetBookName.toLowerCase()
-    );
+    // Use to_book_id from database if available
+    let targetBook;
+    if (crossRef.to_book_id) {
+      targetBook = allBooks.value.find(b => b.book_id === crossRef.to_book_id);
+    } else {
+      targetBook = allBooks.value.find(b => 
+        b.book_abbr === crossRef.to_book_name || 
+        b.book_name.toLowerCase() === crossRef.to_book_name.toLowerCase()
+      );
+    }
     
     if (!targetBook) {
-      console.error('Book not found:', targetBookName);
-      isNavigatingToVerseRef.value = false;
+      crossRefTooltip.value.verseText = 'Book not found';
+      crossRefTooltip.value.loading = false;
       return;
     }
     
@@ -1086,8 +973,8 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     const targetChapter = targetChapters.find(ch => ch.chapter_number === crossRef.to_chapter);
     
     if (!targetChapter) {
-      console.error('Chapter not found:', crossRef.to_chapter);
-      isNavigatingToVerseRef.value = false;
+      crossRefTooltip.value.verseText = 'Chapter not found';
+      crossRefTooltip.value.loading = false;
       return;
     }
     
@@ -1096,19 +983,40 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     const targetVerse = targetVerses.find(v => String(v.verse_index) === crossRef.to_verse);
     
     if (!targetVerse) {
-      console.error('Verse not found:', crossRef.to_verse);
-      isNavigatingToVerseRef.value = false;
+      crossRefTooltip.value.verseText = 'Verse not found';
+      crossRefTooltip.value.loading = false;
       return;
     }
     
-    // Navigate to the verse
-    await navigateToVerse(targetBook.book_id, targetChapter.chapter_id, targetVerse.verse_id);
+    // Store IDs for navigation
+    crossRefTooltip.value.bookId = targetBook.book_id;
+    crossRefTooltip.value.chapterId = targetChapter.chapter_id;
+    crossRefTooltip.value.verseId = targetVerse.verse_id;
+    
+    // Set verse text with formatting applied
+    crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
+    crossRefTooltip.value.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
+    crossRefTooltip.value.loading = false;
   } catch (err) {
-    console.error('Error navigating to cross-reference:', err);
-    isNavigatingToVerseRef.value = false;
+    console.error('Error loading cross-reference verse:', err);
+    crossRefTooltip.value.verseText = 'Error loading verse';
+    crossRefTooltip.value.loading = false;
   }
 }
 
+// Navigate to cross-reference from tooltip
+function navigateFromTooltip() {
+  const { bookId, chapterId, verseId } = crossRefTooltip.value;
+  crossRefTooltip.value.show = false;
+  navigateToVerse(bookId, chapterId, verseId);
+}
+
+// Close cross-reference tooltip
+function closeCrossRefTooltip() {
+  crossRefTooltip.value.show = false;
+}
+
+// Navigate to a cross-reference (kept for backward compatibility)
 // Font size controls
 function increaseFontSize() {
   if (fontSize.value < 24) {
@@ -1181,7 +1089,6 @@ function formatVerseWithPaleoBora(text: string): string {
   // Using book abbreviations from allBooks
   formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
     const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
-    //console.log('Found verse ref:', match, 'bookAbbr:', bookAbbr, 'bookId:', bookId);
     if (bookId) {
       return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
     }
@@ -1281,16 +1188,23 @@ function handleSearch() {
   (window as any).initialSearchQuery = searchText;
 }
 
-// Close context menu when clicking outside
+// Close context menu and tooltip when clicking outside
 function closeContextMenu(event: Event) {
-  // Don't close if clicking on verse ref link or inside context menu
+  // Don't close if clicking on verse ref link, inside context menu, or cross-ref badge
   const target = event.target as HTMLElement;
-  if (target.closest('.context-menu') || target.classList.contains('inline-verse-ref')) {
+  if (target.closest('.context-menu') || 
+      target.closest('.cross-ref-tooltip') || 
+      target.classList.contains('inline-verse-ref') ||
+      target.classList.contains('cross-ref-badge')) {
     return;
   }
   
   if (contextMenu.value.show) {
     contextMenu.value.show = false;
+  }
+  
+  if (crossRefTooltip.value.show) {
+    crossRefTooltip.value.show = false;
   }
 }
 
@@ -1312,7 +1226,6 @@ function loadNextChapterManually() {
   const nextChapter = getNextChapter(lastLoadedChapterId);
   
   if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
-    console.log('Manual: Loading next chapter:', nextChapter.chapter_number);
     isLoadingChapter.value = true;
     loadChapterVerses(nextChapter.chapter_id).then(() => {
       // Scroll to the newly loaded chapter
@@ -1344,7 +1257,6 @@ function loadPreviousChapterManually() {
   const prevChapter = getPreviousChapter(firstLoadedChapterId);
   
   if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
-    console.log('Manual: Loading previous chapter:', prevChapter.chapter_number);
     isLoadingChapter.value = true;
     
     // Get current scroll position
@@ -1436,7 +1348,6 @@ function handleScroll() {
       if (distanceFromBottom < threshold) {
         const nextChapter = getNextChapter(lastLoadedChapterId);
         if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
-          console.log('Scroll: Loading next chapter:', nextChapter.chapter_number);
           isLoadingChapter.value = true;
           loadChapterVerses(nextChapter.chapter_id).finally(() => {
             isLoadingChapter.value = false;
@@ -1456,7 +1367,6 @@ function handleScroll() {
       if (distanceFromTop > -threshold && distanceFromTop < threshold) {
         const prevChapter = getPreviousChapter(firstLoadedChapterId);
         if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
-          console.log('Scroll: Loading previous chapter:', prevChapter.chapter_number);
           isLoadingChapter.value = true;
           
           // Store scroll position relative to first chapter
@@ -1530,7 +1440,6 @@ function setupIntersectionObserver() {
           if (bottomDistance < 500 && bottomDistance > -100) {
             const nextChapter = getNextChapter(chapterId);
             if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
-              console.log('Bottom reached for chapter', chapterId, 'loading next chapter:', nextChapter.chapter_number);
               loadChapterVerses(nextChapter.chapter_id);
             }
           }
@@ -1559,7 +1468,6 @@ function setupIntersectionObserver() {
           if (topDistance < 500 && topDistance > -100) {
             const prevChapter = getPreviousChapter(chapterId);
             if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
-              console.log('Top reached for chapter', chapterId, 'loading previous chapter:', prevChapter.chapter_number);
               // Store current scroll position and the chapter element's position
               const currentScrollY = window.scrollY;
               const chapterTop = rect.top + window.scrollY;
@@ -1616,7 +1524,6 @@ onMounted(async () => {
         bookAbbreviations.value[b.book_abbr.toLowerCase()] = b.book_id;
       }
     });
-    console.log('Loaded book abbreviations:', bookAbbreviations.value);
     
     // Determine book ID from route
     let bookId: number;
@@ -1625,7 +1532,6 @@ onMounted(async () => {
     
     if (route.params.bookName) {
       // New URL format: /:bookName/:chapterNumber/:verseNumber
-      console.log('Parsing new URL format:', route.params);
       const bookName = String(route.params.bookName).replace(/-/g, ' ');
       const foundBook = allBooks.value.find(b => 
         b.book_name.toLowerCase() === bookName.toLowerCase()
@@ -1640,7 +1546,6 @@ onMounted(async () => {
       bookId = foundBook.book_id;
       targetChapterNumber = route.params.chapterNumber ? String(route.params.chapterNumber) : null;
       targetVerseNumber = route.params.verseNumber ? Number(route.params.verseNumber) : null;
-      console.log('Found book:', foundBook.book_name, 'ID:', bookId, 'Chapter:', targetChapterNumber, 'Verse:', targetVerseNumber);
     } else if (route.params.id) {
       // Old URL format: /chapters/:id
       bookId = Number(route.params.id);
@@ -1669,23 +1574,14 @@ onMounted(async () => {
     
     if (targetChapterNumber) {
       // New URL format with chapter number
-      console.log('onMounted: Looking for chapter number:', targetChapterNumber, 'verse number:', targetVerseNumber);
-      console.log('onMounted: Available chapters:', chapters.value.map(ch => ({ id: ch.chapter_id, number: ch.chapter_number })));
-      console.log('onMounted: First 5 chapters:', chapters.value.slice(0, 5).map(ch => `ID:${ch.chapter_id} Num:${ch.chapter_number}`));
-      
-      // IMPORTANT: chapter_number should match, but let's see all matches
-      const allMatches = chapters.value.filter(ch => ch.chapter_number === targetChapterNumber);
-      console.log('onMounted: All chapters matching number', targetChapterNumber, ':', allMatches);
-      
       targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
-      console.log('onMounted: Selected target chapter:', targetChapter);
       
       if (!targetChapter) {
         console.error('onMounted: Could not find chapter with chapter_number:', targetChapterNumber);
         console.error('onMounted: Trying to parse as number and find by position...');
         const chapterIndex = parseInt(targetChapterNumber) - 1; // Try 0-indexed
         if (sortedChapters.value[chapterIndex]) {
-          console.log('onMounted: Found chapter at index', chapterIndex, ':', sortedChapters.value[chapterIndex]);
+          targetChapter = sortedChapters.value[chapterIndex];
         }
       }
       
@@ -1696,7 +1592,6 @@ onMounted(async () => {
         // Find the verse by index
         const verses = await getVersesByChapterId(targetChapter.chapter_id);
         const verse = verses.find(v => v.verse_index === targetVerseNumber);
-        console.log('onMounted: Found verse:', verse);
         
         if (verse) {
           scrollToVerseId = verse.verse_id;
@@ -1712,9 +1607,6 @@ onMounted(async () => {
       // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
       await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
       
-      console.log('onMounted: After selectChapter, loaded chapters:', Array.from(loadedChapters.value.keys()));
-      console.log('onMounted: Looking for verse in loaded chapters...');
-      
       // Verify the verse is in one of the loaded chapters
       if (scrollToVerseId) {
         let foundInChapter = null;
@@ -1722,7 +1614,6 @@ onMounted(async () => {
           const verse = chData.verses.find(v => v.verse_id === scrollToVerseId);
           if (verse) {
             foundInChapter = chId;
-            console.log('onMounted: Found verse', scrollToVerseId, 'in loaded chapter', chId, 'with chapter_number:', chData.chapter.chapter_number);
             break;
           }
         }
@@ -1733,7 +1624,6 @@ onMounted(async () => {
       }
       
       if (scrollToVerseId) {
-        console.log('onMounted: Scrolling to verse:', scrollToVerseId);
         await nextTick();
         scrollToVerse(scrollToVerseId);
       }
@@ -1770,7 +1660,6 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
   const bookChanged = (newId && newId !== oldId) || (newBookName && newBookName !== oldBookName);
   
   if (bookChanged) {
-    console.log('Route changed - new params:', { newId, newBookName, newChapterNumber, newVerseNumber });
     loading.value = true;
     error.value = null;
     
@@ -1817,17 +1706,13 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
       book.value = await getBookById(bookId);
       chapters.value = await getChaptersByBookId(bookId);
       
-      console.log('New book loaded:', book.value?.book_name);
-      
       // Determine which chapter to select
       let targetChapter: Chapter | null = null;
       let scrollToVerseId: number | null = null;
       
       if (targetChapterNumber) {
         // New URL format with chapter number
-        console.log('Looking for chapter number:', targetChapterNumber, 'verse number:', targetVerseNumber);
         targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
-        console.log('Found target chapter:', targetChapter);
         
         if (targetChapter && targetVerseNumber) {
           // Pre-load the chapter verses before selecting
@@ -1835,7 +1720,6 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
           
           const verses = await getVersesByChapterId(targetChapter.chapter_id);
           const verse = verses.find(v => v.verse_index === targetVerseNumber);
-          console.log('Found verse:', verse);
           
           if (verse) {
             scrollToVerseId = verse.verse_id;
@@ -1856,7 +1740,6 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
         // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
         await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
         if (scrollToVerseId) {
-          console.log('Scrolling to verse:', scrollToVerseId);
           await nextTick();
           scrollToVerse(scrollToVerseId);
         }
@@ -1888,7 +1771,6 @@ watch(() => loadedChapters.value.size, async () => {
     await nextTick();
     const verseElement = document.querySelector(`[data-verse-id="${highlightedVerseId.value}"]`);
     if (verseElement && !verseElement.classList.contains('highlight-verse')) {
-      console.log('Re-applying highlight to verse:', highlightedVerseId.value);
       verseElement.classList.add('highlight-verse');
     }
   }
@@ -2429,6 +2311,130 @@ onUnmounted(() => {
   background: #f5f5f5;
 }
 
+/* Cross-Reference Tooltip */
+.cross-ref-tooltip {
+  position: fixed;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+  min-width: 300px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  gap: 8px;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.tooltip-popout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.tooltip-popout:hover {
+  color: #007bff;
+  background: #e9ecef;
+}
+
+.tooltip-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  color: #666;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.tooltip-close:hover {
+  color: #333;
+  background: #e9ecef;
+}
+
+.tooltip-content {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tooltip-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 8px;
+}
+
+.tooltip-loading .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+}
+
+.tooltip-loading p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.tooltip-verse {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  padding: 15px;
+  text-align: left;
+}
+
+.tooltip-verse.telugu-verse {
+  font-family: 'Noto Sans Telugu', sans-serif;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+/* Mobile responsive tooltip */
+@media (max-width: 768px) {
+  .cross-ref-tooltip {
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 90%;
+  }
+}
+
 /* Loading Overlays */
 .loading-overlay {
   position: fixed;
@@ -2535,6 +2541,10 @@ onUnmounted(() => {
 }
 
 .book-footer-content :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.tooltip-verse :deep(.paleobora-text) {
   font-family: 'PaleoBora', serif !important;
 }
 

@@ -10,6 +10,10 @@ export interface CrossReferenceData {
   to_chapter: string;
   to_verse: string;
   votes: number;
+  from_book_abbr?: string;
+  from_book_id?: number;
+  to_book_abbr?: string;
+  to_book_id?: number;
   target_book_id?: number;
   target_chapter_id?: number;
   target_verse_id?: number;
@@ -17,12 +21,12 @@ export interface CrossReferenceData {
 
 // Get cross-references for a specific book, chapter, and verse
 export async function getCrossReferences(
-  bookName: string,
+  bookId: number,
   chapter: string,
   verse: string
 ): Promise<CrossReferenceData[]> {
   const response = await fetch(
-    `${API_BASE_URL}/cross-references?book=${encodeURIComponent(bookName)}&chapter=${encodeURIComponent(chapter)}&verse=${encodeURIComponent(verse)}`
+    `${API_BASE_URL}/cross-references?bookId=${bookId}&chapter=${encodeURIComponent(chapter)}&verse=${encodeURIComponent(verse)}`
   );
   if (!response.ok) {
     throw new Error('Failed to fetch cross-references');

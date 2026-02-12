@@ -1032,13 +1032,13 @@ app.delete("/api/verse-tags/:id", async (req, res) => {
 
 // ============= CROSS-REFERENCES ENDPOINTS =============
 
-// Get cross-references for a verse by book name, chapter, and verse
+// Get cross-references for a verse by book ID, chapter, and verse
 app.get("/api/cross-references", async (req, res) => {
   try {
-    const {book, chapter, verse} = req.query;
+    const {bookId, chapter, verse} = req.query;
 
-    if (!book || !chapter || !verse) {
-      return res.status(400).json({error: "book, chapter, and verse parameters are required"});
+    if (!bookId || !chapter || !verse) {
+      return res.status(400).json({error: "bookId, chapter, and verse parameters are required"});
     }
 
     // Query for cross-references matching the from verse
@@ -1051,13 +1051,19 @@ app.get("/api/cross-references", async (req, res) => {
           cr.to_book_name,
           cr.to_chapter,
           cr.to_verse,
-          cr.votes
+          cr.votes,
+          frb.book_abbr as from_book_abbr,
+          frb.book_id as from_book_id,
+          tob.book_abbr as to_book_abbr,
+          tob.book_id as to_book_id
         FROM cross_references_tbl cr
-        WHERE cr.from_book_name = ? 
+        LEFT JOIN books_tbl frb ON frb.book_id = cr.from_book_id
+        LEFT JOIN books_tbl tob ON tob.book_id = cr.to_book_id
+        WHERE cr.from_book_id = ? 
           AND cr.from_chapter = ? 
           AND cr.from_verse = ?
         ORDER BY cr.votes DESC`,
-        [book, chapter, verse],
+        [bookId, chapter, verse],
     );
 
     res.json(crossRefs);
