@@ -135,7 +135,7 @@
                     
                     <div v-if="showCrossReferences && verse.crossReferences && verse.crossReferences.length > 0" class="verse-cross-references">
                       <a 
-                        v-for="crossRef in verse.crossReferences.slice(0, 10)" 
+                        v-for="crossRef in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 10))" 
                         :key="crossRef.cross_ref_id"
                         href="#"
                         class="cross-ref-badge"
@@ -144,8 +144,12 @@
                       >
                         {{ crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
                       </a>
-                      <span v-if="verse.crossReferences.length > 10" class="cross-ref-more">
-                        +{{ verse.crossReferences.length - 10 }} more
+                      <span 
+                        v-if="verse.crossReferences.length > 10" 
+                        class="cross-ref-more"
+                        @click="toggleCrossRefs(verse.verse_id)"
+                      >
+                        {{ expandedCrossRefs.has(verse.verse_id) ? 'show less' : `+${verse.crossReferences.length - 10} more` }}
                       </span>
                     </div>
                     
@@ -428,6 +432,9 @@ const previewVerseId = ref<number | null>(null);
 // Track the first visible verse at the top of the viewport
 const firstVisibleVerseIndex = ref<number | null>(null);
 const firstVisibleChapterNumber = ref<string | null>(null);
+
+// Track which verses have expanded cross-references
+const expandedCrossRefs = ref<Set<number>>(new Set());
 
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
@@ -818,10 +825,12 @@ function scrollToVerse(verseId: number) {
       // Clear navigation flag after a delay to allow scroll to complete
       setTimeout(() => {
         isNavigatingToVerse.value = false;
+        isNavigatingToVerseRef.value = false; // Clear loading spinner
       }, 1000);
     } else {
       console.warn('scrollToVerse: Could not find verse element');
       isNavigatingToVerse.value = false;
+      isNavigatingToVerseRef.value = false; // Clear loading spinner
     }
   }, 300); // Wait 300ms for anchor scroll to complete
 }
@@ -831,6 +840,12 @@ async function handleVerseSelection(bookId: number, chapterId: number, verseId: 
   console.log('ChaptersView: handleVerseSelection called with:', { bookId, chapterId, verseId, resultsCount: results?.length });
   showVersePicker.value = false;
   showSearchModal.value = false;
+  
+  // Show loading spinner immediately if navigating to different book
+  const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
+  if (currentBookId !== bookId) {
+    isNavigatingToVerseRef.value = true;
+  }
   
   // Store search results if provided
   if (results && results.length > 0) {
@@ -935,6 +950,7 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
       console.warn('navigateToVerse: Chapter not found!');
       console.warn('navigateToVerse: Searched for chapterId:', chapterId, 'type:', typeof chapterId);
       console.warn('navigateToVerse: Available IDs:', chapters.value.map(ch => `${ch.chapter_id} (${typeof ch.chapter_id})`));
+      isNavigatingToVerseRef.value = false; // Clear loading spinner on error
     }
   } else {
     // Navigate to other book with new URL format
@@ -969,8 +985,20 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
   }
 }
 
+// Toggle cross-reference expansion
+function toggleCrossRefs(verseId: number) {
+  if (expandedCrossRefs.value.has(verseId)) {
+    expandedCrossRefs.value.delete(verseId);
+  } else {
+    expandedCrossRefs.value.add(verseId);
+  }
+}
+
 // Navigate to a cross-reference
 async function navigateToCrossReference(crossRef: CrossReferenceData) {
+  // Show loading spinner immediately
+  isNavigatingToVerseRef.value = true;
+  
   try {
     // Parse the to_book_name to find the actual book
     const reverseBookMap: Record<string, string> = {
@@ -1049,6 +1077,7 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     
     if (!targetBook) {
       console.error('Book not found:', targetBookName);
+      isNavigatingToVerseRef.value = false;
       return;
     }
     
@@ -1058,6 +1087,7 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     
     if (!targetChapter) {
       console.error('Chapter not found:', crossRef.to_chapter);
+      isNavigatingToVerseRef.value = false;
       return;
     }
     
@@ -1067,6 +1097,7 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     
     if (!targetVerse) {
       console.error('Verse not found:', crossRef.to_verse);
+      isNavigatingToVerseRef.value = false;
       return;
     }
     
@@ -1074,6 +1105,7 @@ async function navigateToCrossReference(crossRef: CrossReferenceData) {
     await navigateToVerse(targetBook.book_id, targetChapter.chapter_id, targetVerse.verse_id);
   } catch (err) {
     console.error('Error navigating to cross-reference:', err);
+    isNavigatingToVerseRef.value = false;
   }
 }
 
@@ -2342,6 +2374,14 @@ onUnmounted(() => {
   border-radius: 3px;
   border: 1px solid #bbf7d0;
   vertical-align: middle;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cross-ref-more:hover {
+  background: #dcfce7;
+  transform: translateY(-1px);
+  border-color: #059669;
 }
 
 /* Inline verse references within text */
