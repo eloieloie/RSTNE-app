@@ -13,6 +13,13 @@
     <div v-else class="content-wrapper">
       <div class="content-layout">
         <nav class="top-nav">
+          <button class="search-icon" @click="showSearchModal = true" title="Search Verses">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </button>
+
           <button class="verse-picker-button" @click="showVersePicker = true">
             <div class="book-names">
               <span v-if="displayHebrewBookName" class="hebrew-book-name">{{ displayHebrewBookName }}</span>
@@ -23,13 +30,6 @@
             </span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-
-          <button class="search-icon" @click="showSearchModal = true" title="Search Verses">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
             </svg>
           </button>
 
@@ -115,10 +115,10 @@
                 >
                   <div class="verse-main">
                     <span class="verse-number">{{ verse.verse_index }}</span>
-                    <span v-if="showEnglish" class="verse-text" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
+                    <span v-if="showEnglish" class="verse-text" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
                   </div>
                   
-                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   
                   <div v-if="verse.links && verse.links.length > 0" class="verse-links">
                       <a 
@@ -284,77 +284,11 @@
     </div>
 
     <!-- Settings Modal -->
-    <div v-if="showSettingsModal" class="modal-overlay" @click="showSettingsModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Settings</h3>
-          <button class="close-button" @click="showSettingsModal = false">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="settings-section">
-            <h4>Display Options</h4>
-            <div class="settings-group">
-              <label class="setting-item">
-                <span>Show English Verse</span>
-                <button 
-                  @click="showEnglish = !showEnglish" 
-                  :class="['toggle-switch', { active: showEnglish }]"
-                >
-                  <span class="toggle-slider"></span>
-                </button>
-              </label>
-              <label class="setting-item">
-                <span>Show Telugu Verse</span>
-                <button 
-                  @click="showTelugu = !showTelugu" 
-                  :class="['toggle-switch', { active: showTelugu }]"
-                >
-                  <span class="toggle-slider"></span>
-                </button>
-              </label>
-              <label class="setting-item">
-                <span>Show Notes</span>
-                <button 
-                  @click="showNotes = !showNotes" 
-                  :class="['toggle-switch', { active: showNotes }]"
-                >
-                  <span class="toggle-slider"></span>
-                </button>
-              </label>
-              <label class="setting-item">
-                <span>Show Cross References</span>
-                <button 
-                  @click="showCrossReferences = !showCrossReferences" 
-                  :class="['toggle-switch', { active: showCrossReferences }]"
-                >
-                  <span class="toggle-slider"></span>
-                </button>
-              </label>
-              <label class="setting-item">
-                <span>Show Superscript</span>
-                <button 
-                  @click="showSuperscript = !showSuperscript" 
-                  :class="['toggle-switch', { active: showSuperscript }]"
-                >
-                  <span class="toggle-slider"></span>
-                </button>
-              </label>
-            </div>
-          </div>
-          
-          <div class="settings-section">
-            <h4>Font Size</h4>
-            <div class="settings-group">
-              <div class="font-size-controls">
-                <button class="font-btn" @click="decreaseFontSize" :disabled="fontSize <= 12">A-</button>
-                <span class="font-size-display">{{ fontSize }}px</span>
-                <button class="font-btn" @click="increaseFontSize" :disabled="fontSize >= 24">A+</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Settings
+      :is-open="showSettingsModal"
+      @close="showSettingsModal = false"
+      @settings-change="handleSettingsChange"
+    />
   </div>
 </template>
 
@@ -367,6 +301,7 @@ import { getVersesByChapterId } from '@/api/verses';
 import { getCrossReferences, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
+import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 
 interface Book {
@@ -440,11 +375,15 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const isLoadingAdjacentChapter = ref(false);
 
+// Settings state (managed by Settings component)
 const showEnglish = ref(true);
 const showTelugu = ref(true);
 const showNotes = ref(true);
 const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
+const fontSize = ref(16);
+const boldVerseText = ref(true);
+
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
@@ -516,7 +455,6 @@ const contextMenu = ref<{
   chapterNum: 0,
   verseNum: 0
 });
-const fontSize = ref(16);
 
 // Refs for scroll detection
 const chapterRefs = ref<Map<number, HTMLElement>>(new Map());
@@ -1016,18 +954,25 @@ function closeCrossRefTooltip() {
   crossRefTooltip.value.show = false;
 }
 
-// Navigate to a cross-reference (kept for backward compatibility)
-// Font size controls
-function increaseFontSize() {
-  if (fontSize.value < 24) {
-    fontSize.value += 2;
-  }
+// Handle settings change from Settings component
+interface SettingsData {
+  showEnglish: boolean;
+  showTelugu: boolean;
+  showNotes: boolean;
+  showCrossReferences: boolean;
+  showSuperscript: boolean;
+  fontSize: number;
+  boldVerseText: boolean;
 }
 
-function decreaseFontSize() {
-  if (fontSize.value > 12) {
-    fontSize.value -= 2;
-  }
+function handleSettingsChange(settings: SettingsData) {
+  showEnglish.value = settings.showEnglish;
+  showTelugu.value = settings.showTelugu;
+  showNotes.value = settings.showNotes;
+  showCrossReferences.value = settings.showCrossReferences;
+  showSuperscript.value = settings.showSuperscript;
+  fontSize.value = settings.fontSize;
+  boldVerseText.value = settings.boldVerseText;
 }
 
 // Search results navigation
@@ -2008,15 +1953,12 @@ onUnmounted(() => {
   padding: 2rem 0 1rem;
   margin-bottom: 2rem;
   border-bottom: 2px solid #e0e0e0;
-  text-align: left;
+  text-align: center !important;
 }
 
 .book-header h1 {
   margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  justify-content: flex-start;
+  text-align: center;
   color: #2c3e50;
 }
 
@@ -2027,7 +1969,7 @@ onUnmounted(() => {
 }
 
 .book-description {
-  text-align: left;
+  text-align: center;
   color: #666;
   font-size: 0.95rem;
   margin: 0.5rem 0 0 0;
@@ -2156,14 +2098,19 @@ onUnmounted(() => {
 }
 
 .verse-text {
-  display: inline;
+  display: block;
   color: #333;
 }
 
+.bold-text {
+  font-weight: 600;
+}
+
 :deep(.verse-text p) {
-  display: inline;
+  display: block;
   margin: 0;
   padding: 0;
+  text-align: justify;
 }
 
 .verse-telugu {
@@ -2548,198 +2495,6 @@ onUnmounted(() => {
   font-family: 'PaleoBora', serif !important;
 }
 
-/* Settings Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 1.3rem;
-  font-weight: 600;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #666;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-  line-height: 1;
-}
-
-.close-button:hover {
-  background: #e9ecef;
-  color: #333;
-}
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.settings-section {
-  margin-bottom: 2rem;
-}
-
-.settings-section:last-child {
-  margin-bottom: 0;
-}
-
-.settings-section h4 {
-  margin: 0 0 1rem 0;
-  color: #2c3e50;
-  font-size: 1rem;
-  font-weight: 600;
-  border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 0.5rem;
-}
-
-.settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: #f8f9fa;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.setting-item:hover {
-  background: #e9ecef;
-}
-
-.setting-item span {
-  font-size: 0.95rem;
-  color: #333;
-  font-weight: 500;
-}
-
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  background: #ccc;
-  border: none;
-  border-radius: 24px;
-  cursor: pointer;
-  transition: background 0.3s;
-  padding: 0;
-}
-
-.toggle-switch.active {
-  background: #42b983;
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s;
-  display: block;
-}
-
-.toggle-switch.active .toggle-slider {
-  transform: translateX(24px);
-}
-
-/* Font Size Controls */
-.font-size-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.font-btn {
-  width: 40px;
-  height: 40px;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  background: white;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.font-btn:hover:not(:disabled) {
-  border-color: #42b983;
-  color: #42b983;
-  background: #f0fdf8;
-}
-
-.font-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.font-size-display {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #42b983;
-  min-width: 50px;
-  text-align: center;
-}
-
 @media (max-width: 768px) {
   .chapters-page {
     padding: 0;
@@ -2768,10 +2523,13 @@ onUnmounted(() => {
     border-radius: 0;
   }
   
+  .book-header {
+    text-align: center;
+  }
+  
   .book-header h1 {
     font-size: 1.5rem;
-    flex-direction: column;
-    gap: 0.5rem;
+    text-align: center;
   }
 
   .book-header-section,
