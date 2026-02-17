@@ -76,6 +76,22 @@
             </label>
           </div>
         </div>
+        
+        <div class="settings-section">
+          <h4>Device Options</h4>
+          <div class="settings-group">
+            <label class="setting-item">
+              <span>E-Ink Mode</span>
+              <button 
+                @click="toggleSetting('eInkMode')" 
+                :class="['toggle-switch', { active: settings.eInkMode }]"
+              >
+                <span class="toggle-slider"></span>
+              </button>
+            </label>
+            <p class="setting-description">Optimizes display for E-Ink devices by disabling animations, using instant scrolling, and increasing contrast.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -96,6 +112,7 @@ interface Settings {
   showSuperscript: boolean;
   fontSize: number;
   boldVerseText: boolean;
+  eInkMode: boolean;
 }
 
 const props = defineProps<Props>();
@@ -113,7 +130,8 @@ const settings = reactive<Settings>({
   showCrossReferences: true,
   showSuperscript: true,
   fontSize: 16,
-  boldVerseText: true
+  boldVerseText: true,
+  eInkMode: false
 });
 
 // Load settings from localStorage on mount
@@ -129,6 +147,18 @@ onMounted(() => {
       console.error('Error loading settings from localStorage:', err);
     }
   } else {
+    // Auto-detect E-Ink device
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isEInk = userAgent.includes('boox') || 
+                   userAgent.includes('onyx') || 
+                   userAgent.includes('kindle') ||
+                   userAgent.includes('kobo') ||
+                   userAgent.includes('pocketbook');
+    
+    if (isEInk) {
+      settings.eInkMode = true;
+    }
+    
     // Emit default settings to parent
     emit('settingsChange', { ...settings });
   }
@@ -337,6 +367,14 @@ function close() {
   color: #333;
   min-width: 60px;
   text-align: center;
+}
+
+.setting-description {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.4;
+  font-style: italic;
 }
 
 /* Dark mode support (if needed) */
