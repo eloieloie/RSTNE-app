@@ -1213,13 +1213,16 @@ function closeContextMenu(event: Event) {
 // Long-press support for touch devices
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let longPressTriggered = false;
+let activePointerId: number | null = null;
 
 function handleVerseLongPressStart(event: PointerEvent, verse: Verse) {
-  // Don't start a new timer if one is already running
-  if (longPressTimer) {
+  // Only handle one pointer at a time
+  if (longPressTimer || activePointerId !== null) {
     return;
   }
   
+  // Track this pointer
+  activePointerId = event.pointerId;
   longPressTriggered = false;
   
   longPressTimer = setTimeout(() => {
@@ -1250,6 +1253,9 @@ function handleVerseLongPressStart(event: PointerEvent, verse: Verse) {
 }
 
 function handleVerseLongPressEnd() {
+  // Reset pointer tracking
+  activePointerId = null;
+  
   if (longPressTimer) {
     clearTimeout(longPressTimer);
     longPressTimer = null;
