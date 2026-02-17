@@ -2478,13 +2478,15 @@ a.cross-ref-badge:active {
 .context-menu-item {
   display: block;
   width: 100%;
-  padding: 8px 16px;
+  padding: 12px 20px;
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.2s;
+  min-height: 44px;
+  min-width: 120px;
 }
 
 .context-menu-item:hover {
