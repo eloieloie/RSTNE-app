@@ -125,7 +125,7 @@ button:active {
 /* Remove hover effects on touch devices */
 @media (hover: none) {
   button:hover {
-    border-color: transparent;
+    border-color: inherit;
   }
 }
 

@@ -1214,7 +1214,7 @@ function closeContextMenu(event: Event) {
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let longPressTriggered = false;
 
-function handleVerseLongPressStart(event: PointerEvent | TouchEvent, verse: Verse) {
+function handleVerseLongPressStart(event: PointerEvent, verse: Verse) {
   longPressTriggered = false;
   
   longPressTimer = setTimeout(() => {
@@ -1251,7 +1251,7 @@ function handleVerseLongPressEnd() {
   }
 }
 
-function handleVerseTap(event: PointerEvent | TouchEvent) {
+function handleVerseTap(event: MouseEvent) {
   // If long press was triggered, don't handle the tap
   if (longPressTriggered) {
     event.preventDefault();
@@ -1902,17 +1902,6 @@ a,
   user-select: none;
 }
 
-/* Minimum touch target size (44x44px) */
-button,
-a.link-badge,
-a.cross-ref-badge {
-  min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Active states for touch feedback */
 button:active,
 a.link-badge:active,
@@ -2362,7 +2351,9 @@ a.cross-ref-badge:active {
 }
 
 .link-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 0.75rem;
   background: #e7f3ff;
   color: #0366d6;
@@ -2371,8 +2362,7 @@ a.cross-ref-badge:active {
   font-weight: 500;
   text-decoration: none;
   transition: all 0.2s;
-  min-height: 44px;
-  min-width: 44px;
+  /* Touch target: padding + content should reach 44px */
 }
 
 .link-badge:hover {
@@ -2400,8 +2390,10 @@ a.cross-ref-badge:active {
 }
 
 .cross-ref-badge {
-  display: inline-block;
-  padding: 0.4rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
   margin: 0.25rem 0.25rem 0.25rem 0;
   background: #d1fae5;
   color: #065f46;
@@ -2411,8 +2403,7 @@ a.cross-ref-badge:active {
   text-decoration: none;
   transition: all 0.2s;
   border: 1px solid #a7f3d0;
-  min-height: 44px;
-  min-width: 44px;
+  /* Touch target: padding + content should reach 44px */
 }
 
 .cross-ref-badge:hover {
@@ -2423,7 +2414,9 @@ a.cross-ref-badge:active {
 }
 
 .cross-ref-more {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.75rem;
   color: #059669;
   font-weight: 600;
@@ -2436,8 +2429,7 @@ a.cross-ref-badge:active {
   vertical-align: middle;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 44px;
-  min-width: 44px;
+  /* Touch target: padding + content should reach 44px */
 }
 
 .cross-ref-more:hover {
@@ -2485,8 +2477,8 @@ a.cross-ref-badge:active {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.2s;
-  min-height: 44px;
   min-width: 120px;
+  /* min-height not needed - padding ensures sufficient height */
 }
 
 .context-menu-item:hover {

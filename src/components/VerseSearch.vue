@@ -202,8 +202,7 @@ function close() {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
-  min-height: 44px;
-  min-width: 44px;
+  /* Padding in element styles ensures sufficient touch target size */
 }
 
 .close-btn:active,

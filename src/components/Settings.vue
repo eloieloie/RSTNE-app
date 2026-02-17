@@ -147,13 +147,16 @@ onMounted(() => {
       console.error('Error loading settings from localStorage:', err);
     }
   } else {
-    // Auto-detect E-Ink device
+    // Auto-detect E-Ink device with more specific patterns
     const userAgent = navigator.userAgent.toLowerCase();
-    const isEInk = userAgent.includes('boox') || 
-                   userAgent.includes('onyx') || 
-                   userAgent.includes('kindle') ||
-                   userAgent.includes('kobo') ||
-                   userAgent.includes('pocketbook');
+    // Check for E-Ink device specific patterns and avoid false positives
+    const isBoox = userAgent.includes('boox') || userAgent.includes('onyx boox');
+    const isKindle = userAgent.includes('kindle') && (userAgent.includes('amazon') || userAgent.includes('kfapwi'));
+    const isKobo = userAgent.includes('kobo') && userAgent.includes('ereader');
+    const isPocketBook = userAgent.includes('pocketbook');
+    const isRemarkable = userAgent.includes('remarkable');
+    
+    const isEInk = isBoox || isKindle || isKobo || isPocketBook || isRemarkable;
     
     if (isEInk) {
       settings.eInkMode = true;
