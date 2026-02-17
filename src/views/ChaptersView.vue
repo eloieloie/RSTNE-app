@@ -1215,6 +1215,11 @@ let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let longPressTriggered = false;
 
 function handleVerseLongPressStart(event: PointerEvent, verse: Verse) {
+  // Don't start a new timer if one is already running
+  if (longPressTimer) {
+    return;
+  }
+  
   longPressTriggered = false;
   
   longPressTimer = setTimeout(() => {
@@ -1255,6 +1260,8 @@ function handleVerseTap(event: MouseEvent) {
   // If long press was triggered, don't handle the tap
   if (longPressTriggered) {
     event.preventDefault();
+    // Reset for next interaction
+    longPressTriggered = false;
     return;
   }
 }

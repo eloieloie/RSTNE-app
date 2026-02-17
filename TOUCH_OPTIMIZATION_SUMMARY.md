@@ -59,11 +59,11 @@ button:active { transform: scale(0.98); }
 #### Settings Component (Settings.vue)
 - **New Setting**: Added `eInkMode` boolean setting
 - **Auto-detection**: Detects E-Ink devices via userAgent patterns:
-  - Boox
-  - Onyx
-  - Kindle
-  - Kobo
+  - Boox (including Onyx Boox devices)
+  - Kindle (with Amazon identifier)
+  - Kobo (most Kobo e-readers)
   - PocketBook
+  - Remarkable tablet
 - **UI**: Added toggle switch with description explaining E-Ink mode benefits
 - **Persistence**: Settings saved to localStorage
 

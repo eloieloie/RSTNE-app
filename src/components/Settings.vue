@@ -152,7 +152,7 @@ onMounted(() => {
     // Check for E-Ink device specific patterns and avoid false positives
     const isBoox = userAgent.includes('boox') || userAgent.includes('onyx boox');
     const isKindle = userAgent.includes('kindle') && (userAgent.includes('amazon') || userAgent.includes('kfapwi'));
-    const isKobo = userAgent.includes('kobo') && userAgent.includes('ereader');
+    const isKobo = userAgent.includes('kobo'); // Many Kobo devices use just 'kobo' without 'ereader'
     const isPocketBook = userAgent.includes('pocketbook');
     const isRemarkable = userAgent.includes('remarkable');
     
