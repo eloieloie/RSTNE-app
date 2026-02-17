@@ -315,6 +315,61 @@ function close() {
 </script>
 
 <style scoped>
+/* Touch optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.verse-picker-modal {
+  touch-action: pan-y pinch-zoom;
+}
+
+.close-btn,
+.back-btn,
+.category-tab,
+.book-item,
+.chapter-card,
+.verse-card {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Padding in element styles ensures sufficient touch target size */
+}
+
+.close-btn:active,
+.back-btn:active,
+.category-tab:active,
+.book-item:active,
+.chapter-card:active,
+.verse-card:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Remove hover effects on touch devices */
+@media (hover: none) {
+  .close-btn:hover,
+  .back-btn:hover,
+  .category-tab:hover,
+  .book-item:hover,
+  .chapter-card:hover,
+  .verse-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .verse-picker-overlay {
   position: fixed;
   top: 0;

@@ -187,6 +187,52 @@ function close() {
 </script>
 
 <style scoped>
+/* Touch optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-modal {
+  touch-action: pan-y pinch-zoom;
+}
+
+.close-btn,
+.search-btn,
+.result-item {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Padding in element styles ensures sufficient touch target size */
+}
+
+.close-btn:active,
+.search-btn:active,
+.result-item:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Remove hover effects on touch devices */
+@media (hover: none) {
+  .close-btn:hover,
+  .search-btn:hover,
+  .result-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .search-overlay {
   position: fixed;
   top: 0;
