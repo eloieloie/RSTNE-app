@@ -76,22 +76,6 @@
             </label>
           </div>
         </div>
-        
-        <div class="settings-section">
-          <h4>Device Options</h4>
-          <div class="settings-group">
-            <label class="setting-item">
-              <span>E-Ink Mode</span>
-              <button 
-                @click="toggleSetting('eInkMode')" 
-                :class="['toggle-switch', { active: settings.eInkMode }]"
-              >
-                <span class="toggle-slider"></span>
-              </button>
-            </label>
-            <p class="setting-description">Optimizes display for E-Ink devices by disabling animations, using instant scrolling, and increasing contrast.</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -112,7 +96,6 @@ interface Settings {
   showSuperscript: boolean;
   fontSize: number;
   boldVerseText: boolean;
-  eInkMode: boolean;
 }
 
 const props = defineProps<Props>();
@@ -130,8 +113,7 @@ const settings = reactive<Settings>({
   showCrossReferences: true,
   showSuperscript: true,
   fontSize: 16,
-  boldVerseText: true,
-  eInkMode: false
+  boldVerseText: true
 });
 
 // Load settings from localStorage on mount
@@ -147,21 +129,6 @@ onMounted(() => {
       console.error('Error loading settings from localStorage:', err);
     }
   } else {
-    // Auto-detect E-Ink device with more specific patterns
-    const userAgent = navigator.userAgent.toLowerCase();
-    // Check for E-Ink device specific patterns and avoid false positives
-    const isBoox = userAgent.includes('boox'); // Matches both 'boox' and 'onyx boox'
-    const isKindle = userAgent.includes('kindle') && (userAgent.includes('amazon') || userAgent.includes('kfapwi'));
-    const isKobo = userAgent.includes('kobo'); // Many Kobo devices use just 'kobo' without 'ereader'
-    const isPocketBook = userAgent.includes('pocketbook');
-    const isRemarkable = userAgent.includes('remarkable');
-    
-    const isEInk = isBoox || isKindle || isKobo || isPocketBook || isRemarkable;
-    
-    if (isEInk) {
-      settings.eInkMode = true;
-    }
-    
     // Emit default settings to parent
     emit('settingsChange', { ...settings });
   }
@@ -370,14 +337,6 @@ function close() {
   color: #333;
   min-width: 60px;
   text-align: center;
-}
-
-.setting-description {
-  font-size: 0.875rem;
-  color: #666;
-  margin: 0.5rem 0 0 0;
-  line-height: 1.4;
-  font-style: italic;
 }
 
 /* Dark mode support (if needed) */
