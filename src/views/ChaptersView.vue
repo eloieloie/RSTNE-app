@@ -1084,7 +1084,7 @@ function formatVerseWithPaleoBora(text: string): string {
 }
 
 // Handle clicks on inline verse references using event delegation
-function handleVerseRefClick(event: Event) {
+async function handleVerseRefClick(event: Event) {
   const target = event.target as HTMLElement;
   
   // Check if clicked element is an inline verse reference link
@@ -1096,16 +1096,55 @@ function handleVerseRefClick(event: Event) {
     const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
     const verseNum = parseInt(target.getAttribute('data-verse') || '0');
     
-    // Show context menu (position: fixed uses viewport coordinates, no scrollY needed)
+    // Get the target book
+    const targetBook = allBooks.value.find(b => b.book_id === bookId);
+    if (!targetBook) return;
+    
+    // Show tooltip like cross references
     const rect = target.getBoundingClientRect();
-    contextMenu.value = {
-      show: true,
-      x: rect.left,
-      y: rect.bottom + 5,
-      bookId,
-      chapterNum,
-      verseNum
-    };
+    crossRefTooltip.value.show = true;
+    crossRefTooltip.value.x = rect.right + 10;
+    crossRefTooltip.value.y = rect.top;
+    crossRefTooltip.value.loading = true;
+    crossRefTooltip.value.bookName = targetBook.book_name;
+    crossRefTooltip.value.chapterNumber = String(chapterNum);
+    crossRefTooltip.value.verseNumber = String(verseNum);
+    
+    try {
+      // Find the chapter
+      const targetChapters = await getChaptersByBookId(bookId);
+      const targetChapter = targetChapters.find(ch => ch.chapter_number === String(chapterNum));
+      
+      if (!targetChapter) {
+        crossRefTooltip.value.verseText = 'Chapter not found';
+        crossRefTooltip.value.loading = false;
+        return;
+      }
+      
+      // Find the verse
+      const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+      const targetVerse = targetVerses.find(v => v.verse_index === verseNum);
+      
+      if (!targetVerse) {
+        crossRefTooltip.value.verseText = 'Verse not found';
+        crossRefTooltip.value.loading = false;
+        return;
+      }
+      
+      // Store IDs for navigation
+      crossRefTooltip.value.bookId = bookId;
+      crossRefTooltip.value.chapterId = targetChapter.chapter_id;
+      crossRefTooltip.value.verseId = targetVerse.verse_id;
+      
+      // Set verse text with formatting
+      crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
+      crossRefTooltip.value.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
+      crossRefTooltip.value.loading = false;
+    } catch (err) {
+      console.error('Error loading inline verse reference:', err);
+      crossRefTooltip.value.verseText = 'Error loading verse';
+      crossRefTooltip.value.loading = false;
+    }
   }
 }
 
