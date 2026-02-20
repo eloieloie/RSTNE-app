@@ -10,7 +10,7 @@
       <p>{{ error }}</p>
     </div>
 
-    <div v-else class="content-wrapper">
+    <div v-else class="content-wrapper" :class="{ 'broadcast-mode': broadcastMode }">
       <div class="content-layout">
         <nav class="top-nav">
           <div class="nav-container">
@@ -199,6 +199,41 @@
           </div>
         </main>
       </div>
+      
+      <!-- Broadcast Mode Right Panel -->
+      <div v-if="broadcastMode" class="broadcast-mode-right-panel">
+        <div v-if="!crossRefTooltip.show" class="panel-placeholder">
+          <p>Select a verse to view details</p>
+        </div>
+        <!-- Tooltip positioned in right panel when broadcast mode is active -->
+        <div 
+          v-if="crossRefTooltip.show" 
+          class="cross-ref-tooltip broadcast"
+          @click.stop
+        >
+          <div class="tooltip-header">
+            <span class="tooltip-title">{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}</span>
+            <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </button>
+            <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
+          </div>
+          <div class="tooltip-content">
+            <div v-if="crossRefTooltip.loading" class="tooltip-loading">
+              <div class="loading-spinner"></div>
+              <p>Loading verse...</p>
+            </div>
+            <div v-else>
+              <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
+              <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Verse Picker -->
@@ -241,9 +276,9 @@
       </div>
     </div>
 
-    <!-- Cross-Reference Tooltip -->
+    <!-- Cross-Reference Tooltip (hidden in broadcast mode) -->
     <div 
-      v-if="crossRefTooltip.show" 
+      v-if="crossRefTooltip.show && !broadcastMode" 
       class="cross-ref-tooltip"
       :style="{ top: `${crossRefTooltip.y}px`, left: `${crossRefTooltip.x}px` }"
       @click.stop
@@ -385,6 +420,7 @@ const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
 const fontSize = ref(16);
 const boldVerseText = ref(true);
+const broadcastMode = ref(false);
 
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
@@ -666,8 +702,10 @@ async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skip
   // Load adjacent chapters only if not navigating to a specific verse
   if (!skipAdjacentLoad) {
     const adjacentStartTime = performance.now();
-    console.log(`[${new Date().toISOString()}] 📚 Loading adjacent chapters...`);    await loadAdjacentChapters(chapter.chapter_id);
-    console.log(`[${new Date().toISOString()}] ✅ Adjacent chapters loaded in ${(performance.now() - adjacentStartTime).toFixed(2)}ms`);  }
+    console.log(`[${new Date().toISOString()}] 📚 Loading adjacent chapters...`);
+    await loadAdjacentChapters(chapter.chapter_id);
+    console.log(`[${new Date().toISOString()}] ✅ Adjacent chapters loaded in ${(performance.now() - adjacentStartTime).toFixed(2)}ms`);
+  }
   
   // Scroll to chapter after DOM updates (unless skipScroll is true)
   if (!skipScroll) {
@@ -675,7 +713,8 @@ async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skip
     scrollToChapter(chapter.chapter_id);
   }
   
-  console.log(`[${new Date().toISOString()}] ✅ Chapter selection complete in ${(performance.now() - selectStartTime).toFixed(2)}ms`);}
+  console.log(`[${new Date().toISOString()}] ✅ Chapter selection complete in ${(performance.now() - selectStartTime).toFixed(2)}ms`);
+}
 
 // Scroll to chapter
 function scrollToChapter(chapterId: number) {
@@ -920,9 +959,11 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
   const rect = verseItem ? verseItem.getBoundingClientRect() : target.getBoundingClientRect();
   
   crossRefTooltip.value.show = true;
-  // Position tooltip to the right of the verse-item
-  crossRefTooltip.value.x = rect.right + 10;
-  crossRefTooltip.value.y = rect.top;
+  // Position tooltip to the right of the verse-item only if NOT in broadcast mode
+  if (!broadcastMode.value) {
+    crossRefTooltip.value.x = rect.right + 10;
+    crossRefTooltip.value.y = rect.top;
+  }
   crossRefTooltip.value.loading = true;
   crossRefTooltip.value.bookName = crossRef.to_book_name;
   crossRefTooltip.value.chapterNumber = crossRef.to_chapter;
@@ -1003,6 +1044,7 @@ interface SettingsData {
   showSuperscript: boolean;
   fontSize: number;
   boldVerseText: boolean;
+  broadcastMode: boolean;
 }
 
 function handleSettingsChange(settings: SettingsData) {
@@ -1013,6 +1055,7 @@ function handleSettingsChange(settings: SettingsData) {
   showSuperscript.value = settings.showSuperscript;
   fontSize.value = settings.fontSize;
   boldVerseText.value = settings.boldVerseText;
+  broadcastMode.value = settings.broadcastMode;
 }
 
 // Search results navigation
@@ -1101,10 +1144,15 @@ async function handleVerseRefClick(event: Event) {
     if (!targetBook) return;
     
     // Show tooltip like cross references
-    const rect = target.getBoundingClientRect();
     crossRefTooltip.value.show = true;
-    crossRefTooltip.value.x = rect.right + 10;
-    crossRefTooltip.value.y = rect.top;
+    
+    // Only set position if NOT in broadcast mode
+    if (!broadcastMode.value) {
+      const rect = target.getBoundingClientRect();
+      crossRefTooltip.value.x = rect.right + 10;
+      crossRefTooltip.value.y = rect.top;
+    }
+    
     crossRefTooltip.value.loading = true;
     crossRefTooltip.value.bookName = targetBook.book_name;
     crossRefTooltip.value.chapterNumber = String(chapterNum);
@@ -1856,8 +1904,26 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.content-wrapper.broadcast-mode {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
 .content-layout {
   width: 100%;
+}
+
+.content-wrapper.broadcast-mode .content-layout {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-layout.broadcast-mode {
+  display: block;
 }
 
 .top-nav {
@@ -1871,6 +1937,11 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.content-wrapper.broadcast-mode .top-nav {
+  width: 70%;
+  right: auto;
+}
+
 .nav-container {
   max-width: 900px;
   margin: 0 auto;
@@ -1879,6 +1950,12 @@ onUnmounted(() => {
   gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.content-layout.broadcast-mode .nav-container {
+  max-width: none;
+  margin: 0;
+  padding: 0 1rem;
 }
 
 .chapter-content {
@@ -1890,6 +1967,46 @@ onUnmounted(() => {
   max-width: 900px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   min-height: 400px;
+}
+
+.content-layout.broadcast-mode .chapter-content {
+  margin: 90px 0 2rem 0;
+  padding: 2rem 1rem;
+  max-width: none;
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: calc(100vh - 100px);
+}
+
+.broadcast-mode-right-panel {
+  position: fixed;
+  right: 0;
+  top: 90px;
+  width: 30%;
+  height: calc(100vh - 100px);
+  background: white;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  padding: 1rem;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  display: none;
+}
+
+.content-wrapper.broadcast-mode .broadcast-mode-right-panel {
+  display: block;
+}
+
+.cross-ref-tooltip.broadcast {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0;
+  width: 100% !important;
+  border-radius: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
 }
 
 .verse-picker-button {
@@ -2473,6 +2590,35 @@ onUnmounted(() => {
   padding-top: 15px;
   margin-top: 10px;
   text-align: left;
+}
+
+.broadcast-mode-right-panel {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .content-layout.broadcast-mode {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .broadcast-mode-right-panel {
+    display: block;
+  }
+
+  .panel-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    color: #999;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .panel-placeholder p {
+    margin: 0;
+  }
 }
 
 /* Mobile responsive tooltip */

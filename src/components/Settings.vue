@@ -7,6 +7,21 @@
       </div>
       <div class="modal-body">
         <div class="settings-section">
+          <h4>Display Mode</h4>
+          <div class="settings-group">
+            <label class="setting-item">
+              <span>Broadcast Mode</span>
+              <button 
+                @click="toggleSetting('broadcastMode')" 
+                :class="['toggle-switch', { active: settings.broadcastMode }]"
+              >
+                <span class="toggle-slider"></span>
+              </button>
+            </label>
+          </div>
+        </div>
+        
+        <div class="settings-section">
           <h4>Display Options</h4>
           <div class="settings-group">
             <label class="setting-item">
@@ -96,6 +111,7 @@ interface Settings {
   showSuperscript: boolean;
   fontSize: number;
   boldVerseText: boolean;
+  broadcastMode: boolean;
 }
 
 const props = defineProps<Props>();
@@ -113,7 +129,8 @@ const settings = reactive<Settings>({
   showCrossReferences: true,
   showSuperscript: true,
   fontSize: 16,
-  boldVerseText: true
+  boldVerseText: true,
+  broadcastMode: false
 });
 
 // Load settings from localStorage on mount
