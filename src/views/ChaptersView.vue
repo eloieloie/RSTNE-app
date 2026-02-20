@@ -2163,7 +2163,7 @@ onUnmounted(() => {
 }
 
 .verse-text {
-  display: block;
+  display: inline;
   color: #333;
 }
 
@@ -2172,10 +2172,9 @@ onUnmounted(() => {
 }
 
 :deep(.verse-text p) {
-  display: block;
+  display: inline;
   margin: 0;
   padding: 0;
-  text-align: justify;
 }
 
 .verse-telugu {
