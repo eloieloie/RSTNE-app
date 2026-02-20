@@ -280,7 +280,6 @@
     <div 
       v-if="crossRefTooltip.show && !broadcastMode" 
       class="cross-ref-tooltip"
-      :style="{ top: `${crossRefTooltip.y}px`, left: `${crossRefTooltip.x}px` }"
       @click.stop
     >
       <div class="tooltip-header">
@@ -953,17 +952,7 @@ function toggleCrossRefs(verseId: number) {
 async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceData) {
   event.preventDefault();
   
-  // Find the parent verse-item element to position tooltip relative to it
-  const target = event.currentTarget as HTMLElement;
-  const verseItem = target.closest('.verse-item') as HTMLElement;
-  const rect = verseItem ? verseItem.getBoundingClientRect() : target.getBoundingClientRect();
-  
   crossRefTooltip.value.show = true;
-  // Position tooltip to the right of the verse-item only if NOT in broadcast mode
-  if (!broadcastMode.value) {
-    crossRefTooltip.value.x = rect.right + 10;
-    crossRefTooltip.value.y = rect.top;
-  }
   crossRefTooltip.value.loading = true;
   crossRefTooltip.value.bookName = crossRef.to_book_name;
   crossRefTooltip.value.chapterNumber = crossRef.to_chapter;
@@ -1145,14 +1134,6 @@ async function handleVerseRefClick(event: Event) {
     
     // Show tooltip like cross references
     crossRefTooltip.value.show = true;
-    
-    // Only set position if NOT in broadcast mode
-    if (!broadcastMode.value) {
-      const rect = target.getBoundingClientRect();
-      crossRefTooltip.value.x = rect.right + 10;
-      crossRefTooltip.value.y = rect.top;
-    }
-    
     crossRefTooltip.value.loading = true;
     crossRefTooltip.value.bookName = targetBook.book_name;
     crossRefTooltip.value.chapterNumber = String(chapterNum);
@@ -2004,8 +1985,13 @@ onUnmounted(() => {
   right: 0 !important;
   margin: 0;
   width: 100% !important;
-  border-radius: 8px;
-  max-height: 50vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transform: none !important;
+  max-width: none;
+  min-width: auto;
+  max-height: 100%;
   overflow-y: auto;
 }
 
@@ -2489,6 +2475,10 @@ onUnmounted(() => {
   min-width: 300px;
   max-width: 500px;
   overflow: hidden;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-height: 70vh;
 }
 
 .tooltip-header {
@@ -2550,7 +2540,7 @@ onUnmounted(() => {
 
 .tooltip-content {
   padding: 16px;
-  max-height: 300px;
+  max-height: 50vh;
   overflow-y: auto;
 }
 
