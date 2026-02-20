@@ -114,10 +114,6 @@
                   :id="`verse-${verse.verse_id}`"
                   :data-verse-id="verse.verse_id"
                   class="verse-item"
-                  @pointerdown="handleVerseLongPressStart($event, verse)"
-                  @pointerup="handleVerseLongPressEnd"
-                  @pointercancel="handleVerseLongPressEnd"
-                  @click="handleVerseTap"
                 >
                   <div class="verse-main">
                     <span class="verse-number">{{ verse.verse_index }}</span>
@@ -133,7 +129,7 @@
                         href="#"
                         class="link-badge"
                         :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
-                        @pointerup.prevent="navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id)"
+                        @click.prevent="navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id)"
                       >
                         {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
                       </a>
@@ -146,7 +142,7 @@
                         href="#"
                         class="cross-ref-badge"
                         :title="`Preview ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
-                        @pointerup="showCrossRefTooltip($event, crossRef)"
+                        @click="showCrossRefTooltip($event, crossRef)"
                       >
                         {{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
                       </a>
@@ -389,7 +385,6 @@ const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
 const fontSize = ref(16);
 const boldVerseText = ref(true);
-const eInkMode = ref(false);
 
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
@@ -721,7 +716,7 @@ function scrollToVerse(verseId: number) {
       
       window.scrollTo({
         top: offsetPosition,
-        behavior: eInkMode.value ? 'instant' : 'smooth'
+        behavior: 'smooth'
       });
       
       // Apply highlight class
@@ -916,7 +911,7 @@ function toggleCrossRefs(verseId: number) {
 }
 
 // Show cross-reference tooltip with verse preview
-async function showCrossRefTooltip(event: PointerEvent | MouseEvent, crossRef: CrossReferenceData) {
+async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceData) {
   event.preventDefault();
   
   // Find the parent verse-item element to position tooltip relative to it
@@ -1008,7 +1003,6 @@ interface SettingsData {
   showSuperscript: boolean;
   fontSize: number;
   boldVerseText: boolean;
-  eInkMode: boolean;
 }
 
 function handleSettingsChange(settings: SettingsData) {
@@ -1019,14 +1013,6 @@ function handleSettingsChange(settings: SettingsData) {
   showSuperscript.value = settings.showSuperscript;
   fontSize.value = settings.fontSize;
   boldVerseText.value = settings.boldVerseText;
-  eInkMode.value = settings.eInkMode;
-  
-  // Apply E-Ink mode CSS class to body
-  if (settings.eInkMode) {
-    document.body.classList.add('e-ink-mode');
-  } else {
-    document.body.classList.remove('e-ink-mode');
-  }
 }
 
 // Search results navigation
@@ -1207,68 +1193,6 @@ function closeContextMenu(event: Event) {
   
   if (crossRefTooltip.value.show) {
     crossRefTooltip.value.show = false;
-  }
-}
-
-// Long-press support for touch devices
-let longPressTimer: ReturnType<typeof setTimeout> | null = null;
-let longPressTriggered = false;
-let activePointerId: number | null = null;
-
-function handleVerseLongPressStart(event: PointerEvent, verse: Verse) {
-  // Only handle one pointer at a time
-  if (longPressTimer || activePointerId !== null) {
-    return;
-  }
-  
-  // Track this pointer
-  activePointerId = event.pointerId;
-  longPressTriggered = false;
-  
-  longPressTimer = setTimeout(() => {
-    longPressTriggered = true;
-    
-    // Show context menu for verse actions
-    const target = event.target as HTMLElement;
-    const verseItem = target.closest('.verse-item') as HTMLElement;
-    if (verseItem) {
-      const rect = verseItem.getBoundingClientRect();
-      
-      // Position context menu at the center of the verse item
-      contextMenu.value = {
-        show: true,
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-        bookId: book.value?.book_id || 0,
-        chapterNum: parseInt(selectedChapter.value?.chapter_number || '0'),
-        verseNum: verse.verse_index || 0
-      };
-      
-      // Provide haptic feedback if available
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
-    }
-  }, 500); // 500ms for long press
-}
-
-function handleVerseLongPressEnd() {
-  // Reset pointer tracking
-  activePointerId = null;
-  
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-}
-
-function handleVerseTap(event: MouseEvent) {
-  // If long press was triggered, don't handle the tap
-  if (longPressTriggered) {
-    event.preventDefault();
-    // Reset for next interaction
-    longPressTriggered = false;
-    return;
   }
 }
 
@@ -1885,94 +1809,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ============================================
-   Touch Device & E-Ink Optimizations
-   ============================================ */
-
-/* Global touch optimizations */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Touch-action for scrollable areas */
-.chapters-page,
-.chapter-content,
-.continuous-scroll-container {
-  touch-action: pan-y pinch-zoom;
-}
-
-/* Touch-action for interactive elements */
-button,
-a,
-.link-badge,
-.cross-ref-badge,
-.cross-ref-more,
-.verse-picker-button,
-.search-icon,
-.settings-icon {
-  touch-action: manipulation;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Active states for touch feedback */
-button:active,
-a.link-badge:active,
-a.cross-ref-badge:active {
-  opacity: 0.7;
-  transform: scale(0.98);
-}
-
-/* Remove hover effects on touch devices */
-@media (hover: none) {
-  button:hover,
-  a:hover,
-  .link-badge:hover,
-  .cross-ref-badge:hover,
-  .verse-picker-button:hover,
-  .search-icon:hover,
-  .settings-icon:hover {
-    transform: none;
-    box-shadow: none;
-  }
-}
-
-/* E-Ink Mode - Disable animations and transitions */
-.e-ink-mode *,
-.e-ink-mode *::before,
-.e-ink-mode *::after {
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
-}
-
-/* E-Ink Mode - Increase contrast */
-.e-ink-mode {
-  filter: contrast(1.2);
-}
-
-/* E-Ink Mode - Instant scrolling */
-.e-ink-mode .chapters-page {
-  scroll-behavior: auto !important;
-}
-
-/* Reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ============================================
-   Base Styles
-   ============================================ */
-
 .chapters-page {
   min-height: 100vh;
 }
@@ -2364,10 +2200,8 @@ a.cross-ref-badge:active {
 }
 
 .link-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0.75rem;
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
   background: #e7f3ff;
   color: #0366d6;
   border-radius: 4px;
@@ -2375,7 +2209,6 @@ a.cross-ref-badge:active {
   font-weight: 500;
   text-decoration: none;
   transition: all 0.2s;
-  /* Touch target: padding + content should reach 44px */
 }
 
 .link-badge:hover {
@@ -2403,10 +2236,8 @@ a.cross-ref-badge:active {
 }
 
 .cross-ref-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 0.75rem;
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
   margin: 0.25rem 0.25rem 0.25rem 0;
   background: #d1fae5;
   color: #065f46;
@@ -2416,7 +2247,6 @@ a.cross-ref-badge:active {
   text-decoration: none;
   transition: all 0.2s;
   border: 1px solid #a7f3d0;
-  /* Touch target: padding + content should reach 44px */
 }
 
 .cross-ref-badge:hover {
@@ -2427,22 +2257,19 @@ a.cross-ref-badge:active {
 }
 
 .cross-ref-more {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   font-size: 0.75rem;
   color: #059669;
   font-weight: 600;
   font-style: normal;
   margin-left: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.2rem 0.5rem;
   background: #f0fdf4;
   border-radius: 3px;
   border: 1px solid #bbf7d0;
   vertical-align: middle;
   cursor: pointer;
   transition: all 0.2s ease;
-  /* Touch target: padding + content should reach 44px */
 }
 
 .cross-ref-more:hover {
@@ -2483,15 +2310,13 @@ a.cross-ref-badge:active {
 .context-menu-item {
   display: block;
   width: 100%;
-  padding: 12px 20px;
+  padding: 8px 16px;
   text-align: left;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.2s;
-  min-width: 120px;
-  /* min-height not needed - padding ensures sufficient height */
 }
 
 .context-menu-item:hover {
