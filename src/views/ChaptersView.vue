@@ -118,9 +118,10 @@
                   <div class="verse-main">
                     <span class="verse-number">{{ verse.verse_index }}</span>
                     <span v-if="showEnglish" class="verse-text" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.verse)"></span>
+                    <div v-if="!showEnglish && showTelugu && verse.telugu_verse" class="verse-telugu inline" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   </div>
                   
-                  <div v-if="showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+                  <div v-if="showEnglish && showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   
                   <div v-if="verse.links && verse.links.length > 0" class="verse-links">
                       <a 
@@ -199,7 +200,7 @@
           </div>
         </main>
       </div>
-      
+        
       <!-- Broadcast Mode Right Panel -->
       <div v-if="broadcastMode" class="broadcast-mode-right-panel">
         <div v-if="!crossRefTooltip.show" class="panel-placeholder">
@@ -461,6 +462,7 @@ const crossRefTooltip = ref<{
   bookId: number;
   chapterId: number;
   verseId: number;
+  verseIndex: number;
 }>({
   show: false,
   x: 0,
@@ -473,7 +475,8 @@ const crossRefTooltip = ref<{
   verseNumber: '',
   bookId: 0,
   chapterId: 0,
-  verseId: 0
+  verseId: 0,
+  verseIndex: 0
 });
 
 // Context menu state for verse reference links
@@ -599,13 +602,8 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
   const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
   if (!chapter) return;
 
-  const loadStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 📜 Loading verses for chapter ${chapter.chapter_number} (ID: ${chapterId})...`);
-
   try {
-    const versesStartTime = performance.now();
     const verses = await getVersesByChapterId(chapterId);
-    console.log(`[${new Date().toISOString()}] ✅ Fetched ${verses.length} verses in ${(performance.now() - versesStartTime).toFixed(2)}ms`);
     
     // Store verses immediately without cross-references for faster initial load
     const versesWithoutCrossRefs = verses.map(verse => ({
@@ -622,9 +620,6 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
     loadCrossReferencesForChapter(chapterId, chapter, verses).catch(err => {
       console.error('Error loading cross-references:', err);
     });
-    
-    const totalLoadTime = performance.now() - loadStartTime;
-    console.log(`[${new Date().toISOString()}] ✅ Chapter ${chapter.chapter_number} fully loaded in ${totalLoadTime.toFixed(2)}ms`);
   } catch (err) {
     console.error('Error loading chapter verses:', err);
   }
@@ -632,9 +627,6 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
 
 // Lazy load cross-references for a chapter (non-blocking)
 async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter, verses: any[]): Promise<void> {
-  const crossRefsStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🔗 Background loading cross-references for ${verses.length} verses...`);
-  
   try {
     const versesWithCrossRefs = await Promise.all(
       verses.map(async (verse) => {
@@ -659,8 +651,6 @@ async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter
       chapter,
       verses: versesWithCrossRefs
     });
-    
-    console.log(`[${new Date().toISOString()}] ✅ Cross-references loaded in background in ${(performance.now() - crossRefsStartTime).toFixed(2)}ms`);
   } catch (err) {
     console.error('Error in lazy loading cross-references:', err);
   }
@@ -668,13 +658,11 @@ async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter
 
 // Load adjacent chapters (previous and next)
 async function loadAdjacentChapters(chapterId: number): Promise<void> {
-  const adjacentStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🔄 Loading adjacent chapters for chapter ID ${chapterId}...`);    isLoadingAdjacentChapter.value = true;
+  isLoadingAdjacentChapter.value = true;
   
   const prevChapter = getPreviousChapter(chapterId);
   const nextChapter = getNextChapter(chapterId);
-  
-  console.log(`[${new Date().toISOString()}] Previous: ${prevChapter ? prevChapter.chapter_number : 'none'}, Next: ${nextChapter ? nextChapter.chapter_number : 'none'}`);    const promises: Promise<void>[] = [];
+  const promises: Promise<void>[] = [];
   
   if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
     promises.push(loadChapterVerses(prevChapter.chapter_id));
@@ -686,24 +674,18 @@ async function loadAdjacentChapters(chapterId: number): Promise<void> {
   
   await Promise.all(promises);
   isLoadingAdjacentChapter.value = false;
-    console.log(`[${new Date().toISOString()}] ✅ Adjacent chapters loaded in ${(performance.now() - adjacentStartTime).toFixed(2)}ms`);}
+}
 
 // Select chapter and load it
 async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skipAdjacentLoad: boolean = false) {
-  const selectStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 📖 Selecting chapter ${chapter.chapter_number} (ID: ${chapter.chapter_id})`);    selectedChapter.value = chapter;
+  selectedChapter.value = chapter;
   selectedChapterId.value = chapter.chapter_id;
   
   // Load this chapter if not loaded
-  const loadStartTime = performance.now();
   await loadChapterVerses(chapter.chapter_id);
-  console.log(`[${new Date().toISOString()}] ✅ Chapter verses loaded in ${(performance.now() - loadStartTime).toFixed(2)}ms`);  
   // Load adjacent chapters only if not navigating to a specific verse
   if (!skipAdjacentLoad) {
-    const adjacentStartTime = performance.now();
-    console.log(`[${new Date().toISOString()}] 📚 Loading adjacent chapters...`);
     await loadAdjacentChapters(chapter.chapter_id);
-    console.log(`[${new Date().toISOString()}] ✅ Adjacent chapters loaded in ${(performance.now() - adjacentStartTime).toFixed(2)}ms`);
   }
   
   // Scroll to chapter after DOM updates (unless skipScroll is true)
@@ -711,8 +693,6 @@ async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skip
     await nextTick();
     scrollToChapter(chapter.chapter_id);
   }
-  
-  console.log(`[${new Date().toISOString()}] ✅ Chapter selection complete in ${(performance.now() - selectStartTime).toFixed(2)}ms`);
 }
 
 // Scroll to chapter
@@ -723,8 +703,7 @@ function scrollToChapter(chapterId: number) {
 
 // Scroll to verse
 function scrollToVerse(verseId: number) {
-  console.log(`[${new Date().toISOString()}] 📍 Scrolling to verse ${verseId}...`);  const scrollStartTime = performance.now();
-    // Set flag to prevent intersection observer from loading adjacent chapters
+  // Set flag to prevent intersection observer from loading adjacent chapters
   isNavigatingToVerse.value = true;
   
   // Clear any existing highlight timeout
@@ -746,7 +725,6 @@ function scrollToVerse(verseId: number) {
     const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`) as HTMLElement;
     
     if (verseElement) {
-      console.log(`[${new Date().toISOString()}] ✅ Verse element found in ${(performance.now() - scrollStartTime).toFixed(2)}ms`);      
       // Scroll the verse to the top of the viewport with smooth scrolling
       const navHeight = 90; // Height of the fixed top nav
       const elementTop = verseElement.getBoundingClientRect().top + window.scrollY;
@@ -806,9 +784,23 @@ function scrollToVerse(verseId: number) {
       setTimeout(() => {
         isNavigatingToVerse.value = false;
         isNavigatingToVerseRef.value = false; // Clear loading spinner
-        console.log(`[${new Date().toISOString()}] ✅ Scroll to verse ${verseId} completed in ${(performance.now() - scrollStartTime).toFixed(2)}ms`);      }, 1000);
+      }, 1000);
     } else {
-      console.warn(`[${new Date().toISOString()}] ⚠️ scrollToVerse: Could not find verse element for ID ${verseId}`);      isNavigatingToVerse.value = false;
+      // Fallback: search in loaded chapters data for the verse
+      for (const chapterData of loadedChapters.value.values()) {
+        const foundVerse = chapterData.verses.find(v => v.verse_id === verseId);
+        if (foundVerse) {
+          // Try to find by verse index instead
+          const fallbackElement = document.querySelector(`[data-verse-id="${foundVerse.verse_id}"]`);
+          if (fallbackElement && fallbackElement instanceof HTMLElement) {
+            fallbackElement.classList.add('highlight-verse');
+            fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          break;
+        }
+      }
+      
+      isNavigatingToVerse.value = false;
       isNavigatingToVerseRef.value = false; // Clear loading spinner
     }
   }, 300); // Wait 300ms for anchor scroll to complete
@@ -816,8 +808,7 @@ function scrollToVerse(verseId: number) {
 
 // Handle verse selection from VersePicker
 async function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
-  console.log(`[${new Date().toISOString()}] 🎯 Verse selection - Book: ${bookId}, Chapter: ${chapterId}, Verse: ${verseId}`);  const selectionStartTime = performance.now();
-    showVersePicker.value = false;
+  showVersePicker.value = false;
   showSearchModal.value = false;
   
   // Show loading spinner immediately if navigating to different book
@@ -853,12 +844,9 @@ function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: num
 
 // Navigate to verse (for cross-references)
 async function navigateToVerse(bookId: number, chapterId: number, verseId: number) {
-  const navStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🧭 Navigating to verse - Book: ${bookId}, Chapter: ${chapterId}, Verse: ${verseId}`);  
   // Check if we're on the same book (handle both old and new URL formats)
   const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
   const isSameBook = currentBookId === bookId;
-  console.log(`[${new Date().toISOString()}] ${isSameBook ? '✅' : '🔄'} ${isSameBook ? 'Same book' : 'Different book - will reload'}`);  
   // If same book, just select the chapter and scroll
   if (isSameBook) {
     const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
@@ -978,7 +966,8 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
     
     // Find the chapter
     const targetChapters = await getChaptersByBookId(targetBook.book_id);
-    const targetChapter = targetChapters.find(ch => ch.chapter_number === crossRef.to_chapter);
+    const normalizedTargetChapter = String(crossRef.to_chapter);
+    const targetChapter = targetChapters.find(ch => String(ch.chapter_number) === normalizedTargetChapter);
     
     if (!targetChapter) {
       crossRefTooltip.value.verseText = 'Chapter not found';
@@ -1000,6 +989,7 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
     crossRefTooltip.value.bookId = targetBook.book_id;
     crossRefTooltip.value.chapterId = targetChapter.chapter_id;
     crossRefTooltip.value.verseId = targetVerse.verse_id;
+    crossRefTooltip.value.verseIndex = targetVerse.verse_index ?? 1;
     
     // Set verse text with formatting applied
     crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
@@ -1013,10 +1003,26 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
 }
 
 // Navigate to cross-reference from tooltip
-function navigateFromTooltip() {
-  const { bookId, chapterId, verseId } = crossRefTooltip.value;
+async function navigateFromTooltip() {
+  const { bookId, chapterId, verseId, verseIndex, chapterNumber } = crossRefTooltip.value;
   crossRefTooltip.value.show = false;
-  navigateToVerse(bookId, chapterId, verseId);
+
+  // Check if we're navigating to the same book
+  const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
+  const isSameBook = currentBookId === bookId;
+
+  if (isSameBook) {
+    navigateToVerse(bookId, chapterId, verseId);
+  } else {
+    // For cross-book navigation, use the already-resolved verseIndex directly
+    const targetBook = allBooks.value.find(b => b.book_id === bookId);
+    if (targetBook) {
+      const bookSlug = targetBook.book_name.toLowerCase().replace(/\s+/g, '-');
+      router.push(`/${bookSlug}/${chapterNumber}/${verseIndex}`);
+    } else {
+      navigateToVerse(bookId, chapterId, verseId);
+    }
+  }
 }
 
 // Close cross-reference tooltip
@@ -1142,7 +1148,8 @@ async function handleVerseRefClick(event: Event) {
     try {
       // Find the chapter
       const targetChapters = await getChaptersByBookId(bookId);
-      const targetChapter = targetChapters.find(ch => ch.chapter_number === String(chapterNum));
+      const normalizedChapterNum = String(chapterNum);
+      const targetChapter = targetChapters.find(ch => String(ch.chapter_number) === normalizedChapterNum);
       
       if (!targetChapter) {
         crossRefTooltip.value.verseText = 'Chapter not found';
@@ -1152,7 +1159,8 @@ async function handleVerseRefClick(event: Event) {
       
       // Find the verse
       const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
-      const targetVerse = targetVerses.find(v => v.verse_index === verseNum);
+      const normalizedVerseNum = String(verseNum);
+      const targetVerse = targetVerses.find(v => String(v.verse_index) === normalizedVerseNum);
       
       if (!targetVerse) {
         crossRefTooltip.value.verseText = 'Verse not found';
@@ -1568,18 +1576,12 @@ watch(() => chapterRefs.value.size, () => {
 
 // Initialize
 onMounted(async () => {
-  const mountStartTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🚀 Component mounting started`);
-  
   loading.value = true;
   error.value = null;
   
   try {
     // Load all books for abbreviation mapping
-    const booksStartTime = performance.now();
-    console.log(`[${new Date().toISOString()}] 📚 Fetching all books...`);
     allBooks.value = await getAllBooks();
-    console.log(`[${new Date().toISOString()}] ✅ Books loaded in ${(performance.now() - booksStartTime).toFixed(2)}ms`);
     bookAbbreviations.value = {};
     allBooks.value.forEach(b => {
       if (b.book_abbr) {
@@ -1623,15 +1625,9 @@ onMounted(async () => {
     }
     
     // Load book and chapters
-    const bookStartTime = performance.now();
-    console.log(`[${new Date().toISOString()}] 📖 Fetching book ${bookId}...`);
     book.value = await getBookById(bookId);
-    console.log(`[${new Date().toISOString()}] ✅ Book loaded in ${(performance.now() - bookStartTime).toFixed(2)}ms`);
     
-    const chaptersStartTime = performance.now();
-    console.log(`[${new Date().toISOString()}] 📑 Fetching chapters for book ${bookId}...`);
     chapters.value = await getChaptersByBookId(bookId);
-    console.log(`[${new Date().toISOString()}] ✅ Chapters loaded (${chapters.value.length} chapters) in ${(performance.now() - chaptersStartTime).toFixed(2)}ms`);
     
     // Check for query parameters (for old format cross-references)
     const queryChapterId = route.query.chapterId ? Number(route.query.chapterId) : null;
@@ -1656,7 +1652,6 @@ onMounted(async () => {
       
       if (targetChapter && targetVerseNumber) {
         // Pre-load the chapter verses
-        console.log(`[${new Date().toISOString()}] 📄 Pre-loading verses for chapter ${targetChapter.chapter_number}...`);
         await loadChapterVerses(targetChapter.chapter_id);
         
         // Find the verse from cached data instead of making another API call
@@ -1676,10 +1671,7 @@ onMounted(async () => {
     
     if (targetChapter) {
       // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
-      const selectStartTime = performance.now();
-      console.log(`[${new Date().toISOString()}] 🎯 Selecting chapter ${targetChapter.chapter_number}...`);
       await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
-      console.log(`[${new Date().toISOString()}] ✅ Chapter selected in ${(performance.now() - selectStartTime).toFixed(2)}ms`);
       
       // Verify the verse is in one of the loaded chapters
       if (scrollToVerseId) {
@@ -1724,8 +1716,6 @@ onMounted(async () => {
     console.error('Error loading chapters:', err);
   } finally {
     loading.value = false;
-    const totalTime = performance.now() - mountStartTime;
-    console.log(`[${new Date().toISOString()}] 🏁 Component mounted in ${totalTime.toFixed(2)}ms (${(totalTime / 1000).toFixed(2)}s)`);
   }
 });
 
@@ -2254,22 +2244,21 @@ onUnmounted(() => {
 .verses-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   text-align: left;
 }
 
 .verse-item {
   line-height: 1.8;
-  padding: 0.5rem 0;
+  /* padding: 0.5rem 0; */
   transition: all 0.4s ease;
 }
 
 .verse-item.highlight-verse {
   background: linear-gradient(90deg, #fff3cd 0%, #fffbf0 100%);
-  padding: 1rem;
+  /* padding: 1rem;
   border-radius: 8px;
   border-left: 4px solid #ffc107;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3); */
   animation: highlightPulse 0.6s ease-out;
 }
 
@@ -2327,9 +2316,18 @@ onUnmounted(() => {
   text-align: left;
 }
 
+.verse-telugu.inline {
+  display: inline;
+  margin-top: 0;
+}
+
 :deep(.verse-telugu p) {
   margin: 0;
   padding: 0;
+}
+
+:deep(.verse-telugu.inline p) {
+  display: inline;
 }
 
 .verse-links {

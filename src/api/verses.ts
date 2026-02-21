@@ -29,15 +29,11 @@ export interface VerseWithLinks extends Verse {
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const startTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🌐 API: GET /chapters/${chapterId}/verses`);
   const response = await fetch(`${API_BASE_URL}/chapters/${chapterId}/verses`);
-  console.log(`[${new Date().toISOString()}] 📡 API Response received in ${(performance.now() - startTime).toFixed(2)}ms, status: ${response.status}`);
   if (!response.ok) {
     throw new Error('Failed to fetch verses');
   }
   const data = await response.json();
-  console.log(`[${new Date().toISOString()}] 📦 Verses data parsed in ${(performance.now() - startTime).toFixed(2)}ms, ${data.length} verses`);
   return data;
 }
 
@@ -94,14 +90,10 @@ export interface VerseSearchResult extends VerseWithLinks {
 }
 
 export async function searchVersesByText(searchText: string): Promise<VerseSearchResult[]> {
-  const startTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🌐 API: GET /verses/search?q=${searchText.substring(0, 50)}...`);
   const response = await fetch(`${API_BASE_URL}/verses/search?q=${encodeURIComponent(searchText)}`);
-  console.log(`[${new Date().toISOString()}] 📡 API Response received in ${(performance.now() - startTime).toFixed(2)}ms, status: ${response.status}`);
   if (!response.ok) {
     throw new Error('Failed to search verses');
   }
   const data = await response.json();
-  console.log(`[${new Date().toISOString()}] 📦 Search results parsed in ${(performance.now() - startTime).toFixed(2)}ms, ${data.length} results`);
   return data;
 }

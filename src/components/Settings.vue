@@ -126,7 +126,7 @@ const settings = reactive<Settings>({
   showEnglish: true,
   showTelugu: true,
   showNotes: true,
-  showCrossReferences: true,
+  showCrossReferences: false,
   showSuperscript: true,
   fontSize: 16,
   boldVerseText: true,

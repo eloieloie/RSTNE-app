@@ -3,13 +3,9 @@ import type { Chapter } from '@/utils/collectionReferences';
 const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
 export async function getChaptersByBookId(bookId: number): Promise<Chapter[]> {
-  const startTime = performance.now();
-  console.log(`[${new Date().toISOString()}] 🌐 API: GET /books/${bookId}/chapters`);
   const response = await fetch(`${API_URL}/books/${bookId}/chapters`);
-  console.log(`[${new Date().toISOString()}] 📡 API Response received in ${(performance.now() - startTime).toFixed(2)}ms, status: ${response.status}`);
   if (!response.ok) throw new Error('Failed to fetch chapters');
   const data = await response.json();
-  console.log(`[${new Date().toISOString()}] 📦 Chapters data parsed in ${(performance.now() - startTime).toFixed(2)}ms, ${data.length} chapters`);
   return data;
 }
 
