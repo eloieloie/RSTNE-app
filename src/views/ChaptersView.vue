@@ -2448,8 +2448,8 @@ onUnmounted(() => {
   display: block;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background: #f9fafb;
-  border-left: 3px solid #10b981;
+  /* background: #f9fafb; */
+  /* border-left: 3px solid #10b981; */
   border-radius: 4px;
 }
 
@@ -2661,8 +2661,8 @@ onUnmounted(() => {
 
 .tooltip-verse.telugu-verse {
   font-family: 'Noto Sans Telugu', sans-serif;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+  /* border-top: 1px solid #eee; */
+  /* padding-top: 15px; */
   margin-top: 10px;
   text-align: left;
 }
@@ -2768,8 +2768,9 @@ onUnmounted(() => {
 .verse-notes {
   display: block;
   margin-top: 0.75rem;
+  padding: 2px;
   background: linear-gradient(to left, #fffbeb, transparent);
-  border-right: 3px solid #f59e0b;
+  /* border-right: 3px solid #f59e0b; */
   border-radius: 4px;
 }
 
