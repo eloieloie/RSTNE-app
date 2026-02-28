@@ -294,7 +294,7 @@
         </button>
         <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
       </div>
-      <div class="tooltip-content">
+      <div class="tooltip-content" @click="handleTooltipVerseRefClick">
         <div v-if="crossRefTooltip.loading" class="tooltip-loading">
           <div class="loading-spinner"></div>
           <p>Loading verse...</p>
@@ -1123,6 +1123,61 @@ function formatVerseWithPaleoBora(text: string): string {
   });
   
   return formatted;
+}
+
+// Handle inline verse ref clicks inside the cross-reference tooltip
+async function handleTooltipVerseRefClick(event: Event) {
+  const target = event.target as HTMLElement;
+  if (!(target.tagName === 'A' && target.classList.contains('inline-verse-ref'))) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const bookId = parseInt(target.getAttribute('data-book-id') || '0');
+  const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
+  const verseNum = parseInt(target.getAttribute('data-verse') || '0');
+  if (!bookId || !chapterNum || !verseNum) return;
+  
+  const targetBook = allBooks.value.find(b => b.book_id === bookId);
+  if (!targetBook) return;
+  
+  // Update tooltip header and show loading
+  crossRefTooltip.value.loading = true;
+  crossRefTooltip.value.bookName = targetBook.book_name;
+  crossRefTooltip.value.chapterNumber = String(chapterNum);
+  crossRefTooltip.value.verseNumber = String(verseNum);
+  crossRefTooltip.value.verseText = '';
+  crossRefTooltip.value.teluguVerseText = '';
+  
+  try {
+    const targetChapters = await getChaptersByBookId(bookId);
+    const targetChapter = targetChapters.find(ch => String(ch.chapter_number) === String(chapterNum));
+    if (!targetChapter) {
+      crossRefTooltip.value.verseText = 'Chapter not found';
+      crossRefTooltip.value.loading = false;
+      return;
+    }
+    
+    const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+    const targetVerse = targetVerses.find(v => String(v.verse_index) === String(verseNum));
+    if (!targetVerse) {
+      crossRefTooltip.value.verseText = 'Verse not found';
+      crossRefTooltip.value.loading = false;
+      return;
+    }
+    
+    crossRefTooltip.value.bookId = bookId;
+    crossRefTooltip.value.chapterId = targetChapter.chapter_id;
+    crossRefTooltip.value.verseId = targetVerse.verse_id;
+    crossRefTooltip.value.verseIndex = targetVerse.verse_index ?? 1;
+    crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
+    crossRefTooltip.value.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
+    crossRefTooltip.value.loading = false;
+  } catch (err) {
+    console.error('Error loading tooltip inline verse ref:', err);
+    crossRefTooltip.value.verseText = 'Error loading verse';
+    crossRefTooltip.value.loading = false;
+  }
 }
 
 // Handle clicks on inline verse references using event delegation
