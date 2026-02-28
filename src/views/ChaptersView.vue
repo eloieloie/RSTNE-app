@@ -447,6 +447,7 @@ const expandedCrossRefs = ref<Set<number>>(new Set());
 const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
 const isNavigatingToVerse = ref(false);
+const pendingScrollVerseId = ref<number | null>(null);
 
 // Cross-reference tooltip state
 const crossRefTooltip = ref<{
@@ -651,6 +652,24 @@ async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter
       chapter,
       verses: versesWithCrossRefs
     });
+    
+    // Re-scroll to the pending verse after cross-refs have updated the DOM
+    if (pendingScrollVerseId.value !== null) {
+      const verseIdToScroll = pendingScrollVerseId.value;
+      // Check if the scrolled verse belongs to this chapter
+      const verseInChapter = versesWithCrossRefs.find(v => v.verse_id === verseIdToScroll);
+      if (verseInChapter) {
+        pendingScrollVerseId.value = null;
+        await nextTick();
+        const verseElement = document.querySelector(`[data-verse-id="${verseIdToScroll}"]`) as HTMLElement;
+        if (verseElement) {
+          const navHeight = 90;
+          const elementTop = verseElement.getBoundingClientRect().top + window.scrollY;
+          const offsetPosition = elementTop - navHeight - 20;
+          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+      }
+    }
   } catch (err) {
     console.error('Error in lazy loading cross-references:', err);
   }
@@ -705,6 +724,9 @@ function scrollToChapter(chapterId: number) {
 function scrollToVerse(verseId: number) {
   // Set flag to prevent intersection observer from loading adjacent chapters
   isNavigatingToVerse.value = true;
+  
+  // Track this verse so cross-reference loading can re-scroll after DOM updates
+  pendingScrollVerseId.value = verseId;
   
   // Clear any existing highlight timeout
   if (highlightTimeout.value) {
@@ -776,6 +798,7 @@ function scrollToVerse(verseId: number) {
           el.classList.remove('highlight-verse');
         }
         highlightedVerseId.value = null;
+        pendingScrollVerseId.value = null;
         observer.disconnect();
         clearInterval(intervalId);
       }, 30000);
