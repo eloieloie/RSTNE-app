@@ -2645,9 +2645,15 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .cross-ref-tooltip {
     left: 50% !important;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 90%;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 92%;
+    max-width: 92%;
+    max-height: 80vh;
+  }
+
+  .tooltip-content {
+    max-height: calc(80vh - 56px);
   }
 }
 
@@ -2707,7 +2713,6 @@ onUnmounted(() => {
 .verse-notes {
   display: block;
   margin-top: 0.75rem;
-  padding: 0.75rem;
   background: linear-gradient(to left, #fffbeb, transparent);
   border-right: 3px solid #f59e0b;
   border-radius: 4px;
