@@ -807,23 +807,15 @@ function scrollToVerse(verseId: number) {
 }
 
 // Handle verse selection from VersePicker
-async function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
+function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
   showVersePicker.value = false;
   showSearchModal.value = false;
-  
-  // Show loading spinner immediately if navigating to different book
-  const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
-  if (currentBookId !== bookId) {
-    isNavigatingToVerseRef.value = true;
-  }
   
   // Store search results if provided
   if (results && results.length > 0) {
     searchResults.value = results;
-    // Find current index in search results
     currentSearchIndex.value = results.findIndex(r => r.verse_id === verseId);
   } else {
-    // Clear search results when not from search
     searchResults.value = [];
     currentSearchIndex.value = -1;
   }
@@ -832,7 +824,19 @@ async function handleVerseSelection(bookId: number, chapterId: number, verseId: 
   previewBookId.value = null;
   previewChapterId.value = null;
   previewVerseId.value = null;
-  await navigateToVerse(bookId, chapterId, verseId);
+  
+  // Resolve chapter_number and verse_index from offline BOOKS_DATA for reliable URL-based navigation
+  const targetBookData = BOOKS_DATA.find(b => b.book_id === bookId);
+  const targetChapterData = targetBookData?.chapters.find(ch => ch.chapter_id === chapterId);
+  const targetVerseData = targetChapterData?.verse_ids.find(v => v.verse_id === verseId);
+  
+  if (targetBookData && targetChapterData && targetVerseData) {
+    const bookSlug = targetBookData.book_name.toLowerCase().replace(/\s+/g, '-');
+    router.push(`/${bookSlug}/${targetChapterData.chapter_number}/${targetVerseData.verse_index}`);
+  } else {
+    // Fallback: use DOM-based navigation
+    navigateToVerse(bookId, chapterId, verseId);
+  }
 }
 
 // Handle live updates from VersePicker while scrolling
@@ -1719,11 +1723,40 @@ onMounted(async () => {
   }
 });
 
-// Watch for route changes (when navigating to different book via verse picker)
+// Watch for route changes (when navigating to different book or chapter via verse picker)
 watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber, route.params.verseNumber] as const, 
-  async ([newId, newBookName, newChapterNumber, newVerseNumber], [oldId, oldBookName]) => {
-  // Only react if book changed
+  async ([newId, newBookName, newChapterNumber, newVerseNumber], [oldId, oldBookName, oldChapterNumber, oldVerseNumber]) => {
+  // Check if book or chapter/verse changed
   const bookChanged = (newId && newId !== oldId) || (newBookName && newBookName !== oldBookName);
+  const sameBookNavigated = !bookChanged && ((newChapterNumber && newChapterNumber !== oldChapterNumber) || (newVerseNumber && newVerseNumber !== oldVerseNumber));
+  
+  if (sameBookNavigated && newChapterNumber) {
+    // Same book, but chapter or verse changed — navigate within current book
+    const targetChapterNumber = String(newChapterNumber);
+    const targetVerseNumber = newVerseNumber ? Number(newVerseNumber) : null;
+    const targetChapter = chapters.value.find(ch => String(ch.chapter_number) === targetChapterNumber) ?? null;
+    
+    if (targetChapter) {
+      let scrollToVerseId: number | null = null;
+      if (targetVerseNumber) {
+        let chapterData = loadedChapters.value.get(targetChapter.chapter_id);
+        if (!chapterData) {
+          await loadChapterVerses(targetChapter.chapter_id);
+          chapterData = loadedChapters.value.get(targetChapter.chapter_id);
+        }
+        if (chapterData) {
+          const verse = chapterData.verses.find(v => v.verse_index === targetVerseNumber);
+          if (verse) scrollToVerseId = verse.verse_id;
+        }
+      }
+      await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
+      if (scrollToVerseId) {
+        await nextTick();
+        scrollToVerse(scrollToVerseId);
+      }
+    }
+    return;
+  }
   
   if (bookChanged) {
     loading.value = true;
@@ -2568,7 +2601,6 @@ onUnmounted(() => {
   font-size: 15px;
   line-height: 1.6;
   color: #333;
-  padding: 15px;
   text-align: left;
 }
 
