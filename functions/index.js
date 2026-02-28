@@ -355,6 +355,7 @@ app.get("/api/verses/text-search", async (req, res) => {
            c.chapter_number,
            c.book_id,
            b.book_name,
+           b.book_index,
            n.note_content
          FROM verses_tbl v
          JOIN chapters_tbl c ON v.chapter_id = c.chapter_id

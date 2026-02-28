@@ -12,30 +12,58 @@
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else-if="Object.keys(groupedChapters).length === 0" class="empty">No chapters found</div>
       
-      <div v-else class="books-list">
-        <div v-for="book in sortedBooks" :key="book.book_id" class="book-section">
-          <template v-if="groupedChapters[book.book_id]">
-            <div 
-              class="book-title" 
-              :class="{ 'expanded': expandedBookId === book.book_id }"
-              @click="toggleBook(book.book_id)"
-            >
-              <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
-              <span class="book-separator">|</span>
-              <span class="book-english">{{ book.book_name }}</span>
-              <span class="expand-icon">{{ expandedBookId === book.book_id ? '▼' : '▶' }}</span>
-            </div>
-            <div v-if="expandedBookId === book.book_id" class="chapters-grid">
-              <router-link
-                v-for="chapter in groupedChapters[book.book_id]"
-                :key="chapter.chapter_id"
-                :to="`/admin/chapters/${chapter.chapter_id}`"
-                class="chapter-link"
+      <div v-else>
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+          <button 
+            class="category-tab"
+            :class="{ active: activeCategory === 'first_covenant' }"
+            @click="setActiveCategory('first_covenant')"
+          >
+            First Covenant
+          </button>
+          <button 
+            class="category-tab"
+            :class="{ active: activeCategory === 'new_covenant' }"
+            @click="setActiveCategory('new_covenant')"
+          >
+            New Covenant
+          </button>
+          <button 
+            class="category-tab"
+            :class="{ active: activeCategory === 'apocrypha' }"
+            @click="setActiveCategory('apocrypha')"
+          >
+            Restored Apocryphal Books
+          </button>
+        </div>
+
+        <!-- Books List -->
+        <div class="books-list">
+          <div v-for="book in filteredBooks" :key="book.book_id" class="book-section">
+            <template v-if="groupedChapters[book.book_id]">
+              <div 
+                class="book-title" 
+                :class="{ 'expanded': expandedBookId === book.book_id }"
+                @click="toggleBook(book.book_id)"
               >
-                <span class="chapter-number">{{ chapter.chapter_number }}</span>
-              </router-link>
-            </div>
-          </template>
+                <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
+                <span class="book-separator">|</span>
+                <span class="book-english">{{ book.book_name }}</span>
+                <span class="expand-icon">{{ expandedBookId === book.book_id ? '▼' : '▶' }}</span>
+              </div>
+              <div v-if="expandedBookId === book.book_id" class="chapters-grid">
+                <router-link
+                  v-for="chapter in groupedChapters[book.book_id]"
+                  :key="chapter.chapter_id"
+                  :to="`/admin/chapters/${chapter.chapter_id}`"
+                  class="chapter-link"
+                >
+                  <span class="chapter-number">{{ chapter.chapter_number }}</span>
+                </router-link>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -53,9 +81,15 @@ const chapters = ref<Chapter[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const expandedBookId = ref<number | null>(null);
+const activeCategory = ref<'first_covenant' | 'new_covenant' | 'apocrypha'>('first_covenant');
 
 function toggleBook(bookId: number) {
   expandedBookId.value = expandedBookId.value === bookId ? null : bookId;
+}
+
+function setActiveCategory(category: 'first_covenant' | 'new_covenant' | 'apocrypha') {
+  activeCategory.value = category;
+  expandedBookId.value = null; // Close any expanded book when switching tabs
 }
 
 // Sort books by book_index
@@ -65,6 +99,15 @@ const sortedBooks = computed(() => {
     const indexB = b.book_index ?? Number.MAX_SAFE_INTEGER;
     return indexA - indexB;
   });
+});
+
+// Filter books by active category
+const filteredBooks = computed(() => {
+  const categoryId = activeCategory.value === 'first_covenant' ? 1 
+    : activeCategory.value === 'new_covenant' ? 2 
+    : 3;
+  
+  return sortedBooks.value.filter(book => book.category_id === categoryId);
 });
 
 // Group chapters by book_id and sort by chapter_number
@@ -116,11 +159,6 @@ async function loadData() {
   } finally {
     loading.value = false;
   }
-}
-
-function getBookName(bookId: number): string {
-  const book = books.value.find(b => b.book_id === bookId);
-  return book?.book_name || 'Unknown Book';
 }
 </script>
 
@@ -197,15 +235,51 @@ function getBookName(bookId: number): string {
   color: #e74c3c;
 }
 
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.category-tab {
+  flex: 1;
+  background: white;
+  color: #2c3e50;
+  border: 2px solid #e0e0e0;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.category-tab:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.category-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 .books-list {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 0.75rem;
 }
 
 .book-section {
   border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
 }
 
 .book-section:last-child {
@@ -216,13 +290,13 @@ function getBookName(bookId: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
   color: #2c3e50;
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 1rem;
+  padding: 0.75rem;
   background: #f8f9fa;
   border-radius: 8px;
   transition: all 0.2s;
@@ -269,21 +343,21 @@ function getBookName(bookId: number): string {
 
 .chapters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 0.75rem;
 }
 
 .chapter-link {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.75rem;
   background: #f8f9fa;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   text-decoration: none;
   transition: all 0.2s;
-  min-height: 60px;
+  min-height: 55px;
 }
 
 .chapter-link:hover {
@@ -322,9 +396,20 @@ function getBookName(bookId: number): string {
     padding: 1rem;
   }
 
+  .category-tabs {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .category-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
   .book-title {
     font-size: 1.1rem;
-    padding: 0.75rem;
+    padding: 0.625rem;
     gap: 0.5rem;
     flex-wrap: wrap;
   }
@@ -340,11 +425,11 @@ function getBookName(bookId: number): string {
 
   .chapters-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 0.75rem;
+    gap: 0.625rem;
   }
 
   .chapter-link {
-    padding: 0.75rem;
+    padding: 0.625rem;
     min-height: 50px;
   }
 
@@ -368,6 +453,16 @@ function getBookName(bookId: number): string {
 
   .chapters-container {
     padding: 0.75rem;
+  }
+
+  .category-tabs {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .category-tab {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
   }
 
   .book-title {
