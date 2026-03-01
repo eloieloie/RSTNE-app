@@ -114,6 +114,8 @@
                   :id="`verse-${verse.verse_id}`"
                   :data-verse-id="verse.verse_id"
                   class="verse-item"
+                  :class="{ 'verse-selected': clickSelectedVerseId === verse.verse_id }"
+                  @click="selectVerse(verse, $event)"
                 >
                   <div class="verse-main">
                     <span class="verse-number">{{ verse.verse_index }}</span>
@@ -136,7 +138,7 @@
                       </a>
                     </div>
                     
-                    <div v-if="showCrossReferences && verse.crossReferences && verse.crossReferences.length > 0" class="verse-cross-references">
+                    <div v-if="showCrossReferences && !broadcastMode && verse.crossReferences && verse.crossReferences.length > 0" class="verse-cross-references">
                       <a 
                         v-for="crossRef in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 10))" 
                         :key="crossRef.cross_ref_id"
@@ -203,35 +205,48 @@
         
       <!-- Broadcast Mode Right Panel -->
       <div v-if="broadcastMode" class="broadcast-mode-right-panel">
-        <div v-if="!crossRefTooltip.show" class="panel-placeholder">
-          <p>Select a verse to view details</p>
+        <div v-if="!broadcastPanelVerse" class="panel-placeholder">
+          <p>Click or scroll to a verse to view its cross-references</p>
         </div>
-        <!-- Tooltip positioned in right panel when broadcast mode is active -->
-        <div 
-          v-if="crossRefTooltip.show" 
-          class="cross-ref-tooltip broadcast"
-          @click.stop
-        >
-          <div class="tooltip-header">
-            <span class="tooltip-title">{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}</span>
-            <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </button>
-            <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
+
+        <!-- Cross-references for clicked/scroll-visible verse -->
+        <div v-if="broadcastPanelVerse" class="broadcast-crossrefs">
+          <div class="broadcast-crossrefs-heading">
+            <span class="broadcast-verse-label">
+              {{ book?.book_name }} {{ broadcastPanelVerse.chapterNumber }}:{{ broadcastPanelVerse.verse.verse_index }}
+            </span>
+            <span class="broadcast-crossrefs-count" v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length">
+              {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
+            </span>
           </div>
-          <div class="tooltip-content">
-            <div v-if="crossRefTooltip.loading" class="tooltip-loading">
-              <div class="loading-spinner"></div>
-              <p>Loading verse...</p>
+          <div v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0" class="broadcast-crossrefs-list">
+            <div
+              v-for="crossRef in broadcastPanelVerse.verse.crossReferences"
+              :key="crossRef.cross_ref_id"
+              class="broadcast-crossref-wrapper"
+            >
+              <a
+                href="#"
+                class="broadcast-crossref-item"
+                :class="{ 'is-expanded': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }"
+                @click.prevent="toggleBroadcastCrossRef(crossRef)"
+              >
+                <span class="broadcast-crossref-ref">{{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
+                <span class="broadcast-crossref-chevron" :class="{ 'rotated': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }">&#9660;</span>
+              </a>
+              <div v-if="expandedBroadcastCrossRefs.has(crossRef.cross_ref_id)" class="broadcast-crossref-verse" :style="{ fontSize: fontSize + 'px' }">
+                <div v-if="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.loading" class="broadcast-crossref-loading">
+                  <div class="loading-spinner small"></div>
+                </div>
+                <div v-else>
+                  <div v-if="showEnglish && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText" :class="{ 'hide-superscript': !showSuperscript }" v-html="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText"></div>
+                  <div v-if="showTelugu && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText" class="telugu-verse" v-html="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText"></div>
+                </div>
+              </div>
             </div>
-            <div v-else>
-              <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
-              <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
-            </div>
+          </div>
+          <div v-else class="broadcast-crossrefs-empty">
+            <p>No cross-references for this verse.</p>
           </div>
         </div>
       </div>
@@ -442,11 +457,42 @@ const firstVisibleChapterNumber = ref<string | null>(null);
 // Track which verses have expanded cross-references
 const expandedCrossRefs = ref<Set<number>>(new Set());
 
+// Track inline-expanded cross-refs in the broadcast right panel
+const expandedBroadcastCrossRefs = ref<Map<number, { loading: boolean; verseText: string; teluguVerseText: string }>>(new Map());
+
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
 const highlightTimeout = ref<number | null>(null);
 const isNavigatingToVerse = ref(false);
 const pendingScrollVerseId = ref<number | null>(null);
+
+// Track user-clicked (selected) verse for highlight and broadcast panel
+const clickSelectedVerseId = ref<number | null>(null);
+
+// The full verse object for the currently scroll-visible verse (broadcast panel follows scroll)
+const scrollVisibleVerse = computed(() => {
+  if (firstVisibleVerseIndex.value === null || !firstVisibleChapterNumber.value) return null;
+  for (const chData of loadedChapters.value.values()) {
+    if (chData.chapter.chapter_number !== firstVisibleChapterNumber.value) continue;
+    const v = chData.verses.find(v => v.verse_index === firstVisibleVerseIndex.value);
+    if (v) return v;
+  }
+  return null;
+});
+
+// Verse shown in the broadcast right panel: clicked selection takes priority over scroll tracking
+const broadcastPanelVerse = computed<{ verse: any; chapterNumber: string } | null>(() => {
+  if (clickSelectedVerseId.value !== null) {
+    for (const chData of loadedChapters.value.values()) {
+      const v = chData.verses.find(v => v.verse_id === clickSelectedVerseId.value);
+      if (v) return { verse: v, chapterNumber: chData.chapter.chapter_number };
+    }
+  }
+  if (scrollVisibleVerse.value && firstVisibleChapterNumber.value) {
+    return { verse: scrollVisibleVerse.value, chapterNumber: firstVisibleChapterNumber.value };
+  }
+  return null;
+});
 
 // Cross-reference tooltip state
 const crossRefTooltip = ref<{
@@ -859,6 +905,66 @@ function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: num
   previewBookId.value = bookId;
   previewChapterId.value = chapterId;
   previewVerseId.value = verseId;
+}
+
+// Watch broadcastPanelVerse changes — clear any expanded cross-refs when verse changes
+watch(broadcastPanelVerse, () => {
+  expandedBroadcastCrossRefs.value = new Map();
+});
+
+// Toggle inline expand/collapse of a cross-ref verse in the broadcast panel
+async function toggleBroadcastCrossRef(crossRef: CrossReferenceData) {
+  const id = crossRef.cross_ref_id;
+  if (expandedBroadcastCrossRefs.value.has(id)) {
+    expandedBroadcastCrossRefs.value.delete(id);
+    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+    return;
+  }
+  const state = { loading: true, verseText: '', teluguVerseText: '' };
+  expandedBroadcastCrossRefs.value.set(id, state);
+  expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+  try {
+    let targetBook;
+    if (crossRef.to_book_id) {
+      targetBook = allBooks.value.find((b: any) => b.book_id === crossRef.to_book_id);
+    } else {
+      targetBook = allBooks.value.find((b: any) =>
+        b.book_abbr === crossRef.to_book_name ||
+        b.book_name.toLowerCase() === crossRef.to_book_name.toLowerCase()
+      );
+    }
+    if (!targetBook) { state.verseText = 'Book not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
+    const targetChapters = await getChaptersByBookId(targetBook.book_id);
+    const targetChapter = targetChapters.find((ch: any) => String(ch.chapter_number) === String(crossRef.to_chapter));
+    if (!targetChapter) { state.verseText = 'Chapter not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
+    const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+    const targetVerse = targetVerses.find((v: any) => String(v.verse_index) === crossRef.to_verse);
+    if (!targetVerse) { state.verseText = 'Verse not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
+    state.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
+    state.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
+    state.loading = false;
+    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+  } catch (err) {
+    console.error('Error loading broadcast cross-reference:', err);
+    state.verseText = 'Error loading verse';
+    state.loading = false;
+    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+  }
+}
+
+// Toggle highlighting a verse when clicked by the user
+function selectVerse(verse: any, event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  // Ignore clicks on links, badges, or interactive sub-elements
+  if (target.closest('a') || target.closest('.cross-ref-more') || target.closest('.verse-links') || target.closest('.verse-cross-references') || target.closest('.verse-notes')) {
+    return;
+  }
+  if (clickSelectedVerseId.value === verse.verse_id) {
+    // Deselect on second click
+    clickSelectedVerseId.value = null;
+  } else {
+    clickSelectedVerseId.value = verse.verse_id;
+  }
 }
 
 // Navigate to verse (for cross-references)
@@ -2079,6 +2185,114 @@ onUnmounted(() => {
   display: block;
 }
 
+.broadcast-crossrefs {
+  padding: 0.5rem 0;
+}
+
+.broadcast-crossrefs-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0 0.75rem 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.broadcast-verse-label {
+  font-weight: 700;
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.broadcast-crossrefs-count {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.broadcast-crossrefs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.broadcast-crossref-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.broadcast-crossref-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #065f46;
+  text-decoration: none;
+  font-size: 14px;
+  border: 1px solid #d1fae5;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.broadcast-crossref-item:hover,
+.broadcast-crossref-item.is-expanded {
+  background: #d1fae5;
+  border-color: #059669;
+}
+
+.broadcast-crossref-item.is-expanded {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.broadcast-crossref-ref {
+  font-weight: 600;
+}
+
+.broadcast-crossref-chevron {
+  font-size: 10px;
+  color: #059669;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.broadcast-crossref-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.broadcast-crossref-verse {
+  background: #f8fffe;
+  border: 1px solid #d1fae5;
+  border-top: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  padding: 8px 10px;
+  line-height: 1.6;
+  color: #1f2937;
+  text-align: left;
+}
+
+.broadcast-crossref-loading {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.broadcast-crossrefs-empty {
+  color: #888;
+  font-size: 14px;
+  padding: 0.5rem 0;
+}
+
 .cross-ref-tooltip.broadcast {
   position: absolute !important;
   top: 0 !important;
@@ -2360,8 +2574,9 @@ onUnmounted(() => {
 
 .verse-item {
   line-height: 1.8;
-  /* padding: 0.5rem 0; */
+  padding: 5px;
   transition: all 0.4s ease;
+  cursor: pointer;
 }
 
 .verse-item.highlight-verse {
@@ -2371,6 +2586,13 @@ onUnmounted(() => {
   border-left: 4px solid #ffc107;
   box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3); */
   animation: highlightPulse 0.6s ease-out;
+}
+
+.verse-item.verse-selected {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
+  transform: translateY(-1px);
 }
 
 @keyframes highlightPulse {
@@ -2845,6 +3067,10 @@ onUnmounted(() => {
 }
 
 .tooltip-verse :deep(.paleobora-text) {
+  font-family: 'PaleoBora', serif !important;
+}
+
+.broadcast-crossref-verse :deep(.paleobora-text) {
   font-family: 'PaleoBora', serif !important;
 }
 
