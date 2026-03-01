@@ -41,6 +41,12 @@ const router = createRouter({
       component: FindReplace
     },
     {
+      path: '/reading-pane',
+      name: 'reading-pane',
+      component: ChaptersView
+    },
+    // Legacy routes - still work but reading-pane is the preferred URL
+    {
       path: '/chapters/:id',
       name: 'chapters',
       component: ChaptersView

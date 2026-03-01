@@ -18,15 +18,15 @@
       <div v-if="firstCovenantBooks.length > 0" class="category-section">
         <h2 class="category-title first-covenant">First Covenant</h2>
         <div class="books-grid">
-          <router-link 
+          <button 
             v-for="book in firstCovenantBooks" 
             :key="book.book_id"
-            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
+            @click="openBook(book.book_id)"
             class="book-button first-covenant-book"
           >
             <div class="book-name">{{ book.book_name }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </router-link>
+          </button>
         </div>
       </div>
 
@@ -34,15 +34,15 @@
       <div v-if="newCovenantBooks.length > 0" class="category-section">
         <h2 class="category-title new-covenant">New Covenant</h2>
         <div class="books-grid">
-          <router-link 
+          <button 
             v-for="book in newCovenantBooks" 
             :key="book.book_id"
-            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
+            @click="openBook(book.book_id)"
             class="book-button new-covenant-book"
           >
             <div class="book-name">{{ book.book_name }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </router-link>
+          </button>
         </div>
       </div>
 
@@ -50,15 +50,15 @@
       <div v-if="apocryphalBooks.length > 0" class="category-section">
         <h2 class="category-title apocryphal">Restored Apocryphal Books</h2>
         <div class="books-grid">
-          <router-link 
+          <button 
             v-for="book in apocryphalBooks" 
             :key="book.book_id"
-            :to="`/${book.book_name.toLowerCase().replace(/\s+/g, '-')}`" 
+            @click="openBook(book.book_id)"
             class="book-button apocryphal-book"
           >
             <div class="book-name">{{ book.book_name }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </router-link>
+          </button>
         </div>
       </div>
     </div>
@@ -67,12 +67,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import type { Book } from '@/utils/collectionReferences';
 
+const router = useRouter();
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+function openBook(bookId: number) {
+  router.push({ name: 'reading-pane', state: { bookId } });
+}
 
 const sortedBooks = computed(() => {
   return [...books.value].sort((a, b) => {

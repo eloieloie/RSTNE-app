@@ -331,7 +331,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
@@ -400,7 +400,6 @@ interface SearchResult {
 }
 
 const route = useRoute();
-const router = useRouter();
 const allBooks = ref<any[]>([]);
 const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
@@ -716,8 +715,13 @@ async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skip
 
 // Scroll to chapter
 function scrollToChapter(chapterId: number) {
-  // Use anchor navigation for reliable scrolling
-  window.location.hash = `chapter-${chapterId}`;
+  // Scroll without changing the URL (no hash navigation)
+  const el = document.querySelector(`[data-chapter-id="${chapterId}"]`) as HTMLElement;
+  if (el) {
+    const navHeight = 90;
+    const top = el.getBoundingClientRect().top + window.scrollY - navHeight - 10;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
 }
 
 // Scroll to verse
@@ -834,7 +838,6 @@ function handleVerseSelection(bookId: number, chapterId: number, verseId: number
   showVersePicker.value = false;
   showSearchModal.value = false;
   
-  // Store search results if provided
   if (results && results.length > 0) {
     searchResults.value = results;
     currentSearchIndex.value = results.findIndex(r => r.verse_id === verseId);
@@ -843,23 +846,12 @@ function handleVerseSelection(bookId: number, chapterId: number, verseId: number
     currentSearchIndex.value = -1;
   }
   
-  // Clear preview values
   previewBookId.value = null;
   previewChapterId.value = null;
   previewVerseId.value = null;
   
-  // Resolve chapter_number and verse_index from offline BOOKS_DATA for reliable URL-based navigation
-  const targetBookData = BOOKS_DATA.find(b => b.book_id === bookId);
-  const targetChapterData = targetBookData?.chapters.find(ch => ch.chapter_id === chapterId);
-  const targetVerseData = targetChapterData?.verse_ids.find(v => v.verse_id === verseId);
-  
-  if (targetBookData && targetChapterData && targetVerseData) {
-    const bookSlug = targetBookData.book_name.toLowerCase().replace(/\s+/g, '-');
-    router.push(`/${bookSlug}/${targetChapterData.chapter_number}/${targetVerseData.verse_index}`);
-  } else {
-    // Fallback: use DOM-based navigation
-    navigateToVerse(bookId, chapterId, verseId);
-  }
+  // Always navigate in-place — no URL changes
+  navigateToVerse(bookId, chapterId, verseId);
 }
 
 // Handle live updates from VersePicker while scrolling
@@ -923,34 +915,48 @@ async function navigateToVerse(bookId: number, chapterId: number, verseId: numbe
       isNavigatingToVerseRef.value = false; // Clear loading spinner on error
     }
   } else {
-    // Navigate to other book with new URL format
-    const targetBook = allBooks.value.find(b => b.book_id === bookId);
-    const targetChapterData = await getChaptersByBookId(bookId);
-    const targetChapter = targetChapterData.find(ch => ch.chapter_id === chapterId);
-    
-    if (targetBook && targetChapter) {
-      const bookSlug = targetBook.book_name.toLowerCase().replace(/\s+/g, '-');
-      
-      const chapterNum = targetChapter.chapter_number;
-      
-      // Check if chapter is already loaded, otherwise load it with caching
-      let chapterData = loadedChapters.value.get(chapterId);
-      if (!chapterData) {
-        await loadChapterVerses(chapterId);
-        chapterData = loadedChapters.value.get(chapterId);
-      }
-      
-      const verse = chapterData?.verses.find(v => v.verse_id === verseId);
-      const verseNum = verse ? verse.verse_index : 1;
-      
-      router.push(`/${bookSlug}/${chapterNum}/${verseNum}`);
-    } else {
-      // Fallback to old format
-      router.push({
-        path: `/chapters/${bookId}`,
-        query: { chapterId: String(chapterId), verseId: String(verseId) }
-      });
+    // Different book — load in-place without changing the URL
+    await loadBookInPlace(bookId, chapterId, verseId);
+  }
+}
+
+// Load a different book's content in-place (no URL change)
+async function loadBookInPlace(bookId: number, chapterId: number, verseId: number) {
+  isNavigatingToVerseRef.value = true;
+  try {
+    book.value = await getBookById(bookId);
+    chapters.value = await getChaptersByBookId(bookId);
+    loadedChapters.value.clear();
+    selectedChapter.value = null;
+    selectedChapterId.value = null;
+
+    const targetChapter = chapters.value.find(ch => ch.chapter_id === chapterId);
+    if (!targetChapter) {
+      console.error('loadBookInPlace: Chapter not found', chapterId);
+      isNavigatingToVerseRef.value = false;
+      return;
     }
+
+    await loadChapterVerses(chapterId);
+    await selectChapter(targetChapter, true, true);
+
+    let attempts = 0;
+    const waitForVerse = async () => {
+      await nextTick();
+      const verseElement = document.querySelector(`[data-verse-id="${verseId}"]`);
+      if (verseElement) {
+        scrollToVerse(verseId);
+      } else if (attempts < 30) {
+        attempts++;
+        setTimeout(waitForVerse, 150);
+      } else {
+        scrollToVerse(verseId);
+      }
+    };
+    await waitForVerse();
+  } catch (err) {
+    console.error('Error in loadBookInPlace:', err);
+    isNavigatingToVerseRef.value = false;
   }
 }
 
@@ -1030,26 +1036,11 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
 }
 
 // Navigate to cross-reference from tooltip
-async function navigateFromTooltip() {
-  const { bookId, chapterId, verseId, verseIndex, chapterNumber } = crossRefTooltip.value;
+function navigateFromTooltip() {
+  const { bookId, chapterId, verseId } = crossRefTooltip.value;
   crossRefTooltip.value.show = false;
-
-  // Check if we're navigating to the same book
-  const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
-  const isSameBook = currentBookId === bookId;
-
-  if (isSameBook) {
-    navigateToVerse(bookId, chapterId, verseId);
-  } else {
-    // For cross-book navigation, use the already-resolved verseIndex directly
-    const targetBook = allBooks.value.find(b => b.book_id === bookId);
-    if (targetBook) {
-      const bookSlug = targetBook.book_name.toLowerCase().replace(/\s+/g, '-');
-      router.push(`/${bookSlug}/${chapterNumber}/${verseIndex}`);
-    } else {
-      navigateToVerse(bookId, chapterId, verseId);
-    }
-  }
+  // Always navigate in-place — no URL changes
+  navigateToVerse(bookId, chapterId, verseId);
 }
 
 // Close cross-reference tooltip
@@ -1275,7 +1266,8 @@ async function handleGoToVerse() {
   
   try {
     // If same book, find chapter and navigate
-    if (Number(route.params.id) === bookId) {
+    const currentBookId = route.params.id ? Number(route.params.id) : book.value?.book_id;
+    if (currentBookId === bookId) {
     const targetChapter = chapters.value.find(ch => ch.chapter_number === String(chapterNum));
     if (targetChapter) {
       // Check if the target chapter is already loaded
@@ -1701,9 +1693,17 @@ onMounted(async () => {
         return;
       }
     } else {
-      error.value = 'No book specified';
-      loading.value = false;
-      return;
+      // reading-pane route — check for bookId passed via router state, else default to Genesis
+      const stateBookId = window.history.state?.bookId as number | undefined;
+      const defaultBook = stateBookId
+        ? allBooks.value.find(b => b.book_id === stateBookId)
+        : allBooks.value.find(b => b.book_name.toLowerCase() === 'genesis') ?? allBooks.value[0];
+      if (!defaultBook) {
+        error.value = 'No books available';
+        loading.value = false;
+        return;
+      }
+      bookId = defaultBook.book_id;
     }
     
     // Load book and chapters
