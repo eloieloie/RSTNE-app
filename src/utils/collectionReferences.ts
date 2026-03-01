@@ -22,6 +22,7 @@ export interface Book {
   book_description: string | null;
   book_header: string | null;
   book_footer: string | null;
+  book_link: string | null;
   book_index: number | null;
   category_id: number | null;
   chapter_count?: number;
@@ -36,6 +37,7 @@ export interface BookInsert {
   book_description?: string;
   book_header?: string;
   book_footer?: string;
+  book_link?: string;
   book_index?: number;
   category_id?: number;
 }
@@ -48,6 +50,7 @@ export interface BookUpdate {
   book_description?: string;
   book_header?: string;
   book_footer?: string;
+  book_link?: string;
   book_index?: number;
   category_id?: number;
 }

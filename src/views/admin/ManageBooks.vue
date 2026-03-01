@@ -148,6 +148,16 @@
           </div>
 
           <div class="form-group">
+            <label for="bookLink">Book Link</label>
+            <input
+              id="bookLink"
+              v-model="formData.book_link"
+              type="url"
+              placeholder="https://example.com/book-page (optional)"
+            />
+          </div>
+
+          <div class="form-group">
             <label for="bookIndex">Book Index</label>
             <input
               id="bookIndex"
@@ -196,6 +206,7 @@ const formData = ref<BookInsert>({
   book_description: '',
   book_header: '',
   book_footer: '',
+  book_link: '',
   book_index: undefined,
   category_id: undefined
 });
@@ -268,6 +279,7 @@ function openEditModal(book: Book) {
     book_description: book.book_description || '',
     book_header: book.book_header || '',
     book_footer: book.book_footer || '',
+    book_link: book.book_link || '',
     book_index: book.book_index || undefined,
     category_id: book.category_id || undefined
   };
@@ -288,6 +300,7 @@ function closeEditModal() {
     book_description: '',
     book_header: '',
     book_footer: '',
+    book_link: '',
     book_index: undefined,
     category_id: undefined
   };

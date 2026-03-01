@@ -44,7 +44,11 @@ export async function createBook(book: { book_name: string; hebrew_book_name?: s
   if (!response.ok) throw new Error('Failed to create book');
 }
 
-export async function updateBook(bookId: number, book: { book_name?: string; book_abbr?: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_header?: string; book_footer?: string; book_index?: number; category_id?: number }): Promise<void> {
+export async function updateBook(bookId: number, book: { book_name?: string; book_abbr?: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_header?: string; book_footer?: string; book_link?: string; book_index?: number; category_id?: number }): Promise<void> {
+  // Invalidate cache so the next getAllBooks() fetches fresh data
+  sessionStorage.removeItem('rstne_books_cache');
+  sessionStorage.removeItem('rstne_books_cache_time');
+
   const response = await fetch(`${API_URL}/books/${bookId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

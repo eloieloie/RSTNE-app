@@ -36,6 +36,7 @@ app.get("/api/books", async (req, res) => {
            b.book_description,
            b.book_header,
            b.book_footer,
+           b.book_link,
            b.book_index,
            b.category_id,
            b.dt_added,
@@ -44,7 +45,7 @@ app.get("/api/books", async (req, res) => {
          LEFT JOIN chapters_tbl c ON b.book_id = c.book_id
          GROUP BY b.book_id, b.book_name, b.book_abbr, b.hebrew_book_name, 
                   b.telugu_book_name, b.book_description, b.book_header, 
-                  b.book_footer, b.book_index, b.category_id, b.dt_added
+                  b.book_footer, b.book_link, b.book_index, b.category_id, b.dt_added
          ORDER BY b.book_index, b.dt_added DESC`,
     );
     res.json(books);
@@ -81,14 +82,15 @@ app.post("/api/books", async (req, res) => {
       book_description,
       book_header,
       book_footer,
+      book_link,
       book_index,
       category_id,
     } = req.body;
 
     const [result] = await pool.execute(
         `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_name, 
-         telugu_book_name, book_description, book_header, book_footer, book_index, category_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         telugu_book_name, book_description, book_header, book_footer, book_link, book_index, category_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           book_name,
           book_abbr || null,
@@ -97,6 +99,7 @@ app.post("/api/books", async (req, res) => {
           book_description || null,
           book_header || null,
           book_footer || null,
+          book_link || null,
           book_index || null,
           category_id || null,
         ],
@@ -122,6 +125,7 @@ app.put("/api/books/:id", async (req, res) => {
       book_description,
       book_header,
       book_footer,
+      book_link,
       book_index,
       category_id,
     } = req.body;
@@ -129,7 +133,7 @@ app.put("/api/books/:id", async (req, res) => {
     await pool.execute(
         `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_name = ?, 
          telugu_book_name = ?, book_description = ?, book_header = ?, book_footer = ?, 
-         book_index = ?, category_id = ? WHERE book_id = ?`,
+         book_link = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
         [
           book_name,
           book_abbr || null,
@@ -138,6 +142,7 @@ app.put("/api/books/:id", async (req, res) => {
           book_description || null,
           book_header || null,
           book_footer || null,
+          book_link || null,
           book_index || null,
           category_id || null,
           req.params.id,
