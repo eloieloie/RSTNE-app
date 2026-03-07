@@ -32,6 +32,14 @@
           Find & Replace
         </router-link>
       </div>
+      <div class="dashboard-card">
+        <div class="card-icon">📑</div>
+        <h2>Compare with RSTNE</h2>
+        <p>Side-by-side comparison of database verses vs the live RSTNE page with diff highlighting</p>
+        <router-link to="/admin/compare-book" class="action-btn">
+          Compare Book
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

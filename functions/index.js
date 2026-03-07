@@ -2,6 +2,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+const cheerio = require("cheerio");
 
 const app = express();
 
@@ -1091,6 +1092,131 @@ app.get("/api/stats", async (req, res) => {
       totalChapters: chapterCount[0].count,
     });
   } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// ============= RSTNE PAGE PROXY ENDPOINT =============
+
+/**
+ * Fetch and parse an RSTNE book page, returning structured chapter/verse JSON.
+ * GET /api/proxy-rstne?url=https://rstne.com/pages/...
+ */
+app.get("/api/proxy-rstne", async (req, res) => {
+  const pageUrl = req.query.url;
+  if (!pageUrl || !pageUrl.startsWith("http")) {
+    return res.status(400).json({error: "Missing or invalid ?url parameter"});
+  }
+
+  try {
+    const response = await fetch(pageUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(502).json({error: `Upstream HTTP ${response.status}: ${response.statusText}`});
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Find the .rte container (same logic as extract-rte-html.mjs)
+    let container = $("main section").eq(1).find("div.rte").first();
+    if (container.length === 0) container = $("main .rte").first();
+    if (container.length === 0) container = $(".rte").first();
+    if (container.length === 0) {
+      return res.status(422).json({error: "No .rte element found on the page"});
+    }
+
+    function stripTags(htmlStr) {
+      return htmlStr
+          .replace(/<[^>]+>/g, "")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/\s+/g, " ")
+          .trim();
+    }
+
+    const chapters = [];
+    let currentChapterNum = null;
+    let currentVerses = [];
+    let expectFirstVerse = false;
+
+    container.children().each((_, el) => {
+      const tag = el.tagName?.toLowerCase();
+      const elem = $(el);
+
+      // Chapter marker: <div id="chapter-X">
+      if (tag === "div" && elem.attr("id")?.startsWith("chapter-")) {
+        if (currentChapterNum !== null) {
+          chapters.push({chapterNumber: currentChapterNum, verses: currentVerses});
+        }
+        currentChapterNum = parseInt(elem.attr("id").replace("chapter-", ""), 10);
+        currentVerses = [];
+        expectFirstVerse = true;
+        return;
+      }
+
+      // Verse lines: <h2> elements
+      if (tag === "h2") {
+        const innerHtml = elem.html() || "";
+        if (innerHtml.includes("BACK TO MAIN MENU") || innerHtml.includes("copy-of-index")) return;
+
+        // Pattern 1: <u>N</u> — the number is a chapter-number marker; verse is always 1
+        const uTagMatch = innerHtml.match(/<u>\s*(\d+)\s*<\/u>/i);
+        // Pattern 2: <span style="...text-decoration: underline...">N</span>
+        const spanUnderlineMatch = innerHtml.match(/<span[^>]*text-decoration:\s*underline[^>]*>\s*(\d+)\s*<\/span>/i);
+
+        if (uTagMatch || spanUnderlineMatch) {
+          let withoutMarker = innerHtml
+              .replace(/<u>\s*\d+\s*<\/u>\s*/i, "")
+              .replace(/<span[^>]*text-decoration:\s*underline[^>]*>\s*\d+\s*<\/span>\s*/i, "");
+          // Strip trailing period from verse number if present (e.g. "1. text" → "1 text")
+          let verseText = stripTags(withoutMarker).replace(/^(\d+)\.\s*/, "$1 ");
+          if (verseText && currentChapterNum !== null) {
+            currentVerses.push({verseNumber: 1, text: verseText});
+          }
+          expectFirstVerse = false;
+          return;
+        }
+
+        // Get plain text and strip trailing period from verse number
+        let verseText = stripTags(innerHtml).replace(/^(\d+)\.\s+/, "$1 ");
+
+        // Pattern 3 (fallback): first h2 after a chapter marker whose leading number equals
+        // the chapter number — treat it as verse 1 and remove the leading chapter number.
+        if (expectFirstVerse && currentChapterNum !== null) {
+          const leadingNumMatch = verseText.match(/^(\d+)\s+/);
+          if (leadingNumMatch && parseInt(leadingNumMatch[1], 10) === currentChapterNum) {
+            verseText = verseText.replace(/^\d+\s+/, "1 ");
+          }
+          expectFirstVerse = false;
+        }
+
+        // Standard case: leading number is the verse number
+        const match = verseText.match(/^(\d+)\s+(.*)/s);
+        if (match && currentChapterNum !== null) {
+          const verseNum = parseInt(match[1], 10);
+          const text = match[2].trim();
+          currentVerses.push({verseNumber: verseNum, text});
+        }
+      }
+    });
+
+    // Push last chapter
+    if (currentChapterNum !== null) {
+      chapters.push({chapterNumber: currentChapterNum, verses: currentVerses});
+    }
+
+    res.json({url: pageUrl, chapters});
+  } catch (error) {
+    console.error("proxy-rstne error:", error);
     res.status(500).json({error: error.message});
   }
 });
