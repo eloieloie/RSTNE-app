@@ -195,6 +195,16 @@
                           </svg>
                           Copy link
                         </button>
+                        <button class="share-option" @click.stop="copyVerseText(verse, chapterData.chapter.chapter_number)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          Copy text
+                        </button>
                         <button v-if="canNativeShare" class="share-option" @click.stop="nativeShareVerse(verse, chapterData.chapter.chapter_number)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
@@ -396,6 +406,7 @@ import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
+import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
 
 interface Book {
   book_id: number;
@@ -1017,9 +1028,51 @@ function selectVerse(verse: any, event: MouseEvent) {
 // Share helpers
 const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
+function stripHtml(html: string): string {
+  return (html || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
 function getVerseShareUrl(verse: any, chapterNumber: string): string {
   const bookSlug = book.value?.book_name?.toLowerCase().replace(/\s+/g, '-') || '';
   return `${window.location.origin}/${bookSlug}/${chapterNumber}/${verse.verse_index}`;
+}
+
+// Build share text, preserving PaleoBora words as readable plain text
+function buildVerseShareText(verse: any, chapterNumber: string): { title: string; text: string; url: string } {
+  const hebrewName = displayHebrewBookName.value;
+  const englishName = book.value?.book_name || '';
+  const bookLabel = hebrewName ? `${hebrewName} / ${englishName}` : englishName;
+  const reference = `${bookLabel} ${chapterNumber}:${verse.verse_index}`;
+
+  const parts: string[] = [reference];
+
+  if (verse.verse) {
+    parts.push(stripHtmlKeepPaleo(verse.verse));
+  }
+
+  if (verse.telugu_verse) {
+    parts.push(stripHtmlKeepPaleo(verse.telugu_verse));
+  }
+
+  if (verse.notes && verse.notes.length > 0) {
+    for (const note of verse.notes) {
+      const titlePart = note.note_title ? `[${stripHtmlKeepPaleo(note.note_title)}]` : '';
+      const contentPart = note.note_content ? stripHtmlKeepPaleo(note.note_content) : '';
+      if (titlePart || contentPart) {
+        parts.push([titlePart, contentPart].filter(Boolean).join('\n'));
+      }
+    }
+  }
+
+  const url = getVerseShareUrl(verse, chapterNumber);
+  return { title: reference, text: parts.join('\n\n'), url };
+}
+
+// Build share content and generate canvas images for any PaleoBora words found
+async function buildVerseShareContent(verse: any, chapterNumber: string): Promise<{ title: string; text: string; url: string; imageMap: Map<string, string> }> {
+  const { title, text, url } = buildVerseShareText(verse, chapterNumber);
+  const imageMap = await generatePaleoBoraImagesForText(text, fontSize.value);
+  return { title, text, url, imageMap };
 }
 
 function toggleShareMenu(verseId: number) {
@@ -1031,7 +1084,6 @@ async function copyVerseLink(verse: any, chapterNumber: string) {
   try {
     await navigator.clipboard.writeText(url);
   } catch {
-    // Fallback for browsers that block clipboard
     const el = document.createElement('textarea');
     el.value = url;
     document.body.appendChild(el);
@@ -1044,14 +1096,49 @@ async function copyVerseLink(verse: any, chapterNumber: string) {
   setTimeout(() => { copiedVerseId.value = null; }, 2000);
 }
 
+async function copyVerseText(verse: any, chapterNumber: string) {
+  const { text, url } = await buildVerseShareContent(verse, chapterNumber);
+  const fullText = `${text}\n\n${url}`;
+  try {
+    await navigator.clipboard.writeText(fullText);
+  } catch {
+    const el = document.createElement('textarea');
+    el.value = fullText;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
+  shareMenuVerseId.value = null;
+  copiedVerseId.value = verse.verse_id;
+  setTimeout(() => { copiedVerseId.value = null; }, 2000);
+}
+
 async function nativeShareVerse(verse: any, chapterNumber: string) {
-  const url = getVerseShareUrl(verse, chapterNumber);
-  const bookName = book.value?.book_name || '';
-  const reference = `${bookName} ${chapterNumber}:${verse.verse_index}`;
-  const plainText = (verse.verse || '').replace(/<[^>]*>/g, '').trim();
+  const { title, text, url } = await buildVerseShareContent(verse, chapterNumber);
   shareMenuVerseId.value = null;
   try {
-    await navigator.share({ title: reference, text: `${reference} — ${plainText}`, url });
+    if (typeof navigator.canShare === 'function') {
+      const cardFile = await generateVerseCardImage({
+        reference: title,
+        englishText: verse.verse ? stripHtmlKeepPaleo(verse.verse) : undefined,
+        teluguText: verse.telugu_verse ? stripHtmlKeepPaleo(verse.telugu_verse) : undefined,
+        verseNotes: verse.notes && verse.notes.length > 0 ? verse.notes : undefined,
+        verseUrl: url,   // URL is embedded inside the card image
+        fontSizePx: fontSize.value,
+      });
+
+      if (navigator.canShare({ files: [cardFile] })) {
+        // Include URL as plain text alongside the image.
+        // Using `text` (not `url`) avoids iOS generating a second rich link preview card.
+        await navigator.share({ title, text: url, files: [cardFile] });
+      } else {
+        // Files not supported — fall back to plain text + url
+        await navigator.share({ title, text, url });
+      }
+    } else {
+      await navigator.share({ title, text, url });
+    }
   } catch {
     // User cancelled or share not supported
   }
