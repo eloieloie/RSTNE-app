@@ -164,6 +164,47 @@
                         <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
                       </div>
                     </div>
+
+                    <!-- Share action bar (only visible when verse is selected) -->
+                    <div v-if="clickSelectedVerseId === verse.verse_id" class="verse-actions" @click.stop>
+                      <div class="verse-actions-bar">
+                        <button
+                          class="verse-action-btn"
+                          :class="{ active: shareMenuVerseId === verse.verse_id }"
+                          @click.stop="toggleShareMenu(verse.verse_id)"
+                          title="Share verse"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                          </svg>
+                          Share
+                        </button>
+                        <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Link copied!</span>
+                      </div>
+
+                      <!-- Share dropdown -->
+                      <div v-if="shareMenuVerseId === verse.verse_id" class="share-menu">
+                        <button class="share-option" @click.stop="copyVerseLink(verse, chapterData.chapter.chapter_number)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                          Copy link
+                        </button>
+                        <button v-if="canNativeShare" class="share-option" @click.stop="nativeShareVerse(verse, chapterData.chapter.chapter_number)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                          </svg>
+                          Share...
+                        </button>
+                      </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -468,6 +509,10 @@ const pendingScrollVerseId = ref<number | null>(null);
 
 // Track user-clicked (selected) verse for highlight and broadcast panel
 const clickSelectedVerseId = ref<number | null>(null);
+
+// Share menu state
+const shareMenuVerseId = ref<number | null>(null);
+const copiedVerseId = ref<number | null>(null);
 
 // The full verse object for the currently scroll-visible verse (broadcast panel follows scroll)
 const scrollVisibleVerse = computed(() => {
@@ -956,14 +1001,59 @@ async function toggleBroadcastCrossRef(crossRef: CrossReferenceData) {
 function selectVerse(verse: any, event: MouseEvent) {
   const target = event.target as HTMLElement;
   // Ignore clicks on links, badges, or interactive sub-elements
-  if (target.closest('a') || target.closest('.cross-ref-more') || target.closest('.verse-links') || target.closest('.verse-cross-references') || target.closest('.verse-notes')) {
+  if (target.closest('a') || target.closest('.cross-ref-more') || target.closest('.verse-links') || target.closest('.verse-cross-references') || target.closest('.verse-notes') || target.closest('.verse-actions')) {
     return;
   }
   if (clickSelectedVerseId.value === verse.verse_id) {
     // Deselect on second click
     clickSelectedVerseId.value = null;
+    shareMenuVerseId.value = null;
   } else {
     clickSelectedVerseId.value = verse.verse_id;
+    shareMenuVerseId.value = null;
+  }
+}
+
+// Share helpers
+const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+function getVerseShareUrl(verse: any, chapterNumber: string): string {
+  const bookSlug = book.value?.book_name?.toLowerCase().replace(/\s+/g, '-') || '';
+  return `${window.location.origin}/${bookSlug}/${chapterNumber}/${verse.verse_index}`;
+}
+
+function toggleShareMenu(verseId: number) {
+  shareMenuVerseId.value = shareMenuVerseId.value === verseId ? null : verseId;
+}
+
+async function copyVerseLink(verse: any, chapterNumber: string) {
+  const url = getVerseShareUrl(verse, chapterNumber);
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    // Fallback for browsers that block clipboard
+    const el = document.createElement('textarea');
+    el.value = url;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
+  shareMenuVerseId.value = null;
+  copiedVerseId.value = verse.verse_id;
+  setTimeout(() => { copiedVerseId.value = null; }, 2000);
+}
+
+async function nativeShareVerse(verse: any, chapterNumber: string) {
+  const url = getVerseShareUrl(verse, chapterNumber);
+  const bookName = book.value?.book_name || '';
+  const reference = `${bookName} ${chapterNumber}:${verse.verse_index}`;
+  const plainText = (verse.verse || '').replace(/<[^>]*>/g, '').trim();
+  shareMenuVerseId.value = null;
+  try {
+    await navigator.share({ title: reference, text: `${reference} — ${plainText}`, url });
+  } catch {
+    // User cancelled or share not supported
   }
 }
 
@@ -2593,6 +2683,90 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
   transform: translateY(-1px);
+}
+
+/* Verse action bar (share) */
+.verse-actions {
+  position: relative;
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.verse-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verse-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #555;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+
+.verse-action-btn:hover,
+.verse-action-btn.active {
+  background: rgba(66, 185, 131, 0.12);
+  color: #42b983;
+  border-color: rgba(66, 185, 131, 0.3);
+}
+
+.copied-feedback {
+  font-size: 0.72rem;
+  color: #42b983;
+  font-weight: 500;
+  animation: fadeInOut 2s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.share-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 150px;
+  overflow: hidden;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.82rem;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.share-option:hover {
+  background: rgba(66, 185, 131, 0.08);
+  color: #42b983;
 }
 
 @keyframes highlightPulse {
