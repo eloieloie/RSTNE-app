@@ -43,7 +43,7 @@
           </div>
         </nav>
 
-        <main class="chapter-content">
+        <main class="chapter-content" ref="chapterContentRef">
           <!-- Loading spinner for verse navigation -->
           <div v-if="isNavigatingToVerseRef" class="content-loading-overlay">
             <div class="loading-spinner"></div>
@@ -251,6 +251,38 @@
               </button>
             </div>
           </div>
+
+          <!-- Cross-Reference Tooltip -->
+          <div 
+            v-if="crossRefTooltip.show" 
+            class="cross-ref-tooltip"
+            :style="{ left: crossRefTooltip.x + 'px', top: crossRefTooltip.y + 'px' }"
+            @click.stop
+          >
+            <div class="tooltip-header" @mousedown.prevent="startTooltipDrag">
+              <span class="tooltip-title">
+                <template v-if="crossRefTooltip.hebrewBookName">{{ crossRefTooltip.hebrewBookName }} / </template>{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}
+              </span>
+              <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </button>
+              <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
+            </div>
+            <div class="tooltip-content" @click="handleTooltipVerseRefClick">
+              <div v-if="crossRefTooltip.loading" class="tooltip-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading verse...</p>
+              </div>
+              <div v-else>
+                <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
+                <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
         
@@ -266,9 +298,23 @@
             <span class="broadcast-verse-label">
               {{ book?.book_name }} {{ broadcastPanelVerse.chapterNumber }}:{{ broadcastPanelVerse.verse.verse_index }}
             </span>
-            <span class="broadcast-crossrefs-count" v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length">
-              {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
-            </span>
+            <div class="broadcast-crossrefs-heading-actions">
+              <span class="broadcast-crossrefs-count" v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length">
+                {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
+              </span>
+              <button
+                v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0"
+                class="broadcast-expand-all-btn"
+                @click="expandAllBroadcastCrossRefs"
+                title="Expand all"
+              >Expand all</button>
+              <button
+                v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0"
+                class="broadcast-expand-all-btn"
+                @click="collapseAllBroadcastCrossRefs"
+                title="Collapse all"
+              >Collapse all</button>
+            </div>
           </div>
           <div v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0" class="broadcast-crossrefs-list">
             <div
@@ -276,15 +322,28 @@
               :key="crossRef.cross_ref_id"
               class="broadcast-crossref-wrapper"
             >
-              <a
-                href="#"
-                class="broadcast-crossref-item"
-                :class="{ 'is-expanded': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }"
-                @click.prevent="toggleBroadcastCrossRef(crossRef)"
-              >
-                <span class="broadcast-crossref-ref">{{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
-                <span class="broadcast-crossref-chevron" :class="{ 'rotated': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }">&#9660;</span>
-              </a>
+              <div class="broadcast-crossref-row">
+                <a
+                  href="#"
+                  class="broadcast-crossref-item"
+                  :class="{ 'is-expanded': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }"
+                  @click.prevent="toggleBroadcastCrossRef(crossRef)"
+                >
+                  <span class="broadcast-crossref-ref">{{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
+                  <span class="broadcast-crossref-chevron" :class="{ 'rotated': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }">&#9660;</span>
+                </a>
+                <button
+                  class="broadcast-crossref-preview-btn"
+                  title="Preview verse"
+                  @click.stop="showCrossRefTooltip($event, crossRef)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
               <div v-if="expandedBroadcastCrossRefs.has(crossRef.cross_ref_id)" class="broadcast-crossref-verse" :style="{ fontSize: fontSize + 'px' }">
                 <div v-if="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.loading" class="broadcast-crossref-loading">
                   <div class="loading-spinner small"></div>
@@ -340,35 +399,6 @@
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
-      </div>
-    </div>
-
-    <!-- Cross-Reference Tooltip (hidden in broadcast mode) -->
-    <div 
-      v-if="crossRefTooltip.show && !broadcastMode" 
-      class="cross-ref-tooltip"
-      @click.stop
-    >
-      <div class="tooltip-header">
-        <span class="tooltip-title">{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}</span>
-        <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-        </button>
-        <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
-      </div>
-      <div class="tooltip-content" @click="handleTooltipVerseRefClick">
-        <div v-if="crossRefTooltip.loading" class="tooltip-loading">
-          <div class="loading-spinner"></div>
-          <p>Loading verse...</p>
-        </div>
-        <div v-else>
-          <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
-          <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
-        </div>
       </div>
     </div>
 
@@ -487,6 +517,7 @@ const showSuperscript = ref(true);
 const fontSize = ref(16);
 const boldVerseText = ref(true);
 const broadcastMode = ref(false);
+const chapterContentRef = ref<HTMLElement | null>(null);
 
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
@@ -559,6 +590,7 @@ const crossRefTooltip = ref<{
   verseText: string;
   teluguVerseText: string;
   bookName: string;
+  hebrewBookName: string;
   chapterNumber: string;
   verseNumber: string;
   bookId: number;
@@ -573,6 +605,7 @@ const crossRefTooltip = ref<{
   verseText: '',
   teluguVerseText: '',
   bookName: '',
+  hebrewBookName: '',
   chapterNumber: '',
   verseNumber: '',
   bookId: 0,
@@ -580,6 +613,11 @@ const crossRefTooltip = ref<{
   verseId: 0,
   verseIndex: 0
 });
+
+// Tooltip drag state
+const tooltipDragging = ref(false);
+const tooltipDragOffsetX = ref(0);
+const tooltipDragOffsetY = ref(0);
 
 // Context menu state for verse reference links
 const contextMenu = ref<{
@@ -968,6 +1006,20 @@ watch(broadcastPanelVerse, () => {
   expandedBroadcastCrossRefs.value = new Map();
 });
 
+async function expandAllBroadcastCrossRefs() {
+  const refs = broadcastPanelVerse.value?.verse?.crossReferences;
+  if (!refs) return;
+  for (const crossRef of refs) {
+    if (!expandedBroadcastCrossRefs.value.has(crossRef.cross_ref_id)) {
+      await toggleBroadcastCrossRef(crossRef);
+    }
+  }
+}
+
+function collapseAllBroadcastCrossRefs() {
+  expandedBroadcastCrossRefs.value = new Map();
+}
+
 // Toggle inline expand/collapse of a cross-ref verse in the broadcast panel
 async function toggleBroadcastCrossRef(crossRef: CrossReferenceData) {
   const id = crossRef.cross_ref_id;
@@ -1255,10 +1307,16 @@ function toggleCrossRefs(verseId: number) {
 // Show cross-reference tooltip with verse preview
 async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceData) {
   event.preventDefault();
-  
+
+  if (!crossRefTooltip.value.show) {
+    const pos = getTooltipCenterPosition();
+    crossRefTooltip.value.x = pos.x;
+    crossRefTooltip.value.y = pos.y;
+  }
   crossRefTooltip.value.show = true;
   crossRefTooltip.value.loading = true;
   crossRefTooltip.value.bookName = crossRef.to_book_name;
+  crossRefTooltip.value.hebrewBookName = '';
   crossRefTooltip.value.chapterNumber = crossRef.to_chapter;
   crossRefTooltip.value.verseNumber = crossRef.to_verse;
   
@@ -1306,6 +1364,7 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
     crossRefTooltip.value.chapterId = targetChapter.chapter_id;
     crossRefTooltip.value.verseId = targetVerse.verse_id;
     crossRefTooltip.value.verseIndex = targetVerse.verse_index ?? 1;
+    crossRefTooltip.value.hebrewBookName = BOOKS_DATA.find(b => b.book_id === targetBook.book_id)?.hebrew_book_name || '';
     
     // Set verse text with formatting applied
     crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
@@ -1329,6 +1388,52 @@ function navigateFromTooltip() {
 // Close cross-reference tooltip
 function closeCrossRefTooltip() {
   crossRefTooltip.value.show = false;
+}
+
+function getTooltipCenterPosition(): { x: number; y: number } {
+  const tooltipW = 400;
+  const tooltipH = 240;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rect = chapterContentRef.value?.getBoundingClientRect();
+  if (rect) {
+    // Clamp to the visible portion of chapter-content within the viewport
+    const visLeft = Math.max(rect.left, 0);
+    const visTop = Math.max(rect.top, 0);
+    const visRight = Math.min(rect.right, vw);
+    const visBottom = Math.min(rect.bottom, vh);
+    const x = visLeft + Math.max(0, (visRight - visLeft - tooltipW) / 2);
+    const y = visTop + Math.max(0, (visBottom - visTop - tooltipH) / 2);
+    // Final clamp so tooltip never goes off-screen
+    return {
+      x: Math.min(Math.max(8, x), vw - tooltipW - 8),
+      y: Math.min(Math.max(8, y), vh - tooltipH - 8),
+    };
+  }
+  return {
+    x: Math.max(8, (vw - tooltipW) / 2),
+    y: Math.max(8, (vh - tooltipH) / 2),
+  };
+}
+
+function startTooltipDrag(e: MouseEvent) {
+  tooltipDragging.value = true;
+  tooltipDragOffsetX.value = e.clientX - crossRefTooltip.value.x;
+  tooltipDragOffsetY.value = e.clientY - crossRefTooltip.value.y;
+  document.addEventListener('mousemove', onTooltipDragMove);
+  document.addEventListener('mouseup', onTooltipDragEnd);
+}
+
+function onTooltipDragMove(e: MouseEvent) {
+  if (!tooltipDragging.value) return;
+  crossRefTooltip.value.x = e.clientX - tooltipDragOffsetX.value;
+  crossRefTooltip.value.y = e.clientY - tooltipDragOffsetY.value;
+}
+
+function onTooltipDragEnd() {
+  tooltipDragging.value = false;
+  document.removeEventListener('mousemove', onTooltipDragMove);
+  document.removeEventListener('mouseup', onTooltipDragEnd);
 }
 
 // Handle settings change from Settings component
@@ -1441,6 +1546,7 @@ async function handleTooltipVerseRefClick(event: Event) {
   // Update tooltip header and show loading
   crossRefTooltip.value.loading = true;
   crossRefTooltip.value.bookName = targetBook.book_name;
+  crossRefTooltip.value.hebrewBookName = BOOKS_DATA.find(b => b.book_id === bookId)?.hebrew_book_name || '';
   crossRefTooltip.value.chapterNumber = String(chapterNum);
   crossRefTooltip.value.verseNumber = String(verseNum);
   crossRefTooltip.value.verseText = '';
@@ -1495,8 +1601,14 @@ async function handleVerseRefClick(event: Event) {
     if (!targetBook) return;
     
     // Show tooltip like cross references
+    if (!crossRefTooltip.value.show) {
+      const pos = getTooltipCenterPosition();
+      crossRefTooltip.value.x = pos.x;
+      crossRefTooltip.value.y = pos.y;
+    }
     crossRefTooltip.value.show = true;
     crossRefTooltip.value.loading = true;
+    crossRefTooltip.value.hebrewBookName = BOOKS_DATA.find(b => b.book_id === bookId)?.hebrew_book_name || '';
     crossRefTooltip.value.bookName = targetBook.book_name;
     crossRefTooltip.value.chapterNumber = String(chapterNum);
     crossRefTooltip.value.verseNumber = String(verseNum);
@@ -2257,6 +2369,8 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
   document.removeEventListener('click', handleVerseRefClick);
   document.removeEventListener('click', closeContextMenu);
+  document.removeEventListener('mousemove', onTooltipDragMove);
+  document.removeEventListener('mouseup', onTooltipDragEnd);
 });
 </script>
 
@@ -2368,12 +2482,36 @@ onUnmounted(() => {
 
 .broadcast-crossrefs-heading {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.4rem;
   padding: 0.5rem 0 0.75rem 0;
   border-bottom: 2px solid #e0e0e0;
   margin-bottom: 0.75rem;
+}
+
+.broadcast-crossrefs-heading-actions {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.broadcast-expand-all-btn {
+  background: none;
+  border: 1px solid #d1fae5;
+  border-radius: 4px;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.broadcast-expand-all-btn:hover {
+  background: #d1fae5;
+  border-color: #059669;
 }
 
 .broadcast-verse-label {
@@ -2398,6 +2536,35 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.broadcast-crossref-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.broadcast-crossref-row .broadcast-crossref-item {
+  flex: 1;
+}
+
+.broadcast-crossref-preview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  color: #059669;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.broadcast-crossref-preview-btn:hover {
+  background: #d1fae5;
+  border-color: #059669;
 }
 
 .broadcast-crossref-item {
@@ -3067,10 +3234,8 @@ onUnmounted(() => {
   min-width: 300px;
   max-width: 500px;
   overflow: hidden;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   max-height: 70vh;
+  user-select: none;
 }
 
 .tooltip-header {
@@ -3081,6 +3246,7 @@ onUnmounted(() => {
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
   gap: 8px;
+  cursor: move;
 }
 
 .tooltip-title {

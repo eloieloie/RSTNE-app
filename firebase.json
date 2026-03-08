@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "rstne-app-2025",
+    "site": "eat-rstne-26",
     "public": "dist",
     "ignore": [
       "firebase.json",

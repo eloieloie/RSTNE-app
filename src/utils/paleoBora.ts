@@ -283,11 +283,11 @@ export async function generateVerseCardImage(params: {
   ctx.fillRect(PADDING, y, MAX_TEXT_WIDTH, 1);
   y += Math.round(APP_FONT_SIZE * 1.6);
 
-  // "RSTNE Bible" label — bottom right
+  // "EAT-RSTNE-26" label — bottom right
   ctx.font = `bold ${APP_FONT_SIZE}px Georgia, serif`;
   ctx.fillStyle = FOOTER_APP_COLOR;
   ctx.textAlign = 'right';
-  ctx.fillText('RSTNE Bible', CANVAS_WIDTH - PADDING, y);
+  ctx.fillText('EAT-RSTNE-26', CANVAS_WIDTH - PADDING, y);
   ctx.textAlign = 'left'; // reset
 
   return new Promise((resolve) => {
