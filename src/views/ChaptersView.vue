@@ -316,6 +316,28 @@
               >Collapse all</button>
             </div>
           </div>
+          <!-- Highlight word textbox -->
+          <div class="broadcast-highlight-bar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="broadcast-highlight-icon">
+              <path d="M11.5 3.5L17 9l-9.5 9.5-3 .5.5-3L11.5 3.5z"/>
+              <line x1="15" y1="5" x2="19" y2="9"/>
+            </svg>
+            <input
+              v-model="broadcastHighlightWord"
+              type="text"
+              class="broadcast-highlight-input"
+              placeholder="Highlight word…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button
+              v-if="broadcastHighlightWord"
+              class="broadcast-highlight-clear"
+              title="Clear"
+              @click="broadcastHighlightWord = ''"
+            >&#x2715;</button>
+          </div>
+
           <div v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0" class="broadcast-crossrefs-list">
             <div
               v-for="crossRef in broadcastPanelVerse.verse.crossReferences"
@@ -349,8 +371,8 @@
                   <div class="loading-spinner small"></div>
                 </div>
                 <div v-else>
-                  <div v-if="showEnglish && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText" :class="{ 'hide-superscript': !showSuperscript }" v-html="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText"></div>
-                  <div v-if="showTelugu && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText" class="telugu-verse" v-html="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText"></div>
+                  <div v-if="showEnglish && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText" :class="{ 'hide-superscript': !showSuperscript }" v-html="highlightCrossRefVerse(expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)!.verseText, broadcastHighlightWord)"></div>
+                  <div v-if="showTelugu && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText" class="telugu-verse" v-html="highlightCrossRefVerse(expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)!.teluguVerseText, broadcastHighlightWord)"></div>
                 </div>
               </div>
             </div>
@@ -431,7 +453,7 @@ import { useRoute } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
-import { getCrossReferences, type CrossReferenceData } from '@/api/crossReferences';
+import { getCrossReferences, getAllCrossRefVerseTexts, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
@@ -542,6 +564,20 @@ const expandedCrossRefs = ref<Set<number>>(new Set());
 
 // Track inline-expanded cross-refs in the broadcast right panel
 const expandedBroadcastCrossRefs = ref<Map<number, { loading: boolean; verseText: string; teluguVerseText: string }>>(new Map());
+
+// Word to highlight across all expanded broadcast cross-ref verses
+const broadcastHighlightWord = ref('');
+
+// Highlights every occurrence of `word` inside an HTML string while skipping
+// text that is part of an HTML tag or attribute.
+function highlightCrossRefVerse(html: string, word: string): string {
+  if (!word.trim()) return html;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Negative lookahead: skip matches that sit inside a tag (i.e. followed by
+  // a '>' before any opening '<').
+  const regex = new RegExp(`(${escaped})(?![^<]*>)`, 'gi');
+  return html.replace(regex, '<mark class="crossref-highlight">$1</mark>');
+}
 
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
@@ -1007,12 +1043,58 @@ watch(broadcastPanelVerse, () => {
 });
 
 async function expandAllBroadcastCrossRefs() {
-  const refs = broadcastPanelVerse.value?.verse?.crossReferences;
-  if (!refs) return;
+  const panelVerse = broadcastPanelVerse.value;
+  const refs = panelVerse?.verse?.crossReferences;
+  if (!refs || refs.length === 0) return;
+
+  const fromBookId = book.value?.book_id;
+  const fromChapter = String(panelVerse.chapterNumber);
+  const fromVerse = String(panelVerse.verse.verse_index);
+
+  if (!fromBookId) return;
+
+  // Mark all not-yet-expanded refs as loading immediately so the UI updates
   for (const crossRef of refs) {
     if (!expandedBroadcastCrossRefs.value.has(crossRef.cross_ref_id)) {
-      await toggleBroadcastCrossRef(crossRef);
+      expandedBroadcastCrossRefs.value.set(crossRef.cross_ref_id, {
+        loading: true,
+        verseText: '',
+        teluguVerseText: '',
+      });
     }
+  }
+  expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+
+  try {
+    // Single SQL round-trip: fetch all target verse texts at once
+    const verseTexts = await getAllCrossRefVerseTexts(fromBookId, fromChapter, fromVerse);
+    const textMap = new Map(verseTexts.map((r) => [r.cross_ref_id, r]));
+
+    for (const crossRef of refs) {
+      const state = expandedBroadcastCrossRefs.value.get(crossRef.cross_ref_id);
+      if (!state) continue;
+      const result = textMap.get(crossRef.cross_ref_id);
+      if (result) {
+        state.verseText = formatVerseWithPaleoBora(result.verse_text || '');
+        state.teluguVerseText = formatVerseWithPaleoBora(result.telugu_verse_text || '');
+      } else {
+        state.verseText = 'Verse not found';
+        state.teluguVerseText = '';
+      }
+      state.loading = false;
+    }
+    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
+  } catch (err) {
+    console.error('Error loading all broadcast cross-reference verses:', err);
+    // On error, clear the loading state for each ref
+    for (const crossRef of refs) {
+      const state = expandedBroadcastCrossRefs.value.get(crossRef.cross_ref_id);
+      if (state && state.loading) {
+        state.verseText = 'Error loading verse';
+        state.loading = false;
+      }
+    }
+    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
   }
 }
 
@@ -2635,6 +2717,59 @@ onUnmounted(() => {
   color: #888;
   font-size: 14px;
   padding: 0.5rem 0;
+}
+
+.broadcast-highlight-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+.broadcast-highlight-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.broadcast-highlight-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1f2937;
+  min-width: 0;
+}
+
+.broadcast-highlight-input::placeholder {
+  color: #a78bfa;
+  opacity: 0.8;
+}
+
+.broadcast-highlight-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d97706;
+  font-size: 13px;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.broadcast-highlight-clear:hover {
+  color: #b45309;
+}
+
+mark.crossref-highlight {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
 }
 
 .cross-ref-tooltip.broadcast {

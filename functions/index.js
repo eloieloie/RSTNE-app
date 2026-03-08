@@ -1080,6 +1080,49 @@ app.get("/api/cross-references", async (req, res) => {
   }
 });
 
+// Batch-fetch all target verse texts for every cross-reference belonging to a
+// single from-verse in one SQL round-trip.  Used by the broadcast panel
+// "Expand all" button so we don't have to fire N×2 individual requests.
+//
+// GET /api/cross-references/expand-all
+// Query params: bookId, chapter, verse
+//
+// Response: [{ cross_ref_id, verse_text, telugu_verse_text }, ...]
+app.get("/api/cross-references/expand-all", async (req, res) => {
+  try {
+    const {bookId, chapter, verse} = req.query;
+
+    if (!bookId || !chapter || !verse) {
+      return res.status(400).json({
+        error: "bookId, chapter, and verse parameters are required",
+      });
+    }
+
+    const [rows] = await pool.execute(
+        `SELECT
+           cr.cross_ref_id,
+           v.verse           AS verse_text,
+           v.telugu_verse    AS telugu_verse_text
+         FROM cross_references_tbl cr
+         JOIN books_tbl     tob  ON tob.book_id    = cr.to_book_id
+         JOIN chapters_tbl  toch ON toch.book_id   = tob.book_id
+                                AND toch.chapter_number = cr.to_chapter
+         JOIN verses_tbl    v    ON v.chapter_id   = toch.chapter_id
+                                AND CAST(v.verse_index AS CHAR) = cr.to_verse
+         WHERE cr.from_book_id = ?
+           AND cr.from_chapter = ?
+           AND cr.from_verse   = ?
+         ORDER BY cr.votes DESC`,
+        [bookId, chapter, verse],
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching expand-all cross-reference verses:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
 // ============= STATS ENDPOINT =============
 
 app.get("/api/stats", async (req, res) => {
