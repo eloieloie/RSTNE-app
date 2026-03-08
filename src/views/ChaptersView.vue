@@ -1,5 +1,5 @@
 <template>
-  <div class="chapters-page">
+  <div class="chapters-page" :class="{ 'broadcast-mode': broadcastMode }">
     <!-- Initial Loading -->
     <div v-if="loading" class="loading-overlay">
       <div class="loading-spinner"></div>
@@ -286,102 +286,6 @@
         </main>
       </div>
         
-      <!-- Broadcast Mode Right Panel -->
-      <div v-if="broadcastMode" class="broadcast-mode-right-panel">
-        <div v-if="!broadcastPanelVerse" class="panel-placeholder">
-          <p>Click or scroll to a verse to view its cross-references</p>
-        </div>
-
-        <!-- Cross-references for clicked/scroll-visible verse -->
-        <div v-if="broadcastPanelVerse" class="broadcast-crossrefs">
-          <div class="broadcast-crossrefs-heading">
-            <span class="broadcast-verse-label">
-              {{ book?.book_name }} {{ broadcastPanelVerse.chapterNumber }}:{{ broadcastPanelVerse.verse.verse_index }}
-            </span>
-            <div class="broadcast-crossrefs-heading-actions">
-              <span class="broadcast-crossrefs-count" v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length">
-                {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
-              </span>
-              <button
-                v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0"
-                class="broadcast-expand-all-btn"
-                @click="expandAllBroadcastCrossRefs"
-                title="Expand all"
-              >Expand all</button>
-              <button
-                v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0"
-                class="broadcast-expand-all-btn"
-                @click="collapseAllBroadcastCrossRefs"
-                title="Collapse all"
-              >Collapse all</button>
-            </div>
-          </div>
-          <!-- Highlight word textbox -->
-          <div class="broadcast-highlight-bar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="broadcast-highlight-icon">
-              <path d="M11.5 3.5L17 9l-9.5 9.5-3 .5.5-3L11.5 3.5z"/>
-              <line x1="15" y1="5" x2="19" y2="9"/>
-            </svg>
-            <input
-              v-model="broadcastHighlightWord"
-              type="text"
-              class="broadcast-highlight-input"
-              placeholder="Highlight word…"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <button
-              v-if="broadcastHighlightWord"
-              class="broadcast-highlight-clear"
-              title="Clear"
-              @click="broadcastHighlightWord = ''"
-            >&#x2715;</button>
-          </div>
-
-          <div v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0" class="broadcast-crossrefs-list">
-            <div
-              v-for="crossRef in broadcastPanelVerse.verse.crossReferences"
-              :key="crossRef.cross_ref_id"
-              class="broadcast-crossref-wrapper"
-            >
-              <div class="broadcast-crossref-row">
-                <a
-                  href="#"
-                  class="broadcast-crossref-item"
-                  :class="{ 'is-expanded': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }"
-                  @click.prevent="toggleBroadcastCrossRef(crossRef)"
-                >
-                  <span class="broadcast-crossref-ref">{{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
-                  <span class="broadcast-crossref-chevron" :class="{ 'rotated': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }">&#9660;</span>
-                </a>
-                <button
-                  class="broadcast-crossref-preview-btn"
-                  title="Preview verse"
-                  @click.stop="showCrossRefTooltip($event, crossRef)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                  </svg>
-                </button>
-              </div>
-              <div v-if="expandedBroadcastCrossRefs.has(crossRef.cross_ref_id)" class="broadcast-crossref-verse" :style="{ fontSize: fontSize + 'px' }">
-                <div v-if="expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.loading" class="broadcast-crossref-loading">
-                  <div class="loading-spinner small"></div>
-                </div>
-                <div v-else>
-                  <div v-if="showEnglish && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.verseText" :class="{ 'hide-superscript': !showSuperscript }" v-html="highlightCrossRefVerse(expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)!.verseText, broadcastHighlightWord)"></div>
-                  <div v-if="showTelugu && expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)?.teluguVerseText" class="telugu-verse" v-html="highlightCrossRefVerse(expandedBroadcastCrossRefs.get(crossRef.cross_ref_id)!.teluguVerseText, broadcastHighlightWord)"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="broadcast-crossrefs-empty">
-            <p>No cross-references for this verse.</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Verse Picker -->
@@ -449,11 +353,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
-import { getCrossReferences, getAllCrossRefVerseTexts, type CrossReferenceData } from '@/api/crossReferences';
+import { getCrossReferences, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
@@ -518,7 +422,19 @@ interface SearchResult {
   note_content?: string | null;
 }
 
+const props = withDefaults(defineProps<{
+  broadcastMode?: boolean;
+}>(), {
+  broadcastMode: false
+});
+
+const emit = defineEmits<{
+  'broadcast-verse-change': [verse: { verse: any; chapterNumber: string } | null, book: any];
+  'settings-change': [settings: any];
+}>();
+
 const route = useRoute();
+const router = useRouter();
 const allBooks = ref<any[]>([]);
 const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
@@ -538,7 +454,8 @@ const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
 const fontSize = ref(16);
 const boldVerseText = ref(true);
-const broadcastMode = ref(false);
+const internalBroadcastMode = ref(false);
+const broadcastMode = computed(() => props.broadcastMode || internalBroadcastMode.value);
 const chapterContentRef = ref<HTMLElement | null>(null);
 
 const showSettingsModal = ref(false);
@@ -561,23 +478,6 @@ const firstVisibleChapterNumber = ref<string | null>(null);
 
 // Track which verses have expanded cross-references
 const expandedCrossRefs = ref<Set<number>>(new Set());
-
-// Track inline-expanded cross-refs in the broadcast right panel
-const expandedBroadcastCrossRefs = ref<Map<number, { loading: boolean; verseText: string; teluguVerseText: string }>>(new Map());
-
-// Word to highlight across all expanded broadcast cross-ref verses
-const broadcastHighlightWord = ref('');
-
-// Highlights every occurrence of `word` inside an HTML string while skipping
-// text that is part of an HTML tag or attribute.
-function highlightCrossRefVerse(html: string, word: string): string {
-  if (!word.trim()) return html;
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // Negative lookahead: skip matches that sit inside a tag (i.e. followed by
-  // a '>' before any opening '<').
-  const regex = new RegExp(`(${escaped})(?![^<]*>)`, 'gi');
-  return html.replace(regex, '<mark class="crossref-highlight">$1</mark>');
-}
 
 // Track highlighted verse to prevent premature removal
 const highlightedVerseId = ref<number | null>(null);
@@ -610,9 +510,6 @@ const broadcastPanelVerse = computed<{ verse: any; chapterNumber: string } | nul
       const v = chData.verses.find(v => v.verse_id === clickSelectedVerseId.value);
       if (v) return { verse: v, chapterNumber: chData.chapter.chapter_number };
     }
-  }
-  if (scrollVisibleVerse.value && firstVisibleChapterNumber.value) {
-    return { verse: scrollVisibleVerse.value, chapterNumber: firstVisibleChapterNumber.value };
   }
   return null;
 });
@@ -1037,110 +934,10 @@ function handleVersePickerUpdate(bookId: number, chapterId: number, verseId: num
   previewVerseId.value = verseId;
 }
 
-// Watch broadcastPanelVerse changes — clear any expanded cross-refs when verse changes
-watch(broadcastPanelVerse, () => {
-  expandedBroadcastCrossRefs.value = new Map();
+// Watch broadcastPanelVerse changes — emit to parent BroadcastView
+watch(broadcastPanelVerse, (val) => {
+  emit('broadcast-verse-change', val, book.value);
 });
-
-async function expandAllBroadcastCrossRefs() {
-  const panelVerse = broadcastPanelVerse.value;
-  const refs = panelVerse?.verse?.crossReferences;
-  if (!refs || refs.length === 0) return;
-
-  const fromBookId = book.value?.book_id;
-  const fromChapter = String(panelVerse.chapterNumber);
-  const fromVerse = String(panelVerse.verse.verse_index);
-
-  if (!fromBookId) return;
-
-  // Mark all not-yet-expanded refs as loading immediately so the UI updates
-  for (const crossRef of refs) {
-    if (!expandedBroadcastCrossRefs.value.has(crossRef.cross_ref_id)) {
-      expandedBroadcastCrossRefs.value.set(crossRef.cross_ref_id, {
-        loading: true,
-        verseText: '',
-        teluguVerseText: '',
-      });
-    }
-  }
-  expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-
-  try {
-    // Single SQL round-trip: fetch all target verse texts at once
-    const verseTexts = await getAllCrossRefVerseTexts(fromBookId, fromChapter, fromVerse);
-    const textMap = new Map(verseTexts.map((r) => [r.cross_ref_id, r]));
-
-    for (const crossRef of refs) {
-      const state = expandedBroadcastCrossRefs.value.get(crossRef.cross_ref_id);
-      if (!state) continue;
-      const result = textMap.get(crossRef.cross_ref_id);
-      if (result) {
-        state.verseText = formatVerseWithPaleoBora(result.verse_text || '');
-        state.teluguVerseText = formatVerseWithPaleoBora(result.telugu_verse_text || '');
-      } else {
-        state.verseText = 'Verse not found';
-        state.teluguVerseText = '';
-      }
-      state.loading = false;
-    }
-    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-  } catch (err) {
-    console.error('Error loading all broadcast cross-reference verses:', err);
-    // On error, clear the loading state for each ref
-    for (const crossRef of refs) {
-      const state = expandedBroadcastCrossRefs.value.get(crossRef.cross_ref_id);
-      if (state && state.loading) {
-        state.verseText = 'Error loading verse';
-        state.loading = false;
-      }
-    }
-    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-  }
-}
-
-function collapseAllBroadcastCrossRefs() {
-  expandedBroadcastCrossRefs.value = new Map();
-}
-
-// Toggle inline expand/collapse of a cross-ref verse in the broadcast panel
-async function toggleBroadcastCrossRef(crossRef: CrossReferenceData) {
-  const id = crossRef.cross_ref_id;
-  if (expandedBroadcastCrossRefs.value.has(id)) {
-    expandedBroadcastCrossRefs.value.delete(id);
-    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-    return;
-  }
-  const state = { loading: true, verseText: '', teluguVerseText: '' };
-  expandedBroadcastCrossRefs.value.set(id, state);
-  expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-  try {
-    let targetBook;
-    if (crossRef.to_book_id) {
-      targetBook = allBooks.value.find((b: any) => b.book_id === crossRef.to_book_id);
-    } else {
-      targetBook = allBooks.value.find((b: any) =>
-        b.book_abbr === crossRef.to_book_name ||
-        b.book_name.toLowerCase() === crossRef.to_book_name.toLowerCase()
-      );
-    }
-    if (!targetBook) { state.verseText = 'Book not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
-    const targetChapters = await getChaptersByBookId(targetBook.book_id);
-    const targetChapter = targetChapters.find((ch: any) => String(ch.chapter_number) === String(crossRef.to_chapter));
-    if (!targetChapter) { state.verseText = 'Chapter not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
-    const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
-    const targetVerse = targetVerses.find((v: any) => String(v.verse_index) === crossRef.to_verse);
-    if (!targetVerse) { state.verseText = 'Verse not found'; state.loading = false; expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value); return; }
-    state.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
-    state.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
-    state.loading = false;
-    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-  } catch (err) {
-    console.error('Error loading broadcast cross-reference:', err);
-    state.verseText = 'Error loading verse';
-    state.loading = false;
-    expandedBroadcastCrossRefs.value = new Map(expandedBroadcastCrossRefs.value);
-  }
-}
 
 // Toggle highlighting a verse when clicked by the user
 function selectVerse(verse: any, event: MouseEvent) {
@@ -1538,7 +1335,13 @@ function handleSettingsChange(settings: SettingsData) {
   showSuperscript.value = settings.showSuperscript;
   fontSize.value = settings.fontSize;
   boldVerseText.value = settings.boldVerseText;
-  broadcastMode.value = settings.broadcastMode;
+  const wasInBroadcastMode = internalBroadcastMode.value;
+  internalBroadcastMode.value = settings.broadcastMode;
+  emit('settings-change', settings);
+  // Navigate to broadcast route when broadcast mode is toggled ON from reading page
+  if (settings.broadcastMode && !wasInBroadcastMode && !props.broadcastMode) {
+    router.push({ name: 'broadcast', state: { bookId: book.value?.book_id } });
+  }
 }
 
 // Search results navigation
@@ -2454,6 +2257,8 @@ onUnmounted(() => {
   document.removeEventListener('mousemove', onTooltipDragMove);
   document.removeEventListener('mouseup', onTooltipDragEnd);
 });
+
+defineExpose({ showCrossRefTooltip });
 </script>
 
 <style scoped>
@@ -2461,14 +2266,16 @@ onUnmounted(() => {
   min-height: 100vh;
 }
 
+.chapters-page.broadcast-mode {
+  width: 70%;
+  max-width: 70%;
+}
+
 .content-wrapper {
   width: 100%;
 }
 
 .content-wrapper.broadcast-mode {
-  display: grid;
-  grid-template-columns: 70% 30%;
-  grid-template-rows: auto 1fr;
   min-height: 100vh;
 }
 
@@ -2477,8 +2284,6 @@ onUnmounted(() => {
 }
 
 .content-wrapper.broadcast-mode .content-layout {
-  grid-column: 1;
-  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
 }
@@ -2498,7 +2303,7 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.content-wrapper.broadcast-mode .top-nav {
+.chapters-page.broadcast-mode .top-nav {
   width: 70%;
   right: auto;
 }
@@ -2538,255 +2343,6 @@ onUnmounted(() => {
   border-radius: 0;
   box-shadow: none;
   min-height: calc(100vh - 100px);
-}
-
-.broadcast-mode-right-panel {
-  position: fixed;
-  right: 0;
-  top: 90px;
-  width: 30%;
-  height: calc(100vh - 100px);
-  background: white;
-  border-left: 1px solid #e0e0e0;
-  overflow-y: auto;
-  padding: 1rem;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
-  display: none;
-}
-
-.content-wrapper.broadcast-mode .broadcast-mode-right-panel {
-  display: block;
-}
-
-.broadcast-crossrefs {
-  padding: 0.5rem 0;
-}
-
-.broadcast-crossrefs-heading {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem 0 0.75rem 0;
-  border-bottom: 2px solid #e0e0e0;
-  margin-bottom: 0.75rem;
-}
-
-.broadcast-crossrefs-heading-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.broadcast-expand-all-btn {
-  background: none;
-  border: 1px solid #d1fae5;
-  border-radius: 4px;
-  color: #059669;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.broadcast-expand-all-btn:hover {
-  background: #d1fae5;
-  border-color: #059669;
-}
-
-.broadcast-verse-label {
-  font-weight: 700;
-  font-size: 15px;
-  color: #2c3e50;
-}
-
-.broadcast-crossrefs-count {
-  font-size: 12px;
-  color: #888;
-  white-space: nowrap;
-}
-
-.broadcast-crossrefs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.broadcast-crossref-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.broadcast-crossref-row {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.broadcast-crossref-row .broadcast-crossref-item {
-  flex: 1;
-}
-
-.broadcast-crossref-preview-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-  border-radius: 6px;
-  background: #f0fdf4;
-  border: 1px solid #d1fae5;
-  color: #059669;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  flex-shrink: 0;
-}
-
-.broadcast-crossref-preview-btn:hover {
-  background: #d1fae5;
-  border-color: #059669;
-}
-
-.broadcast-crossref-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: #f0fdf4;
-  color: #065f46;
-  text-decoration: none;
-  font-size: 14px;
-  border: 1px solid #d1fae5;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.broadcast-crossref-item:hover,
-.broadcast-crossref-item.is-expanded {
-  background: #d1fae5;
-  border-color: #059669;
-}
-
-.broadcast-crossref-item.is-expanded {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.broadcast-crossref-ref {
-  font-weight: 600;
-}
-
-.broadcast-crossref-chevron {
-  font-size: 10px;
-  color: #059669;
-  transition: transform 0.2s ease;
-  display: inline-block;
-}
-
-.broadcast-crossref-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.broadcast-crossref-verse {
-  background: #f8fffe;
-  border: 1px solid #d1fae5;
-  border-top: none;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  padding: 8px 10px;
-  line-height: 1.6;
-  color: #1f2937;
-  text-align: left;
-}
-
-.broadcast-crossref-loading {
-  display: flex;
-  justify-content: center;
-  padding: 6px 0;
-}
-
-.loading-spinner.small {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-.broadcast-crossrefs-empty {
-  color: #888;
-  font-size: 14px;
-  padding: 0.5rem 0;
-}
-
-.broadcast-highlight-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 0.75rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 6px;
-  padding: 5px 10px;
-}
-
-.broadcast-highlight-icon {
-  color: #d97706;
-  flex-shrink: 0;
-}
-
-.broadcast-highlight-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 13px;
-  color: #1f2937;
-  min-width: 0;
-}
-
-.broadcast-highlight-input::placeholder {
-  color: #a78bfa;
-  opacity: 0.8;
-}
-
-.broadcast-highlight-clear {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #d97706;
-  font-size: 13px;
-  padding: 0 2px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.broadcast-highlight-clear:hover {
-  color: #b45309;
-}
-
-mark.crossref-highlight {
-  background: #fef08a;
-  color: inherit;
-  border-radius: 2px;
-  padding: 0 1px;
-}
-
-.cross-ref-tooltip.broadcast {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  margin: 0;
-  width: 100% !important;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-  transform: none !important;
-  max-width: none;
-  min-width: auto;
-  max-height: 100%;
-  overflow-y: auto;
 }
 
 .verse-picker-button {

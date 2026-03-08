@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import BooksView from '@/views/BooksView.vue';
 import ChaptersView from '@/views/ChaptersView.vue';
+import BroadcastView from '@/views/BroadcastView.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ManageBooks from '@/views/admin/ManageBooks.vue';
 import ManageChapters from '@/views/admin/ManageChapters.vue';
@@ -50,6 +51,16 @@ const router = createRouter({
       path: '/reading-pane',
       name: 'reading-pane',
       component: ChaptersView
+    },
+    {
+      path: '/broadcast',
+      name: 'broadcast',
+      component: BroadcastView
+    },
+    {
+      path: '/broadcast/:bookName/:chapterNumber?/:verseNumber?',
+      name: 'broadcast-params',
+      component: BroadcastView
     },
     // Legacy routes - still work but reading-pane is the preferred URL
     {
