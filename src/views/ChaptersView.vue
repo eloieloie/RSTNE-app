@@ -44,6 +44,9 @@
         </nav>
 
         <main class="chapter-content" ref="chapterContentRef">
+          <!-- Tint overlay when cross-ref tooltip is open -->
+          <div v-if="crossRefTooltip.show" class="chapter-content-tint" @click="closeCrossRefTooltip"></div>
+
           <!-- Loading spinner for verse navigation -->
           <div v-if="isNavigatingToVerseRef" class="content-loading-overlay">
             <div class="loading-spinner"></div>
@@ -1270,7 +1273,7 @@ function closeCrossRefTooltip() {
 }
 
 function getTooltipCenterPosition(): { x: number; y: number } {
-  const tooltipW = 400;
+  const tooltipW = 700;
   const tooltipH = 240;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -2609,7 +2612,7 @@ defineExpose({ showCrossRefTooltip });
 
 .verse-item {
   line-height: 1.8;
-  padding: 5px;
+  padding: 5px 10px;
   transition: all 0.4s ease;
   cursor: pointer;
 }
@@ -2915,6 +2918,15 @@ defineExpose({ showCrossRefTooltip });
 }
 
 /* Cross-Reference Tooltip */
+.chapter-content-tint {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 1);
+  z-index: 10000;
+  border-radius: inherit;
+  pointer-events: all;
+}
+
 .cross-ref-tooltip {
   position: fixed;
   background: white;
@@ -2923,7 +2935,7 @@ defineExpose({ showCrossRefTooltip });
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10001;
   min-width: 300px;
-  max-width: 500px;
+  max-width: 700px;
   overflow: hidden;
   max-height: 70vh;
   user-select: none;
@@ -3016,7 +3028,8 @@ defineExpose({ showCrossRefTooltip });
 }
 
 .tooltip-verse {
-  font-size: 15px;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.6;
   color: #333;
   text-align: left;

@@ -21,7 +21,12 @@
           </span>
           <div class="broadcast-crossrefs-heading-actions">
             <span class="broadcast-crossrefs-count" v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length">
-              {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
+                <template v-if="broadcastHighlightWord.trim()">
+                  {{ filteredCrossRefs.filter((r: any) => !expandedBroadcastCrossRefs.get(r.cross_ref_id)?.loading).length }} of {{ broadcastPanelVerse.verse.crossReferences.length }} match
+                </template>
+                <template v-else>
+                  {{ broadcastPanelVerse.verse.crossReferences.length }} cross-reference{{ broadcastPanelVerse.verse.crossReferences.length !== 1 ? 's' : '' }}
+                </template>
             </span>
             <button
               v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0"
@@ -59,9 +64,9 @@
           >&#x2715;</button>
         </div>
 
-        <div v-if="broadcastPanelVerse.verse.crossReferences && broadcastPanelVerse.verse.crossReferences.length > 0" class="broadcast-crossrefs-list">
+        <div v-if="filteredCrossRefs.length > 0" class="broadcast-crossrefs-list">
           <div
-            v-for="crossRef in broadcastPanelVerse.verse.crossReferences"
+            v-for="crossRef in filteredCrossRefs"
             :key="crossRef.cross_ref_id"
             class="broadcast-crossref-wrapper"
           >
@@ -99,7 +104,8 @@
           </div>
         </div>
         <div v-else class="broadcast-crossrefs-empty">
-          <p>No cross-references for this verse.</p>
+          <p v-if="broadcastHighlightWord.trim()">No cross-references contain "{{ broadcastHighlightWord }}".</p>
+          <p v-else>No cross-references for this verse.</p>
         </div>
       </div>
     </div>
@@ -107,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import ChaptersView from '@/views/ChaptersView.vue';
 import { getChaptersByBookId } from '@/api/chapters';
@@ -167,6 +173,35 @@ function onSettingsChange(settings: any) {
 // Clear expanded cross-refs when the active verse changes
 watch(broadcastPanelVerse, () => {
   expandedBroadcastCrossRefs.value = new Map();
+  broadcastHighlightWord.value = '';
+});
+
+// Auto-load all verse texts when a highlight word is typed
+watch(broadcastHighlightWord, (word) => {
+  if (word.trim()) {
+    expandAllBroadcastCrossRefs();
+  }
+});
+
+// Strip HTML tags for plain-text matching
+function stripHtml(html: string): string {
+  return (html || '').replace(/<[^>]*>/g, '');
+}
+
+// Cross-refs filtered to only those whose verse text contains the highlight word
+const filteredCrossRefs = computed(() => {
+  const refs = broadcastPanelVerse.value?.verse?.crossReferences;
+  if (!refs) return [];
+  const word = broadcastHighlightWord.value.trim().toLowerCase();
+  if (!word) return refs;
+  return refs.filter((crossRef: any) => {
+    const state = expandedBroadcastCrossRefs.value.get(crossRef.cross_ref_id);
+    if (!state) return false;
+    if (state.loading) return true; // keep visible while loading
+    const englishText = stripHtml(state.verseText).toLowerCase();
+    const teluguText = stripHtml(state.teluguVerseText).toLowerCase();
+    return englishText.includes(word) || teluguText.includes(word);
+  });
 });
 
 // Format verse HTML with PaleoBora font spans
