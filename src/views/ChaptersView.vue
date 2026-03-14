@@ -434,6 +434,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'broadcast-verse-change': [verse: { verse: any; chapterNumber: string } | null, book: any];
   'settings-change': [settings: any];
+  'broadcast-text-select': [text: string];
 }>();
 
 const route = useRoute();
@@ -1272,6 +1273,22 @@ function closeCrossRefTooltip() {
   crossRefTooltip.value.show = false;
 }
 
+// Emit selected verse text to BroadcastView when in broadcast mode
+function handleVerseTextSelection() {
+  if (!broadcastMode.value) return;
+  const selection = window.getSelection();
+  if (!selection) return;
+  const text = selection.toString().trim();
+  if (!text) return;
+  // Check that the selection is within chapter-content
+  const container = chapterContentRef.value;
+  if (!container) return;
+  const range = selection.getRangeAt(0);
+  if (container.contains(range.commonAncestorContainer)) {
+    emit('broadcast-text-select', text);
+  }
+}
+
 function getTooltipCenterPosition(): { x: number; y: number } {
   const tooltipW = 700;
   const tooltipH = 240;
@@ -2075,6 +2092,9 @@ onMounted(async () => {
     
     // Add document click listener to close context menu
     document.addEventListener('click', closeContextMenu);
+
+    // Add document mouseup listener for broadcast text selection
+    document.addEventListener('mouseup', handleVerseTextSelection);
     
   } catch (err: any) {
     error.value = err.message || 'Failed to load chapters';
@@ -2257,6 +2277,7 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
   document.removeEventListener('click', handleVerseRefClick);
   document.removeEventListener('click', closeContextMenu);
+  document.removeEventListener('mouseup', handleVerseTextSelection);
   document.removeEventListener('mousemove', onTooltipDragMove);
   document.removeEventListener('mouseup', onTooltipDragEnd);
 });

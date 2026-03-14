@@ -5,6 +5,7 @@
       :broadcast-mode="true"
       @broadcast-verse-change="onVerseChange"
       @settings-change="onSettingsChange"
+      @broadcast-text-select="onTextSelect"
     />
 
     <!-- Broadcast Mode Right Panel -->
@@ -155,6 +156,11 @@ onMounted(async () => {
 function onVerseChange(verse: { verse: any; chapterNumber: string } | null, book: any) {
   broadcastPanelVerse.value = verse;
   currentBook.value = book;
+}
+
+// Called when ChaptersView emits selected verse text in broadcast mode
+function onTextSelect(text: string) {
+  broadcastHighlightWord.value = text;
 }
 
 // Called when ChaptersView emits a settings change
