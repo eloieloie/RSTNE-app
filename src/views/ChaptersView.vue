@@ -2955,7 +2955,7 @@ defineExpose({ showCrossRefTooltip });
 .chapters-page-tint {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 1);
   z-index: 10000;
   pointer-events: all;
 }
