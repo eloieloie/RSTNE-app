@@ -1,5 +1,8 @@
 <template>
   <div class="chapters-page" :class="{ 'broadcast-mode': broadcastMode }">
+    <!-- Tint overlay when cross-ref tooltip is open -->
+    <div v-if="crossRefTooltip.show" class="chapters-page-tint" :class="{ 'broadcast-mode': broadcastMode }" @click="closeCrossRefTooltip"></div>
+
     <!-- Initial Loading -->
     <div v-if="loading" class="loading-overlay">
       <div class="loading-spinner"></div>
@@ -14,7 +17,7 @@
       <div class="content-layout">
         <nav class="top-nav">
           <div class="nav-container">
-            <button class="search-icon" @click="showSearchModal = true" title="Search Verses">
+            <button class="search-icon" @click="openSearchModal" title="Search Verses">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
@@ -44,8 +47,6 @@
         </nav>
 
         <main class="chapter-content" ref="chapterContentRef">
-          <!-- Tint overlay when cross-ref tooltip is open -->
-          <div v-if="crossRefTooltip.show" class="chapter-content-tint" @click="closeCrossRefTooltip"></div>
 
           <!-- Loading spinner for verse navigation -->
           <div v-if="isNavigatingToVerseRef" class="content-loading-overlay">
@@ -304,6 +305,7 @@
     <!-- Verse Search -->
     <VerseSearch
       :is-open="showSearchModal"
+      :broadcast-mode="broadcastMode"
       @close="showSearchModal = false"
       @select="handleVerseSelection"
     />
@@ -465,6 +467,14 @@ const chapterContentRef = ref<HTMLElement | null>(null);
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
+
+function openSearchModal() {
+  const selected = window.getSelection()?.toString().trim();
+  if (selected) {
+    (window as any).initialSearchQuery = selected;
+  }
+  showSearchModal.value = true;
+}
 const isNavigatingToVerseRef = ref(false);
 
 // Search results navigation
@@ -950,6 +960,9 @@ function selectVerse(verse: any, event: MouseEvent) {
   if (target.closest('a') || target.closest('.cross-ref-more') || target.closest('.verse-links') || target.closest('.verse-cross-references') || target.closest('.verse-notes') || target.closest('.verse-actions')) {
     return;
   }
+  // If the user was selecting text, don't toggle verse selection
+  const selectedText = window.getSelection()?.toString().trim();
+  if (selectedText) return;
   if (clickSelectedVerseId.value === verse.verse_id) {
     // Deselect on second click
     clickSelectedVerseId.value = null;
@@ -2939,13 +2952,20 @@ defineExpose({ showCrossRefTooltip });
 }
 
 /* Cross-Reference Tooltip */
-.chapter-content-tint {
-  position: absolute;
+.chapters-page-tint {
+  position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 1);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 10000;
-  border-radius: inherit;
   pointer-events: all;
+}
+
+.chapters-page-tint.broadcast-mode {
+  right: 30%;
+}
+
+body {
+  background-color: black;
 }
 
 .cross-ref-tooltip {

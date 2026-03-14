@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="search-overlay" @click="close">
+  <div v-if="isOpen" class="search-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click="close">
     <div class="search-modal" @click.stop>
       <div class="search-header">
         <h3>Search Verses</h3>
@@ -25,9 +25,36 @@
           {{ errorMessage }}
         </div>
         
+        <!-- Verse Navigator Modal -->
+        <div v-if="showVerseNav" class="verse-nav-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click.self="showVerseNav = false">
+          <div class="verse-nav-modal">
+            <div class="verse-nav-header">
+              <span class="verse-nav-counter">{{ navIndex + 1 }} / {{ searchResults.length }}</span>
+              <button class="close-btn" @click="showVerseNav = false">&times;</button>
+            </div>
+            <div class="verse-nav-body">
+              <div class="result-reference">
+                {{ searchResults[navIndex].book_name }} {{ searchResults[navIndex].chapter_number }}:{{ searchResults[navIndex].verse_index }}
+              </div>
+              <div class="result-text" v-html="highlightSearchTerms(searchResults[navIndex].verse)"></div>
+              <div v-if="searchResults[navIndex].telugu_verse" class="result-telugu" v-html="highlightSearchTerms(searchResults[navIndex].telugu_verse!)"></div>
+              <div v-if="searchResults[navIndex].note_content" class="result-note">
+                <span class="note-label">Note:</span>
+                <span v-html="highlightSearchTerms(searchResults[navIndex].note_content!)"></span>
+              </div>
+            </div>
+            <div class="verse-nav-footer">
+              <button class="nav-btn" :disabled="navIndex === 0" @click="navIndex--">&#8592; Prev</button>
+              <button class="nav-go-btn" @click="selectVerse(searchResults[navIndex])">Go to verse</button>
+              <button class="nav-btn" :disabled="navIndex === searchResults.length - 1" @click="navIndex++">Next &#8594;</button>
+            </div>
+          </div>
+        </div>
+
         <div v-if="searchResults.length > 0" class="search-results">
           <div class="results-header">
             Found {{ searchResults.length }} verse{{ searchResults.length !== 1 ? 's' : '' }}
+            <button class="browse-btn" @click="openVerseNav">Browse</button>
           </div>
           <div class="results-list">
             <div
@@ -74,6 +101,7 @@ interface SearchResult {
 
 const props = defineProps<{
   isOpen: boolean;
+  broadcastMode?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -87,6 +115,13 @@ const searchResults = ref<SearchResult[]>([]);
 const isSearching = ref(false);
 const hasSearched = ref(false);
 const errorMessage = ref('');
+const showVerseNav = ref(false);
+const navIndex = ref(0);
+
+function openVerseNav() {
+  navIndex.value = 0;
+  showVerseNav.value = true;
+}
 
 // Watch for modal opening to focus input
 watch(() => props.isOpen, async (isOpen) => {
@@ -199,6 +234,10 @@ function close() {
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+}
+
+.search-overlay.broadcast-mode {
+  right: 30%;
 }
 
 .search-modal {
@@ -315,6 +354,119 @@ function close() {
   color: #666;
   margin-bottom: 0.75rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.browse-btn {
+  padding: 3px 12px;
+  background: #42b983;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.browse-btn:hover {
+  background: #35a372;
+}
+
+/* Verse Navigator */
+.verse-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 1rem;
+}
+
+.verse-nav-overlay.broadcast-mode {
+  right: 30%;
+}
+
+.verse-nav-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.verse-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f8f8;
+}
+
+.verse-nav-counter {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #42b983;
+}
+
+.verse-nav-body {
+  padding: 1.5rem;
+  min-height: 120px;
+}
+
+.verse-nav-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  padding: 0.5rem 1.1rem;
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #d1fae5;
+}
+
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.nav-go-btn {
+  padding: 0.5rem 1.4rem;
+  background: #42b983;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-go-btn:hover {
+  background: #35a372;
 }
 
 .results-list {
@@ -344,6 +496,7 @@ function close() {
   color: #42b983;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
+  text-align: left;
 }
 
 .result-text {
@@ -368,6 +521,7 @@ function close() {
   font-size: 0.9rem;
   color: #555;
   line-height: 1.5;
+  text-align: left;
 }
 
 .note-label {
