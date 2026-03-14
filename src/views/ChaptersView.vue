@@ -164,8 +164,8 @@
                     
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
-                        <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
-                        <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
+                        <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
+                        <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
                       </div>
                     </div>
 
@@ -260,6 +260,7 @@
           <div 
             v-if="crossRefTooltip.show" 
             class="cross-ref-tooltip"
+            :class="{ 'broadcast-mode': broadcastMode }"
             :style="{ left: crossRefTooltip.x + 'px', top: crossRefTooltip.y + 'px' }"
             @click.stop
           >
@@ -282,8 +283,8 @@
                 <p>Loading verse...</p>
               </div>
               <div v-else>
-                <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" v-html="crossRefTooltip.verseText"></div>
-                <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" v-html="crossRefTooltip.teluguVerseText"></div>
+                <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.verseText"></div>
+                <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.teluguVerseText"></div>
               </div>
             </div>
           </div>
@@ -1303,7 +1304,8 @@ function handleVerseTextSelection() {
 }
 
 function getTooltipCenterPosition(): { x: number; y: number } {
-  const tooltipW = 700;
+  const panelRight = broadcastMode.value ? window.innerWidth * 0.7 : window.innerWidth;
+  const tooltipW = broadcastMode.value ? panelRight - 16 : 700;
   const tooltipH = 240;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -1312,18 +1314,18 @@ function getTooltipCenterPosition(): { x: number; y: number } {
     // Clamp to the visible portion of chapter-content within the viewport
     const visLeft = Math.max(rect.left, 0);
     const visTop = Math.max(rect.top, 0);
-    const visRight = Math.min(rect.right, vw);
+    const visRight = Math.min(rect.right, panelRight);
     const visBottom = Math.min(rect.bottom, vh);
     const x = visLeft + Math.max(0, (visRight - visLeft - tooltipW) / 2);
     const y = visTop + Math.max(0, (visBottom - visTop - tooltipH) / 2);
-    // Final clamp so tooltip never goes off-screen
+    // Final clamp so tooltip never goes off-screen or outside the left panel
     return {
-      x: Math.min(Math.max(8, x), vw - tooltipW - 8),
+      x: Math.min(Math.max(8, x), panelRight - tooltipW - 8),
       y: Math.min(Math.max(8, y), vh - tooltipH - 8),
     };
   }
   return {
-    x: Math.max(8, (vw - tooltipW) / 2),
+    x: Math.max(8, (panelRight - tooltipW) / 2),
     y: Math.max(8, (vh - tooltipH) / 2),
   };
 }
@@ -2304,8 +2306,10 @@ defineExpose({ showCrossRefTooltip });
 }
 
 .chapters-page.broadcast-mode {
-  width: 70%;
-  max-width: 70%;
+  width: 100%;
+  max-width: 100%;
+  margin-right: 30%;
+  box-sizing: border-box;
 }
 
 .content-wrapper {
@@ -2325,7 +2329,7 @@ defineExpose({ showCrossRefTooltip });
   flex-direction: column;
 }
 
-.content-layout.broadcast-mode {
+.content-wrapper.broadcast-mode .content-layout {
   display: block;
 }
 
@@ -2341,8 +2345,7 @@ defineExpose({ showCrossRefTooltip });
 }
 
 .chapters-page.broadcast-mode .top-nav {
-  width: 70%;
-  right: auto;
+  right: 30%;
 }
 
 .nav-container {
@@ -2355,7 +2358,7 @@ defineExpose({ showCrossRefTooltip });
   justify-content: space-between;
 }
 
-.content-layout.broadcast-mode .nav-container {
+.content-wrapper.broadcast-mode .nav-container {
   max-width: none;
   margin: 0;
   padding: 0 1rem;
@@ -2372,10 +2375,12 @@ defineExpose({ showCrossRefTooltip });
   min-height: 400px;
 }
 
-.content-layout.broadcast-mode .chapter-content {
+.content-wrapper.broadcast-mode .chapter-content {
   margin: 90px 0 2rem 0;
   padding: 2rem 1rem;
+  width: 100%;
   max-width: none;
+  box-sizing: border-box;
   background: white;
   border-radius: 0;
   box-shadow: none;
@@ -2980,6 +2985,11 @@ body {
   overflow: hidden;
   max-height: 70vh;
   user-select: none;
+}
+
+.cross-ref-tooltip.broadcast-mode {
+  max-width: calc(70vw - 2rem);
+  width: calc(70vw - 2rem);
 }
 
 .tooltip-header {

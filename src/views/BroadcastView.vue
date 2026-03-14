@@ -357,6 +357,7 @@ function previewCrossRef(event: MouseEvent, crossRef: CrossReferenceData) {
 .broadcast-page {
   min-height: 100vh;
   position: relative;
+  width: 70%;
 }
 
 /* ---- right panel ---- */
