@@ -62,6 +62,12 @@
         </div>
       </div>
     </div>
+
+    <footer class="page-footer">
+      <router-link to="/privacy-policy">Privacy Policy</router-link>
+      <span class="footer-divider">·</span>
+      <router-link to="/terms-and-conditions">Terms &amp; Conditions</router-link>
+    </footer>
   </div>
 </template>
 
@@ -335,5 +341,26 @@ onMounted(async () => {
   .book-chapters {
     font-size: 0.65rem;
   }
+}
+
+.page-footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.page-footer a {
+  color: #8B4513;
+  text-decoration: none;
+}
+
+.page-footer a:hover {
+  text-decoration: underline;
+}
+
+.footer-divider {
+  margin: 0 0.75rem;
+  color: #888;
 }
 </style>

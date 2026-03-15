@@ -8,6 +8,8 @@ import ManageChapters from '@/views/admin/ManageChapters.vue';
 import ChapterEditor from '@/views/admin/ChapterEditor.vue';
 import FindReplace from '@/views/admin/FindReplace.vue';
 import CompareBook from '@/views/admin/CompareBook.vue';
+import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
+import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +63,16 @@ const router = createRouter({
       path: '/broadcast/:bookName/:chapterNumber?/:verseNumber?',
       name: 'broadcast-params',
       component: BroadcastView
+    },
+    {
+      path: '/privacy-policy',
+      name: 'privacy-policy',
+      component: PrivacyPolicyView
+    },
+    {
+      path: '/terms-and-conditions',
+      name: 'terms-and-conditions',
+      component: TermsAndConditionsView
     },
     // Legacy routes - still work but reading-pane is the preferred URL
     {
