@@ -60,6 +60,7 @@ Key endpoints:
 - `GET /api/chapters/:id/verses` — verses with links and notes
 - `GET /api/verses/search?q=` — full-text search
 - `GET /api/stats` — book and chapter counts
+- `GET /api/app-version` — returns `{ min_version, max_version }` from `app_version_tbl` (id=1); used by the mobile app for forced-update checks
 
 Vite proxies `/api/*` to `localhost:3000` in dev mode (see `vite.config.ts`).
 
@@ -74,6 +75,7 @@ Main tables (MySQL):
 - `verse_links_tbl` — cross-references between verses
 - `tags_tbl` / `verse_tags_tbl` — topic tags
 - `cross_references_tbl` — imported cross-reference data
+- `app_version_tbl` — single row (id=1) with `min_version` and `max_version` fields (semver strings); used by the mobile app for forced-update enforcement
 
 All type definitions and table names are in `src/utils/collectionReferences.ts`.
 

@@ -10,6 +10,7 @@ export const TABLES = {
   TAGS: 'tags_tbl',
   VERSE_TAGS: 'verse_tags_tbl',
   CROSS_REFERENCES: 'cross_references_tbl',
+  APP_VERSION: 'app_version_tbl',
 } as const;
 
 // Type Definitions
@@ -284,4 +285,16 @@ export const CROSS_REFERENCE_COLUMNS = {
   TO_VERSE: 'to_verse',
   VOTES: 'votes',
   DATE_ADDED: 'dt_added',
+} as const;
+
+export interface AppVersion {
+  id: number;
+  min_version: string;
+  max_version: string;
+}
+
+export const APP_VERSION_COLUMNS = {
+  ID: 'id',
+  MIN_VERSION: 'min_version',
+  MAX_VERSION: 'max_version',
 } as const;

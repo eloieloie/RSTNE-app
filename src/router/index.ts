@@ -8,6 +8,7 @@ import ManageChapters from '@/views/admin/ManageChapters.vue';
 import ChapterEditor from '@/views/admin/ChapterEditor.vue';
 import FindReplace from '@/views/admin/FindReplace.vue';
 import CompareBook from '@/views/admin/CompareBook.vue';
+import PushNotificationsAdmin from '@/views/admin/PushNotificationsAdmin.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
 
@@ -48,6 +49,11 @@ const router = createRouter({
       path: '/admin/compare-book',
       name: 'compare-book',
       component: CompareBook
+    },
+    {
+      path: '/admin/push-notifications',
+      name: 'push-notifications',
+      component: PushNotificationsAdmin
     },
     {
       path: '/reading-pane',

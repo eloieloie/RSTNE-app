@@ -40,6 +40,15 @@
           Compare Book
         </router-link>
       </div>
+
+      <div class="dashboard-card">
+        <div class="card-icon">🔔</div>
+        <h2>Push Notifications</h2>
+        <p>Send push notifications to all registered devices or specific devices with optional deep links</p>
+        <router-link to="/admin/push-notifications" class="action-btn">
+          Send Notification
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

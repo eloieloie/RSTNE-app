@@ -3,6 +3,9 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 const cheerio = require("cheerio");
+const admin = require("firebase-admin");
+
+admin.initializeApp();
 
 const app = express();
 
@@ -1142,6 +1145,24 @@ app.get("/api/stats", async (req, res) => {
 // ============= RSTNE PAGE PROXY ENDPOINT =============
 
 /**
+ * Strip HTML tags and decode common HTML entities from a string.
+ * @param {string} htmlStr - The HTML string to strip.
+ * @return {string} Plain text with entities decoded and whitespace normalised.
+ */
+function stripTags(htmlStr) {
+  return htmlStr
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, "\"")
+      .replace(/\s+/g, " ")
+      .trim();
+}
+
+/**
  * Fetch and parse an RSTNE book page, returning structured chapter/verse JSON.
  * GET /api/proxy-rstne?url=https://rstne.com/pages/...
  */
@@ -1171,19 +1192,6 @@ app.get("/api/proxy-rstne", async (req, res) => {
     if (container.length === 0) container = $(".rte").first();
     if (container.length === 0) {
       return res.status(422).json({error: "No .rte element found on the page"});
-    }
-
-    function stripTags(htmlStr) {
-      return htmlStr
-          .replace(/<[^>]+>/g, "")
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&nbsp;/g, " ")
-          .replace(/&#39;/g, "'")
-          .replace(/&quot;/g, '"')
-          .replace(/\s+/g, " ")
-          .trim();
     }
 
     const chapters = [];
@@ -1217,11 +1225,11 @@ app.get("/api/proxy-rstne", async (req, res) => {
         const spanUnderlineMatch = innerHtml.match(/<span[^>]*text-decoration:\s*underline[^>]*>\s*(\d+)\s*<\/span>/i);
 
         if (uTagMatch || spanUnderlineMatch) {
-          let withoutMarker = innerHtml
+          const withoutMarker = innerHtml
               .replace(/<u>\s*\d+\s*<\/u>\s*/i, "")
               .replace(/<span[^>]*text-decoration:\s*underline[^>]*>\s*\d+\s*<\/span>\s*/i, "");
           // Strip trailing period from verse number if present (e.g. "1. text" → "1 text")
-          let verseText = stripTags(withoutMarker).replace(/^(\d+)\.\s*/, "$1 ");
+          const verseText = stripTags(withoutMarker).replace(/^(\d+)\.\s*/, "$1 ");
           if (verseText && currentChapterNum !== null) {
             currentVerses.push({verseNumber: 1, text: verseText});
           }
@@ -1260,6 +1268,136 @@ app.get("/api/proxy-rstne", async (req, res) => {
     res.json({url: pageUrl, chapters});
   } catch (error) {
     console.error("proxy-rstne error:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
+// ============= APP VERSION ENDPOINT =============
+
+// Get app version info (min and max version)
+app.get("/api/app-version", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+        "SELECT min_version, max_version FROM app_version_tbl WHERE id = 1",
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({error: "Version info not found"});
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// ============= PUSH NOTIFICATIONS ENDPOINTS =============
+
+const db = admin.firestore();
+
+// Register or refresh a device FCM token
+app.post("/api/fcm-token", async (req, res) => {
+  try {
+    const {token, platform} = req.body;
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({error: "token is required"});
+    }
+    await db.collection("fcm_tokens").doc(token).set({
+      token,
+      platform: platform || "unknown",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+    res.json({ok: true});
+  } catch (error) {
+    console.error("Error saving FCM token:", error);
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Remove a device FCM token (called on sign-out or notification opt-out)
+app.delete("/api/fcm-token/:token", async (req, res) => {
+  try {
+    await db.collection("fcm_tokens").doc(req.params.token).delete();
+    res.json({ok: true});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Get registered device count (for admin UI)
+app.get("/api/fcm-tokens/count", async (req, res) => {
+  try {
+    const snapshot = await db.collection("fcm_tokens").count().get();
+    res.json({count: snapshot.data().count});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+});
+
+// Send a push notification
+// Body: { title, body, data?, tokens? }
+// - If `tokens` (array) is provided → send to those devices only
+// - Otherwise → broadcast to all registered devices
+app.post("/api/notifications/send", async (req, res) => {
+  try {
+    const {title, body, data = {}, tokens} = req.body;
+    if (!title || !body) {
+      return res.status(400).json({error: "title and body are required"});
+    }
+
+    let tokenList = tokens;
+    if (!tokenList || !tokenList.length) {
+      const snapshot = await db.collection("fcm_tokens").get();
+      tokenList = snapshot.docs.map((d) => d.data().token);
+    }
+
+    if (!tokenList.length) {
+      return res.json({sent: 0, failed: 0, message: "No registered devices"});
+    }
+
+    // FCM sendEachForMulticast accepts up to 500 tokens per call
+    const CHUNK = 500;
+    let sent = 0;
+    let failed = 0;
+    const failedTokens = [];
+
+    for (let i = 0; i < tokenList.length; i += CHUNK) {
+      const chunk = tokenList.slice(i, i + CHUNK);
+      const response = await admin.messaging().sendEachForMulticast({
+        tokens: chunk,
+        notification: {title, body},
+        data: Object.fromEntries(
+            Object.entries(data).map(([k, v]) => [k, String(v)]),
+        ),
+        android: {priority: "high"},
+        apns: {payload: {aps: {sound: "default"}}},
+      });
+
+      sent += response.successCount;
+      failed += response.failureCount;
+
+      // Clean up invalid tokens automatically
+      response.responses.forEach((r, idx) => {
+        if (!r.success && r.error) {
+          const code = r.error.code;
+          if (
+            code === "messaging/registration-token-not-registered" ||
+            code === "messaging/invalid-registration-token"
+          ) {
+            failedTokens.push(chunk[idx]);
+          }
+        }
+      });
+    }
+
+    // Remove stale tokens in the background
+    if (failedTokens.length) {
+      const batch = db.batch();
+      failedTokens.forEach((t) => batch.delete(db.collection("fcm_tokens").doc(t)));
+      batch.commit().catch((e) => console.error("Error pruning stale tokens:", e));
+    }
+
+    res.json({sent, failed, total: tokenList.length});
+  } catch (error) {
+    console.error("Error sending notification:", error);
     res.status(500).json({error: error.message});
   }
 });
