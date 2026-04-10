@@ -53,6 +53,8 @@
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-english">{{ book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
             </div>
 
             <div
@@ -65,6 +67,8 @@
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-english">{{ book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
             </div>
 
             <div
@@ -77,6 +81,8 @@
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-english">{{ book.book_name }}</span>
+              <span class="book-separator">|</span>
+              <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
             </div>
           </div>
         </div>
@@ -90,6 +96,8 @@
             <span class="title-hebrew">{{ selectedBook.hebrew_book_name || selectedBook.book_name }}</span>
             <span class="title-separator">|</span>
             <span class="title-english">{{ selectedBook.book_name }}</span>
+            <span class="title-separator">|</span>
+            <span class="title-telugu">{{ selectedBook.telugu_book_name || selectedBook.book_name }}</span>
           </h4>
           <div class="chapters-grid">
             <div
@@ -137,12 +145,16 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
+import { TELUGU_BOOK_NAMES } from '@/utils/teluguBookNamesMap';
 
 interface Book {
   book_id: number;
   book_name: string;
   book_abbr: string | null;
+  hebrew_book_abbr: string | null;
+  telugu_book_abbr: string | null;
   hebrew_book_name: string | null;
+  telugu_book_name: string | null;
   category_id?: number;
 }
 
@@ -173,8 +185,11 @@ const books = ref<Book[]>(
   BOOKS_DATA.map(b => ({
     book_id: b.book_id,
     book_name: b.book_name,
-    book_abbr: b.book_abbr,
+    book_abbr: b.book_abbr ?? null,
+    hebrew_book_abbr: b.hebrew_book_abbr ?? null,
+    telugu_book_abbr: b.telugu_book_abbr ?? null,
     hebrew_book_name: b.hebrew_book_name,
+    telugu_book_name: TELUGU_BOOK_NAMES[b.book_id] ?? null,
     category_id: b.category_id ?? undefined
   }))
 );
@@ -457,7 +472,7 @@ function close() {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
   align-items: center;
   gap: 1.5rem;
   border: 2px solid transparent;
@@ -487,6 +502,12 @@ function close() {
 }
 
 .book-english {
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.book-telugu {
   font-size: 1.1rem;
   font-weight: 600;
   text-align: left;
@@ -547,6 +568,10 @@ function close() {
 }
 
 .title-english {
+  font-size: 1.75rem;
+}
+
+.title-telugu {
   font-size: 1.75rem;
 }
 
@@ -673,6 +698,12 @@ function close() {
   .book-english {
     font-size: 1rem;
     min-width: auto;
+    text-align: center;
+  }
+
+  .book-telugu {
+    font-size: 1rem;
+    min-width: auto;
     text-align: left;
   }
 
@@ -683,7 +714,8 @@ function close() {
   }
 
   .title-hebrew,
-  .title-english {
+  .title-english,
+  .title-telugu {
     font-size: 1.25rem;
   }
 

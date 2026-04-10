@@ -78,7 +78,7 @@
                 :class="{ 'is-expanded': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }"
                 @click.prevent="toggleBroadcastCrossRef(crossRef)"
               >
-                <span class="broadcast-crossref-ref">{{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
+                <span class="broadcast-crossref-ref">{{ getBookAbbr({ book_name: crossRef.to_book_name, book_abbr: crossRef.to_book_abbr, hebrew_book_abbr: crossRef.to_hebrew_book_abbr, telugu_book_abbr: crossRef.to_telugu_book_abbr }) }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}</span>
                 <span class="broadcast-crossref-chevron" :class="{ 'rotated': expandedBroadcastCrossRefs.has(crossRef.cross_ref_id) }">&#9660;</span>
               </a>
               <button
@@ -121,6 +121,9 @@ import { getChaptersByBookId } from '@/api/chapters';
 import { getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
 import { getAllCrossRefVerseTexts, type CrossReferenceData } from '@/api/crossReferences';
+import { useBookLanguage } from '@/composables/useBookLanguage';
+
+const { getBookAbbr } = useBookLanguage();
 
 const router = useRouter();
 
@@ -136,6 +139,9 @@ const currentBook = ref<any>(null);
 // All books cache for cross-ref lookups
 const allBooks = ref<any[]>([]);
 
+// Abbreviation lookup map (all 3 language abbr columns) → book_id
+const bookAbbreviations = ref<Record<string, number>>({});
+
 // Settings mirrored from ChaptersView
 const currentShowEnglish = ref(true);
 const currentShowTelugu = ref(true);
@@ -150,6 +156,12 @@ const broadcastHighlightWord = ref('');
 
 onMounted(async () => {
   allBooks.value = await getAllBooks();
+  bookAbbreviations.value = {};
+  allBooks.value.forEach(b => {
+    if (b.book_abbr) bookAbbreviations.value[b.book_abbr.toLowerCase()] = b.book_id;
+    if (b.hebrew_book_abbr) bookAbbreviations.value[b.hebrew_book_abbr.toLowerCase()] = b.book_id;
+    if (b.telugu_book_abbr) bookAbbreviations.value[b.telugu_book_abbr.toLowerCase()] = b.book_id;
+  });
 });
 
 // Called when ChaptersView emits a verse change
@@ -224,6 +236,19 @@ function formatVerseWithPaleoBora(text: string): string {
   ];
   let formatted = text;
   patterns.forEach(p => { formatted = formatted.replace(p.search, p.replace); });
+
+  // Convert inline verse references like #Yoch1 3 to clickable links
+  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+    const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
+    if (bookId) {
+      const bookObj = allBooks.value.find(b => b.book_id === bookId);
+      const displayAbbr = bookObj ? getBookAbbr(bookObj) : bookAbbr;
+      const label = `#${displayAbbr}${chapter} ${verse}`;
+      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${label}</a>`;
+    }
+    return match;
+  });
+
   return formatted;
 }
 

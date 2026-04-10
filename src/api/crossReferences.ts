@@ -11,8 +11,12 @@ export interface CrossReferenceData {
   to_verse: string;
   votes: number;
   from_book_abbr?: string;
+  from_hebrew_book_abbr?: string;
+  from_telugu_book_abbr?: string;
   from_book_id?: number;
   to_book_abbr?: string;
+  to_hebrew_book_abbr?: string;
+  to_telugu_book_abbr?: string;
   to_book_id?: number;
   target_book_id?: number;
   target_chapter_id?: number;

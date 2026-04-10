@@ -20,9 +20,11 @@
               <tr>
                 <th>ID</th>
                 <th>Name</th>
-                <th>Abbr</th>
+                <th>Abbr (EN)</th>
                 <th>Hebrew Name</th>
+                <th>Hebrew Abbr</th>
                 <th>Telugu Name</th>
+                <th>Telugu Abbr</th>
                 <th>Category</th>
                 <th>Index</th>
                 <th>Actions</th>
@@ -34,7 +36,9 @@
                 <td>{{ book.book_name }}</td>
                 <td>{{ book.book_abbr || 'N/A' }}</td>
                 <td>{{ book.hebrew_book_name || 'N/A' }}</td>
+                <td>{{ book.hebrew_book_abbr || 'N/A' }}</td>
                 <td>{{ book.telugu_book_name || 'N/A' }}</td>
+                <td>{{ book.telugu_book_abbr || 'N/A' }}</td>
                 <td>{{ getCategoryName(book.category_id) }}</td>
                 <td>{{ book.book_index || 'N/A' }}</td>
                 <td class="actions">
@@ -69,13 +73,35 @@
           </div>
 
           <div class="form-group">
-            <label for="bookAbbr">Book Abbreviation</label>
+            <label for="bookAbbr">Book Abbreviation (English)</label>
             <input
               id="bookAbbr"
               v-model="formData.book_abbr"
               type="text"
-              maxlength="10"
-              placeholder="e.g., gene, exod, prov"
+              maxlength="20"
+              placeholder="e.g., Gen, Exod, Lev"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="hebrewBookAbbr">Hebrew Abbreviation</label>
+            <input
+              id="hebrewBookAbbr"
+              v-model="formData.hebrew_book_abbr"
+              type="text"
+              maxlength="20"
+              placeholder="e.g., bare, shem, uyiq"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="teluguBookAbbr">Telugu Abbreviation</label>
+            <input
+              id="teluguBookAbbr"
+              v-model="formData.telugu_book_abbr"
+              type="text"
+              maxlength="30"
+              placeholder="e.g., ఆది., నిర్గ."
             />
           </div>
 
@@ -201,6 +227,8 @@ const books = computed(() => {
 const formData = ref<BookInsert>({
   book_name: '',
   book_abbr: '',
+  hebrew_book_abbr: '',
+  telugu_book_abbr: '',
   hebrew_book_name: '',
   telugu_book_name: '',
   book_description: '',
@@ -274,6 +302,8 @@ function openEditModal(book: Book) {
   formData.value = {
     book_name: book.book_name,
     book_abbr: book.book_abbr || '',
+    hebrew_book_abbr: book.hebrew_book_abbr || '',
+    telugu_book_abbr: book.telugu_book_abbr || '',
     hebrew_book_name: book.hebrew_book_name || '',
     telugu_book_name: book.telugu_book_name || '',
     book_description: book.book_description || '',
@@ -295,6 +325,8 @@ function closeEditModal() {
   formData.value = {
     book_name: '',
     book_abbr: '',
+    hebrew_book_abbr: '',
+    telugu_book_abbr: '',
     hebrew_book_name: '',
     telugu_book_name: '',
     book_description: '',

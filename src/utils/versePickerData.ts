@@ -18,6 +18,8 @@ export interface VersePickerBook {
   book_id: number;
   book_name: string;
   book_abbr: string | null;
+  hebrew_book_abbr?: string | null;
+  telugu_book_abbr?: string | null;
   hebrew_book_name: string | null;
   book_index: number;
   category_id: number | null;

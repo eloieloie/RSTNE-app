@@ -4,8 +4,8 @@ const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
 
 export async function getAllBooks(): Promise<Book[]> {
   // Check cache first
-  const cacheKey = 'rstne_books_cache';
-  const cacheTimeKey = 'rstne_books_cache_time';
+  const cacheKey = 'rstne_books_cache_v2';
+  const cacheTimeKey = 'rstne_books_cache_time_v2';
   const cached = sessionStorage.getItem(cacheKey);
   const cacheTime = sessionStorage.getItem(cacheTimeKey);
   
@@ -44,10 +44,10 @@ export async function createBook(book: { book_name: string; hebrew_book_name?: s
   if (!response.ok) throw new Error('Failed to create book');
 }
 
-export async function updateBook(bookId: number, book: { book_name?: string; book_abbr?: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_header?: string; book_footer?: string; book_link?: string; book_index?: number; category_id?: number }): Promise<void> {
+export async function updateBook(bookId: number, book: { book_name?: string; book_abbr?: string; hebrew_book_abbr?: string; telugu_book_abbr?: string; hebrew_book_name?: string; telugu_book_name?: string; book_description?: string; book_header?: string; book_footer?: string; book_link?: string; book_index?: number; category_id?: number }): Promise<void> {
   // Invalidate cache so the next getAllBooks() fetches fresh data
-  sessionStorage.removeItem('rstne_books_cache');
-  sessionStorage.removeItem('rstne_books_cache_time');
+  sessionStorage.removeItem('rstne_books_cache_v2');
+  sessionStorage.removeItem('rstne_books_cache_time_v2');
 
   const response = await fetch(`${API_URL}/books/${bookId}`, {
     method: 'PUT',

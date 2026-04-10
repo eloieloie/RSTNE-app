@@ -50,16 +50,17 @@ app.get('/api/books/:id', async (req, res) => {
 app.post('/api/books', async (req, res) => {
   try {
     const {
-      book_name, book_abbr, hebrew_book_name, telugu_book_name,
+      book_name, book_abbr, hebrew_book_abbr, telugu_book_abbr, hebrew_book_name, telugu_book_name,
       book_description, book_header, book_footer, book_link,
       book_index, category_id
     } = req.body;
     const [result] = await pool.execute(
-      `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_name,
+      `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_abbr, telugu_book_abbr, hebrew_book_name,
        telugu_book_name, book_description, book_header, book_footer, book_link,
-       book_index, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       book_index, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        book_name, book_abbr || null, hebrew_book_name || null, telugu_book_name || null,
+        book_name, book_abbr || null, hebrew_book_abbr || null, telugu_book_abbr || null,
+        hebrew_book_name || null, telugu_book_name || null,
         book_description || null, book_header || null, book_footer || null, book_link || null,
         book_index || null, category_id || null
       ]
@@ -74,16 +75,17 @@ app.post('/api/books', async (req, res) => {
 app.put('/api/books/:id', async (req, res) => {
   try {
     const {
-      book_name, book_abbr, hebrew_book_name, telugu_book_name,
+      book_name, book_abbr, hebrew_book_abbr, telugu_book_abbr, hebrew_book_name, telugu_book_name,
       book_description, book_header, book_footer, book_link,
       book_index, category_id
     } = req.body;
     await pool.execute(
-      `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_name = ?,
-       telugu_book_name = ?, book_description = ?, book_header = ?, book_footer = ?,
-       book_link = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
+      `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_abbr = ?, telugu_book_abbr = ?,
+       hebrew_book_name = ?, telugu_book_name = ?, book_description = ?, book_header = ?,
+       book_footer = ?, book_link = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
       [
-        book_name, book_abbr || null, hebrew_book_name || null, telugu_book_name || null,
+        book_name, book_abbr || null, hebrew_book_abbr || null, telugu_book_abbr || null,
+        hebrew_book_name || null, telugu_book_name || null,
         book_description || null, book_header || null, book_footer || null, book_link || null,
         book_index || null, category_id || null, req.params.id
       ]

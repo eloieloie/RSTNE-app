@@ -18,6 +18,8 @@ export interface Book {
   book_id: number;
   book_name: string;
   book_abbr: string | null;
+  hebrew_book_abbr: string | null;
+  telugu_book_abbr: string | null;
   hebrew_book_name: string | null;
   telugu_book_name: string | null;
   book_description: string | null;
@@ -33,6 +35,8 @@ export interface Book {
 export interface BookInsert {
   book_name: string;
   book_abbr?: string;
+  hebrew_book_abbr?: string;
+  telugu_book_abbr?: string;
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;
@@ -46,6 +50,8 @@ export interface BookInsert {
 export interface BookUpdate {
   book_name?: string;
   book_abbr?: string;
+  hebrew_book_abbr?: string;
+  telugu_book_abbr?: string;
   hebrew_book_name?: string;
   telugu_book_name?: string;
   book_description?: string;
@@ -206,14 +212,28 @@ export interface BookCategory {
   dt_added: Date;
 }
 
+export const BOOK_CATEGORY_COLUMNS = {
+  ID: 'category_id',
+  NAME: 'category_name',
+  ORDER: 'category_order',
+  DATE_ADDED: 'dt_added',
+} as const;
+
 // Column Names
 export const BOOK_COLUMNS = {
   ID: 'book_id',
   NAME: 'book_name',
+  ABBR: 'book_abbr',
+  HEBREW_ABBR: 'hebrew_book_abbr',
+  TELUGU_ABBR: 'telugu_book_abbr',
   HEBREW_NAME: 'hebrew_book_name',
   TELUGU_NAME: 'telugu_book_name',
   DESCRIPTION: 'book_description',
+  HEADER: 'book_header',
+  FOOTER: 'book_footer',
+  LINK: 'book_link',
   INDEX: 'book_index',
+  CATEGORY_ID: 'category_id',
   DATE_ADDED: 'dt_added',
 } as const;
 

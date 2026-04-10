@@ -3,6 +3,14 @@
     <div class="page-header">
       <h1>Restoration Scriptures True Name Edition</h1>
       <p class="subtitle">Choose a book to start reading - HalleluYAHUA!</p>
+      <div class="lang-selector">
+        <button
+          v-for="opt in langOptions"
+          :key="opt.value"
+          :class="['lang-btn', { active: bookNameLanguage === opt.value }]"
+          @click="bookNameLanguage = opt.value"
+        >{{ opt.label }}</button>
+      </div>
     </div>
     
     <div v-if="loading" class="loading">Loading books...</div>
@@ -24,7 +32,7 @@
             @click="openBook(book.book_id)"
             class="book-button first-covenant-book"
           >
-            <div class="book-name">{{ book.book_name }}</div>
+            <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
           </button>
         </div>
@@ -40,7 +48,7 @@
             @click="openBook(book.book_id)"
             class="book-button new-covenant-book"
           >
-            <div class="book-name">{{ book.book_name }}</div>
+            <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
           </button>
         </div>
@@ -56,7 +64,7 @@
             @click="openBook(book.book_id)"
             class="book-button apocryphal-book"
           >
-            <div class="book-name">{{ book.book_name }}</div>
+            <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
           </button>
         </div>
@@ -76,11 +84,20 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import type { Book } from '@/utils/collectionReferences';
+import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 
 const router = useRouter();
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const { bookNameLanguage, getBookName } = useBookLanguage();
+
+const langOptions: { value: BookNameLanguage; label: string }[] = [
+  { value: 'english', label: 'EN' },
+  { value: 'hebrew', label: 'HE' },
+  { value: 'telugu', label: 'TE' },
+];
 
 function openBook(bookId: number) {
   router.push({ name: 'reading-pane', state: { bookId } });
@@ -136,6 +153,38 @@ onMounted(async () => {
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+  position: relative;
+}
+
+.lang-selector {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.lang-btn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1.5px solid #ccc;
+  background: #f5f5f5;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.15s ease;
+}
+
+.lang-btn:hover {
+  border-color: #888;
+  color: #222;
+}
+
+.lang-btn.active {
+  background: #2c3e50;
+  border-color: #2c3e50;
+  color: #fff;
 }
 
 .page-header h1 {

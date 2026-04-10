@@ -7,6 +7,20 @@
       </div>
       <div class="modal-body">
         <div class="settings-section">
+          <h4>Book Names Language</h4>
+          <div class="settings-group">
+            <div class="lang-options">
+              <button
+                v-for="opt in langOptions"
+                :key="opt.value"
+                :class="['lang-option-btn', { active: bookNameLanguage === opt.value }]"
+                @click="bookNameLanguage = opt.value"
+              >{{ opt.label }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h4>Display Mode</h4>
           <div class="settings-group">
             <label class="setting-item">
@@ -98,6 +112,7 @@
 
 <script setup lang="ts">
 import { reactive, watch, onMounted } from 'vue';
+import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 
 interface Props {
   isOpen: boolean;
@@ -120,6 +135,14 @@ const emit = defineEmits<{
   close: [];
   settingsChange: [settings: Settings];
 }>();
+
+const { bookNameLanguage } = useBookLanguage();
+
+const langOptions: { value: BookNameLanguage; label: string }[] = [
+  { value: 'english', label: 'English' },
+  { value: 'hebrew', label: 'Hebrew' },
+  { value: 'telugu', label: 'Telugu' },
+];
 
 // Settings state with localStorage persistence
 const settings = reactive<Settings>({
@@ -167,13 +190,13 @@ function toggleSetting(key: keyof Settings) {
 // Font size controls
 function increaseFontSize() {
   if (settings.fontSize < 24) {
-    settings.fontSize += 2;
+    settings.fontSize += 1;
   }
 }
 
 function decreaseFontSize() {
   if (settings.fontSize > 12) {
-    settings.fontSize -= 2;
+    settings.fontSize -= 1;
   }
 }
 
@@ -354,6 +377,36 @@ function close() {
   color: #333;
   min-width: 60px;
   text-align: center;
+}
+
+.lang-options {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.lang-option-btn {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: #f5f5f5;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.15s ease;
+}
+
+.lang-option-btn:hover {
+  border-color: #888;
+  color: #222;
+}
+
+.lang-option-btn.active {
+  background: #2c3e50;
+  border-color: #2c3e50;
+  color: #fff;
 }
 
 /* Dark mode support (if needed) */

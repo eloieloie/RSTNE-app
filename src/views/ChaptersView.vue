@@ -26,8 +26,7 @@
 
             <button class="verse-picker-button" @click="showVersePicker = true">
             <div class="book-names">
-              <span v-if="displayHebrewBookName" class="hebrew-book-name">{{ displayHebrewBookName }}</span>
-              <span class="book-name">{{ displayBookName }}</span>
+              <span class="book-name">{{ displayButtonBookName }}</span>
             </div>
             <span v-if="displayChapterNumber" class="chapter-verse">
               {{ displayChapterNumber }}{{ displayVerseNumber }}
@@ -138,7 +137,7 @@
                         :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
                         @click.prevent="navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id)"
                       >
-                        {{ link.target_book_name }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
+                        {{ getBookName(allBooks.find(b => b.book_id === link.target_book_id) || { book_name: link.target_book_name }) }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
                       </a>
                     </div>
                     
@@ -151,7 +150,7 @@
                         :title="`Preview ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
                         @click="showCrossRefTooltip($event, crossRef)"
                       >
-                        {{ crossRef.to_book_abbr || crossRef.to_book_name }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
+                        {{ getBookAbbr(allBooks.find(b => b.book_id === crossRef.to_book_id) || { book_name: crossRef.to_book_name, book_abbr: crossRef.to_book_abbr, hebrew_book_abbr: crossRef.to_hebrew_book_abbr, telugu_book_abbr: crossRef.to_telugu_book_abbr }) }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
                       </a>
                       <span 
                         v-if="verse.crossReferences.length > 10" 
@@ -369,6 +368,7 @@ import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
+import { useBookLanguage } from '@/composables/useBookLanguage';
 
 interface Book {
   book_id: number;
@@ -442,6 +442,7 @@ const emit = defineEmits<{
 
 const route = useRoute();
 const router = useRouter();
+const { getBookName, getBookAbbr } = useBookLanguage();
 const allBooks = ref<any[]>([]);
 const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
@@ -506,17 +507,6 @@ const clickSelectedVerseId = ref<number | null>(null);
 // Share menu state
 const shareMenuVerseId = ref<number | null>(null);
 const copiedVerseId = ref<number | null>(null);
-
-// The full verse object for the currently scroll-visible verse (broadcast panel follows scroll)
-const scrollVisibleVerse = computed(() => {
-  if (firstVisibleVerseIndex.value === null || !firstVisibleChapterNumber.value) return null;
-  for (const chData of loadedChapters.value.values()) {
-    if (chData.chapter.chapter_number !== firstVisibleChapterNumber.value) continue;
-    const v = chData.verses.find(v => v.verse_index === firstVisibleVerseIndex.value);
-    if (v) return v;
-  }
-  return null;
-});
 
 // Verse shown in the broadcast right panel: clicked selection takes priority over scroll tracking
 const broadcastPanelVerse = computed<{ verse: any; chapterNumber: string } | null>(() => {
@@ -602,22 +592,15 @@ const sortedChapters = computed(() => {
   });
 });
 
-// Computed properties for verse picker button display
-const displayBookName = computed(() => {
-  if (showVersePicker.value && previewBookId.value) {
-    const previewBook = allBooks.value.find(b => b.book_id === previewBookId.value);
-    return previewBook?.book_name || book.value?.book_name || '';
-  }
-  return book.value?.book_name || '';
-});
-
-const displayHebrewBookName = computed(() => {
-  if (showVersePicker.value && previewBookId.value) {
-    const previewBook = BOOKS_DATA.find(b => b.book_id === previewBookId.value);
-    return previewBook?.hebrew_book_name || null;
-  }
-  const currentBook = BOOKS_DATA.find(b => b.book_id === book.value?.book_id);
-  return currentBook?.hebrew_book_name || null;
+// Computed property for verse picker button display (language-aware)
+const displayButtonBookName = computed(() => {
+  const bookId = showVersePicker.value && previewBookId.value
+    ? previewBookId.value
+    : book.value?.book_id;
+  if (!bookId) return book.value?.book_name || '';
+  const found = allBooks.value.find(b => b.book_id === bookId);
+  if (!found) return book.value?.book_name || '';
+  return getBookName(found);
 });
 
 const displayChapterNumber = computed(() => {
@@ -977,10 +960,6 @@ function selectVerse(verse: any, event: MouseEvent) {
 // Share helpers
 const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-function stripHtml(html: string): string {
-  return (html || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-}
-
 function getVerseShareUrl(verse: any, chapterNumber: string): string {
   const bookSlug = book.value?.book_name?.toLowerCase().replace(/\s+/g, '-') || '';
   return `${window.location.origin}/${bookSlug}/${chapterNumber}/${verse.verse_index}`;
@@ -988,9 +967,7 @@ function getVerseShareUrl(verse: any, chapterNumber: string): string {
 
 // Build share text, preserving PaleoBora words as readable plain text
 function buildVerseShareText(verse: any, chapterNumber: string): { title: string; text: string; url: string } {
-  const hebrewName = displayHebrewBookName.value;
-  const englishName = book.value?.book_name || '';
-  const bookLabel = hebrewName ? `${hebrewName} / ${englishName}` : englishName;
+  const bookLabel = displayButtonBookName.value || book.value?.book_name || '';
   const reference = `${bookLabel} ${chapterNumber}:${verse.verse_index}`;
 
   const parts: string[] = [reference];
@@ -1234,6 +1211,9 @@ async function showCrossRefTooltip(event: MouseEvent, crossRef: CrossReferenceDa
       crossRefTooltip.value.loading = false;
       return;
     }
+
+    // Set language-aware book name in tooltip
+    crossRefTooltip.value.bookName = getBookName(targetBook);
     
     // Find the chapter
     const targetChapters = await getChaptersByBookId(targetBook.book_id);
@@ -1307,7 +1287,6 @@ function getTooltipCenterPosition(): { x: number; y: number } {
   const panelRight = broadcastMode.value ? window.innerWidth * 0.7 : window.innerWidth;
   const tooltipW = broadcastMode.value ? panelRight - 16 : 700;
   const tooltipH = 240;
-  const vw = window.innerWidth;
   const vh = window.innerHeight;
   const rect = chapterContentRef.value?.getBoundingClientRect();
   if (rect) {
@@ -1439,7 +1418,10 @@ function formatVerseWithPaleoBora(text: string): string {
   formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
     const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
     if (bookId) {
-      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${match}</a>`;
+      const bookObj = allBooks.value.find(b => b.book_id === bookId);
+      const displayAbbr = bookObj ? getBookAbbr(bookObj) : bookAbbr;
+      const label = `#${displayAbbr}${chapter} ${verse}`;
+      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${label}</a>`;
     }
     return match;
   });
@@ -1976,6 +1958,12 @@ onMounted(async () => {
       if (b.book_abbr) {
         bookAbbreviations.value[b.book_abbr.toLowerCase()] = b.book_id;
       }
+      if (b.hebrew_book_abbr) {
+        bookAbbreviations.value[b.hebrew_book_abbr.toLowerCase()] = b.book_id;
+      }
+      if (b.telugu_book_abbr) {
+        bookAbbreviations.value[b.telugu_book_abbr.toLowerCase()] = b.book_id;
+      }
     });
     
     // Determine book ID from route
@@ -2441,6 +2429,16 @@ defineExpose({ showCrossRefTooltip });
   text-overflow: ellipsis;
   width: 100%;
   opacity: 0.8;
+}
+
+.telugu-book-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  opacity: 0.7;
 }
 
 .chapter-verse {

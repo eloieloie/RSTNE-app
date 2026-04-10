@@ -35,6 +35,8 @@ app.get("/api/books", async (req, res) => {
            b.book_id,
            b.book_name,
            b.book_abbr,
+           b.hebrew_book_abbr,
+           b.telugu_book_abbr,
            b.hebrew_book_name,
            b.telugu_book_name,
            b.book_description,
@@ -47,8 +49,8 @@ app.get("/api/books", async (req, res) => {
            COUNT(c.chapter_id) as chapter_count 
          FROM books_tbl b
          LEFT JOIN chapters_tbl c ON b.book_id = c.book_id
-         GROUP BY b.book_id, b.book_name, b.book_abbr, b.hebrew_book_name, 
-                  b.telugu_book_name, b.book_description, b.book_header, 
+         GROUP BY b.book_id, b.book_name, b.book_abbr, b.hebrew_book_abbr, b.telugu_book_abbr,
+                  b.hebrew_book_name, b.telugu_book_name, b.book_description, b.book_header, 
                   b.book_footer, b.book_link, b.book_index, b.category_id, b.dt_added
          ORDER BY b.book_index, b.dt_added DESC`,
     );
@@ -81,6 +83,8 @@ app.post("/api/books", async (req, res) => {
     const {
       book_name,
       book_abbr,
+      hebrew_book_abbr,
+      telugu_book_abbr,
       hebrew_book_name,
       telugu_book_name,
       book_description,
@@ -92,12 +96,14 @@ app.post("/api/books", async (req, res) => {
     } = req.body;
 
     const [result] = await pool.execute(
-        `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_name, 
+        `INSERT INTO books_tbl (book_name, book_abbr, hebrew_book_abbr, telugu_book_abbr, hebrew_book_name, 
          telugu_book_name, book_description, book_header, book_footer, book_link, book_index, category_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           book_name,
           book_abbr || null,
+          hebrew_book_abbr || null,
+          telugu_book_abbr || null,
           hebrew_book_name || null,
           telugu_book_name || null,
           book_description || null,
@@ -124,6 +130,8 @@ app.put("/api/books/:id", async (req, res) => {
     const {
       book_name,
       book_abbr,
+      hebrew_book_abbr,
+      telugu_book_abbr,
       hebrew_book_name,
       telugu_book_name,
       book_description,
@@ -135,12 +143,14 @@ app.put("/api/books/:id", async (req, res) => {
     } = req.body;
 
     await pool.execute(
-        `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_name = ?, 
-         telugu_book_name = ?, book_description = ?, book_header = ?, book_footer = ?, 
+        `UPDATE books_tbl SET book_name = ?, book_abbr = ?, hebrew_book_abbr = ?, telugu_book_abbr = ?,
+         hebrew_book_name = ?, telugu_book_name = ?, book_description = ?, book_header = ?, book_footer = ?, 
          book_link = ?, book_index = ?, category_id = ? WHERE book_id = ?`,
         [
           book_name,
           book_abbr || null,
+          hebrew_book_abbr || null,
+          telugu_book_abbr || null,
           hebrew_book_name || null,
           telugu_book_name || null,
           book_description || null,
@@ -1063,8 +1073,12 @@ app.get("/api/cross-references", async (req, res) => {
           cr.to_verse,
           cr.votes,
           frb.book_abbr as from_book_abbr,
+          frb.hebrew_book_abbr as from_hebrew_book_abbr,
+          frb.telugu_book_abbr as from_telugu_book_abbr,
           frb.book_id as from_book_id,
           tob.book_abbr as to_book_abbr,
+          tob.hebrew_book_abbr as to_hebrew_book_abbr,
+          tob.telugu_book_abbr as to_telugu_book_abbr,
           tob.book_id as to_book_id
         FROM cross_references_tbl cr
         LEFT JOIN books_tbl frb ON frb.book_id = cr.from_book_id
