@@ -1296,7 +1296,10 @@ function getTooltipCenterPosition(): { x: number; y: number } {
     const visRight = Math.min(rect.right, panelRight);
     const visBottom = Math.min(rect.bottom, vh);
     const x = visLeft + Math.max(0, (visRight - visLeft - tooltipW) / 2);
-    const y = visTop + Math.max(0, (visBottom - visTop - tooltipH) / 2);
+    // In broadcast mode, default to top; otherwise center vertically
+    const y = broadcastMode.value
+      ? visTop + 8
+      : visTop + Math.max(0, (visBottom - visTop - tooltipH) / 2);
     // Final clamp so tooltip never goes off-screen or outside the left panel
     return {
       x: Math.min(Math.max(8, x), panelRight - tooltipW - 8),
@@ -1305,7 +1308,7 @@ function getTooltipCenterPosition(): { x: number; y: number } {
   }
   return {
     x: Math.max(8, (panelRight - tooltipW) / 2),
-    y: Math.max(8, (vh - tooltipH) / 2),
+    y: broadcastMode.value ? 8 : Math.max(8, (vh - tooltipH) / 2),
   };
 }
 
