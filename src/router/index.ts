@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import BooksView from '@/views/BooksView.vue';
 import ChaptersView from '@/views/ChaptersView.vue';
 import BroadcastView from '@/views/BroadcastView.vue';
+import WeeklyReadingView from '@/views/WeeklyReadingView.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ManageBooks from '@/views/admin/ManageBooks.vue';
 import ManageChapters from '@/views/admin/ManageChapters.vue';
@@ -54,6 +55,11 @@ const router = createRouter({
       path: '/admin/push-notifications',
       name: 'push-notifications',
       component: PushNotificationsAdmin
+    },
+    {
+      path: '/weekly-reading',
+      name: 'weekly-reading',
+      component: WeeklyReadingView
     },
     {
       path: '/reading-pane',

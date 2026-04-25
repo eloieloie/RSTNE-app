@@ -11,6 +11,16 @@
           @click="bookNameLanguage = opt.value"
         >{{ opt.label }}</button>
       </div>
+
+      <button class="weekly-reading-btn" @click="router.push({ name: 'weekly-reading' })">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        52-Week Reading Plan
+      </button>
     </div>
     
     <div v-if="loading" class="loading">Loading books...</div>
@@ -390,6 +400,29 @@ onMounted(async () => {
   .book-chapters {
     font-size: 0.65rem;
   }
+}
+
+.weekly-reading-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.2rem;
+  background: linear-gradient(135deg, #8B4513, #c0763a);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139,69,19,0.3);
+  margin-top: 0.25rem;
+}
+
+.weekly-reading-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(139,69,19,0.4);
+  background: linear-gradient(135deg, #7a3a0f, #a8632e);
 }
 
 .page-footer {

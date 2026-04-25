@@ -3,6 +3,22 @@
     <!-- Tint overlay when cross-ref tooltip is open -->
     <div v-if="crossRefTooltip.show" class="chapters-page-tint" :class="{ 'broadcast-mode': broadcastMode }" @click="closeCrossRefTooltip"></div>
 
+    <!-- Parasha flash notification -->
+    <Transition name="parasha-flash">
+      <div v-if="parashaFlash.visible" class="parasha-flash" @click="parashaFlash.visible = false">
+        <div class="parasha-flash-inner">
+          <div class="parasha-flash-week">Week {{ parashaFlash.week }}</div>
+          <div class="parasha-flash-name">{{ parashaFlash.name }}</div>
+          <div class="parasha-flash-readings">
+            <span class="parasha-flash-torah">{{ parashaFlash.torahText }}</span>
+            <span class="parasha-flash-divider">·</span>
+            <span class="parasha-flash-nc">{{ parashaFlash.ncText }}</span>
+          </div>
+        </div>
+        <button class="parasha-flash-close" @click.stop="parashaFlash.visible = false">✕</button>
+      </div>
+    </Transition>
+
     <!-- Initial Loading -->
     <div v-if="loading" class="loading-overlay">
       <div class="loading-spinner"></div>
@@ -453,6 +469,9 @@ const selectedChapterId = ref<number | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const isLoadingAdjacentChapter = ref(false);
+
+const parashaFlash = ref({ visible: false, week: 0, name: '', torahText: '', ncText: '' });
+let parashaFlashTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Settings state (managed by Settings component)
 const showEnglish = ref(true);
@@ -2101,7 +2120,22 @@ onMounted(async () => {
 
     // Add document mouseup listener for broadcast text selection
     document.addEventListener('mouseup', handleVerseTextSelection);
-    
+
+    // Show parasha flash if navigated from weekly reading plan
+    const state = window.history.state;
+    if (state?.parashaWeek) {
+      parashaFlash.value = {
+        visible: true,
+        week: state.parashaWeek,
+        name: state.parashaName ?? '',
+        torahText: state.parashaTorahText ?? '',
+        ncText: state.parashaNcText ?? '',
+      };
+      parashaFlashTimer = setTimeout(() => {
+        parashaFlash.value.visible = false;
+      }, 20000);
+    }
+
   } catch (err: any) {
     error.value = err.message || 'Failed to load chapters';
     console.error('Error loading chapters:', err);
@@ -2278,6 +2312,9 @@ onUnmounted(() => {
   // Clear highlight timeout
   if (highlightTimeout.value) {
     clearTimeout(highlightTimeout.value);
+  }
+  if (parashaFlashTimer) {
+    clearTimeout(parashaFlashTimer);
   }
   // Remove event listeners
   window.removeEventListener('scroll', handleScroll);
@@ -3412,5 +3449,112 @@ body {
     font-size: 0.9rem;
     min-width: 60px;
   }
+}
+
+/* Parasha flash notification */
+.parasha-flash {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #3b1f0a, #5c2d0e);
+  color: #fff;
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+  max-width: min(600px, calc(100vw - 2rem));
+  cursor: pointer;
+  user-select: none;
+}
+
+.parasha-flash-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.parasha-flash-week {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #f59e0b;
+  opacity: 0.9;
+}
+
+.parasha-flash-name {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.parasha-flash-readings {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.parasha-flash-torah {
+  font-size: 1rem;
+  color: #fde68a;
+  font-weight: 500;
+}
+
+.parasha-flash-divider {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.parasha-flash-nc {
+  font-size: 1rem;
+  color: #93c5fd;
+  font-weight: 500;
+}
+
+.parasha-flash-close {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.parasha-flash-close:hover {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
+/* Transition */
+.parasha-flash-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.parasha-flash-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.parasha-flash-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.88);
+}
+.parasha-flash-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.94);
 }
 </style>
