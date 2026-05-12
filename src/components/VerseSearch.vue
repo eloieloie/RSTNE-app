@@ -153,7 +153,7 @@ async function performSearch() {
     const query = searchQuery.value.trim();
     
     console.log('Searching for:', query);
-    const url = `https://api-kua4u2vhxa-uc.a.run.app/api/verses/text-search?q=${encodeURIComponent(query)}`;
+    const url = `https://rstne.eloi.in/api/verses/text-search?q=${encodeURIComponent(query)}`;
     console.log('Request URL:', url);
     
     const response = await fetch(url);

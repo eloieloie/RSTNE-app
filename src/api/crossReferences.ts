@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_BASE_URL = 'https://rstne.eloi.in/api';
 
 // Type for cross-reference data with target verse details
 export interface CrossReferenceData {
@@ -21,6 +21,18 @@ export interface CrossReferenceData {
   target_book_id?: number;
   target_chapter_id?: number;
   target_verse_id?: number;
+}
+
+// Fetch all verses for a chapter with cross-references already embedded.
+// Single request instead of N per-verse requests.
+export async function getChapterVersesWithCrossRefs(chapterId: number): Promise<any[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/chapters/${chapterId}/verses-with-cross-refs`
+  );
+  if (!response.ok) {
+    throw new Error('Failed to fetch verses with cross-references');
+  }
+  return response.json();
 }
 
 // Get cross-references for a specific book, chapter, and verse

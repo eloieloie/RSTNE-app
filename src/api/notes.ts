@@ -1,6 +1,6 @@
 import type { Note, NoteInsert, NoteUpdate, VerseNoteInsert } from '@/utils/collectionReferences';
 
-const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_BASE_URL = 'https://rstne.eloi.in/api';
 
 // Extended Note type with verse_note_id for deletion
 export interface NoteWithVerseNoteId extends Note {

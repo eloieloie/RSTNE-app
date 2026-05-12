@@ -1,6 +1,6 @@
 import type { BookCategory } from '@/utils/collectionReferences';
 
-const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_URL = 'https://rstne.eloi.in/api';
 
 /**
  * Fetches all book categories from the API

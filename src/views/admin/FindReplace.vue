@@ -121,7 +121,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 
-const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api';
+const API_BASE_URL = 'https://rstne.eloi.in';
 
 interface SearchResult {
   verse_id: number;

@@ -1,6 +1,6 @@
 import type { VerseLink, VerseLinkInsert, Tag, TagInsert, TagUpdate, VerseTagInsert } from '@/utils/collectionReferences';
 
-const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_BASE_URL = 'https://rstne.eloi.in/api';
 
 // Verse Links API
 export async function getLinkedVerses(verseId: number): Promise<{ source: number[], target: number[] }> {

@@ -136,7 +136,7 @@ import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
 import type { Book, Chapter, Verse } from '@/utils/collectionReferences';
 
-const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_URL = 'https://rstne.eloi.in/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

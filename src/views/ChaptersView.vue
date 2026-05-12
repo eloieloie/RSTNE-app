@@ -378,7 +378,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
-import { getCrossReferences, type CrossReferenceData } from '@/api/crossReferences';
+import { getChapterVersesWithCrossRefs, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
@@ -683,7 +683,7 @@ function setChapterRef(chapterId: number, el: HTMLElement | null) {
   }
 }
 
-// Load verses for a chapter
+// Load verses for a chapter (includes cross-references in a single request)
 async function loadChapterVerses(chapterId: number): Promise<void> {
   if (loadedChapters.value.has(chapterId)) {
     return; // Already loaded
@@ -693,60 +693,14 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
   if (!chapter) return;
 
   try {
-    const verses = await getVersesByChapterId(chapterId);
-    
-    // Store verses immediately without cross-references for faster initial load
-    const versesWithoutCrossRefs = verses.map(verse => ({
-      ...verse,
-      crossReferences: []
-    }));
-    
-    loadedChapters.value.set(chapterId, {
-      chapter,
-      verses: versesWithoutCrossRefs
-    });
-    
-    // Lazy load cross-references in the background (don't await)
-    loadCrossReferencesForChapter(chapterId, chapter, verses).catch(err => {
-      console.error('Error loading cross-references:', err);
-    });
-  } catch (err) {
-    console.error('Error loading chapter verses:', err);
-  }
-}
+    const verses = await getChapterVersesWithCrossRefs(chapterId);
 
-// Lazy load cross-references for a chapter (non-blocking)
-async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter, verses: any[]): Promise<void> {
-  try {
-    const versesWithCrossRefs = await Promise.all(
-      verses.map(async (verse) => {
-        try {
-          const bookId = book.value?.book_id;
-          if (!bookId) return { ...verse, crossReferences: [] };
-          
-          const crossRefs = await getCrossReferences(
-            bookId,
-            chapter.chapter_number,
-            String(verse.verse_index || '')
-          );
-          return { ...verse, crossReferences: crossRefs };
-        } catch (err) {
-          return { ...verse, crossReferences: [] };
-        }
-      })
-    );
-    
-    // Update the loaded chapters with cross-references
-    loadedChapters.value.set(chapterId, {
-      chapter,
-      verses: versesWithCrossRefs
-    });
-    
-    // Re-scroll to the pending verse after cross-refs have updated the DOM
+    loadedChapters.value.set(chapterId, { chapter, verses });
+
+    // Scroll to a pending verse now that cross-refs are already present
     if (pendingScrollVerseId.value !== null) {
       const verseIdToScroll = pendingScrollVerseId.value;
-      // Check if the scrolled verse belongs to this chapter
-      const verseInChapter = versesWithCrossRefs.find(v => v.verse_id === verseIdToScroll);
+      const verseInChapter = verses.find((v: any) => v.verse_id === verseIdToScroll);
       if (verseInChapter) {
         pendingScrollVerseId.value = null;
         await nextTick();
@@ -760,7 +714,7 @@ async function loadCrossReferencesForChapter(chapterId: number, chapter: Chapter
       }
     }
   } catch (err) {
-    console.error('Error in lazy loading cross-references:', err);
+    console.error('Error loading chapter verses:', err);
   }
 }
 

@@ -1,6 +1,6 @@
 import type { Book } from '@/utils/collectionReferences';
 
-const API_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_URL = 'https://rstne.eloi.in/api';
 
 export async function getAllBooks(): Promise<Book[]> {
   // Check cache first

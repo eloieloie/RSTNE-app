@@ -1,6 +1,6 @@
 import type { Verse, VerseInsert, VerseUpdate } from '@/utils/collectionReferences';
 
-const API_BASE_URL = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api';
+const API_BASE_URL = 'https://rstne.eloi.in/api';
 
 // Types for data returned in verses endpoint
 export interface VerseLinkData {

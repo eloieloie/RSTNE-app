@@ -124,7 +124,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-const API_BASE = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api'
+const API_BASE = 'https://rstne.eloi.in/api'
+const FCM_BASE = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api'
 
 interface Book { book_id: number; book_name: string }
 interface Chapter { chapter_id: number; chapter_number: number }
@@ -152,7 +153,7 @@ const form = ref({
 onMounted(async () => {
   try {
     const [countRes, booksRes] = await Promise.all([
-      fetch(`${API_BASE}/fcm-tokens/count`),
+      fetch(`${FCM_BASE}/fcm-tokens/count`),
       fetch(`${API_BASE}/books`),
     ])
     deviceCount.value = (await countRes.json()).count ?? 0
@@ -204,7 +205,7 @@ async function send() {
       : undefined
 
   try {
-    const res = await fetch(`${API_BASE}/notifications/send`, {
+    const res = await fetch(`${FCM_BASE}/notifications/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -234,7 +235,7 @@ async function send() {
       form.value.audience = 'all'
       chapters.value = []
       verses.value = []
-      const countRes = await fetch(`${API_BASE}/fcm-tokens/count`)
+      const countRes = await fetch(`${FCM_BASE}/fcm-tokens/count`)
       deviceCount.value = (await countRes.json()).count ?? deviceCount.value
     }
   } catch (e: unknown) {

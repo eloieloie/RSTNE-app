@@ -9,14 +9,42 @@
         Books
       </button>
       <div class="header-content">
-        <div class="header-badge">52 Weeks</div>
-        <h1>Weekly Torah Parashot</h1>
-        <p class="subtitle">A full-year reading plan through Torah &amp; New Covenant</p>
+        <div class="header-badge">52 Weeks · 12 Months</div>
+        <h1>Torah Reading Plan</h1>
+        <p class="subtitle">Weekly Parashot &amp; Monthly Haftarot from Aviv One</p>
       </div>
     </div>
 
-    <!-- Grid -->
-    <div class="parashot-grid">
+    <!-- Tab Toggle -->
+    <div class="view-tabs">
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'weekly' }"
+        @click="activeTab = 'weekly'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Weekly Parashot
+      </button>
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'monthly' }"
+        @click="activeTab = 'monthly'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Monthly Haftarot
+      </button>
+    </div>
+
+    <!-- Weekly Grid -->
+    <div v-if="activeTab === 'weekly'" class="parashot-grid">
       <div
         v-for="parasha in WEEKLY_PARASHOT"
         :key="parasha.week"
@@ -74,6 +102,51 @@
         </div>
       </div>
     </div>
+
+    <!-- Monthly Grid -->
+    <div v-if="activeTab === 'monthly'" class="monthly-grid">
+      <div
+        v-for="haftarah in MONTHLY_HAFTAROT"
+        :key="haftarah.month"
+        class="month-card"
+        :class="{ 'current-month': haftarah.month === currentMonth }"
+      >
+        <div class="card-header">
+          <div class="week-row">
+            <span class="week-badge">Month {{ haftarah.month }}</span>
+            <span v-if="haftarah.month === currentMonth" class="this-week-label">This Month</span>
+          </div>
+          <h3 class="hebrew-name">{{ haftarah.hebrewName }}</h3>
+        </div>
+
+        <div class="readings">
+          <div
+            v-for="(passage, idx) in haftarah.passages"
+            :key="idx"
+            class="reading-block prophet-block"
+          >
+            <div class="reading-label">
+              <svg class="reading-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+              </svg>
+              Haftarah {{ haftarah.passages.length > 1 ? idx + 1 : '' }}
+            </div>
+            <div class="reading-text">{{ passage.displayText }}</div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button
+            v-for="(passage, idx) in haftarah.passages"
+            :key="idx"
+            class="read-btn prophet-btn"
+            @click="navigateToPassage(passage)"
+          >
+            Read {{ passage.displayText.split(' ')[0] }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -81,9 +154,11 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { WEEKLY_PARASHOT, type Parasha } from '@/data/weeklyParashot';
+import { MONTHLY_HAFTAROT, type MonthlyPassage } from '@/data/monthlyReadings';
 
 const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);
+const activeTab = ref<'weekly' | 'monthly'>('weekly');
 
 function getCurrentWeek(): number {
   const now = new Date();
@@ -92,7 +167,17 @@ function getCurrentWeek(): number {
   return Math.min(52, Math.ceil(dayOfYear / 7));
 }
 
+function getCurrentBiblicalMonth(): number {
+  const now = new Date();
+  const year = now.getFullYear();
+  const yearStart = new Date(year, 2, 21); // March 21
+  const start = now < yearStart ? new Date(year - 1, 2, 21) : yearStart;
+  const daysSinceStart = Math.floor((now.getTime() - start.getTime()) / 86400000);
+  return Math.min(12, Math.max(1, Math.floor(daysSinceStart / 30) + 1));
+}
+
 const currentWeek = getCurrentWeek();
+const currentMonth = getCurrentBiblicalMonth();
 
 function navigate(parasha: Parasha, side: 'torah' | 'nc') {
   const reading = side === 'torah' ? parasha.torah : parasha.newCovenant;
@@ -105,6 +190,13 @@ function navigate(parasha: Parasha, side: 'torah' | 'nc') {
       parashaTorahText: parasha.torah.displayText,
       parashaNcText: parasha.newCovenant.displayText,
     },
+  });
+}
+
+function navigateToPassage(passage: MonthlyPassage) {
+  router.push({
+    name: 'book-chapter-verse',
+    params: { bookName: passage.bookSlug, chapterNumber: String(passage.startChapter) },
   });
 }
 
@@ -359,9 +451,105 @@ onMounted(() => {
   border-color: #1E40AF;
 }
 
+/* Tab Toggle */
+.view-tabs {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.4rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.02em;
+}
+
+.tab-btn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+  background: #FFF8DC;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #8B4513, #c0763a);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* Monthly Grid */
+.monthly-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.1rem;
+}
+
+.month-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.month-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.month-card.current-month {
+  border: 2px solid #166534;
+  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+  box-shadow: 0 0 0 4px rgba(22,101,52,0.1), 0 4px 16px rgba(22,101,52,0.12);
+}
+
+.month-card.current-month:hover {
+  box-shadow: 0 0 0 4px rgba(22,101,52,0.15), 0 8px 24px rgba(22,101,52,0.18);
+}
+
+.month-card.current-month .this-week-label {
+  background: linear-gradient(135deg, #166534, #15803d);
+}
+
+.prophet-block {
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+}
+
+.prophet-block .reading-label {
+  color: #166534;
+}
+
+.prophet-btn {
+  background: #F0FDF4;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+.prophet-btn:hover {
+  background: #166534;
+  color: #fff;
+  border-color: #166534;
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
-  .parashot-grid {
+  .parashot-grid,
+  .monthly-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -381,7 +569,8 @@ onMounted(() => {
     left: 0;
   }
 
-  .parashot-grid {
+  .parashot-grid,
+  .monthly-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
