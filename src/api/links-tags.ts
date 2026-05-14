@@ -35,7 +35,12 @@ export async function createVerseLink(linkData: VerseLinkInsert): Promise<{ link
 
 export async function deleteVerseLink(linkId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/verse-links/${linkId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to delete verse link');
@@ -75,9 +80,10 @@ export async function createTag(tag: TagInsert): Promise<{ tag_id: number }> {
 
 export async function updateTag(tagId: number, tag: TagUpdate): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'PUT',
     },
     body: JSON.stringify(tag),
   });
@@ -88,7 +94,12 @@ export async function updateTag(tagId: number, tag: TagUpdate): Promise<void> {
 
 export async function deleteTag(tagId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to delete tag');
@@ -120,7 +131,12 @@ export async function linkTagToVerse(verseTagData: VerseTagInsert): Promise<{ ve
 
 export async function unlinkTagFromVerse(verseTagId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/verse-tags/${verseTagId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to unlink tag from verse');

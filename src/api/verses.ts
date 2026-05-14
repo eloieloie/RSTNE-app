@@ -61,9 +61,10 @@ export async function createVerse(verse: VerseInsert): Promise<Verse> {
 
 export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<Verse> {
   const response = await fetch(`${API_BASE_URL}/verses/${verseId}`, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'PUT',
     },
     body: JSON.stringify(verse),
   });
@@ -75,7 +76,12 @@ export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<
 
 export async function deleteVerse(verseId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/verses/${verseId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to delete verse');

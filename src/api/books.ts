@@ -50,8 +50,8 @@ export async function updateBook(bookId: number, book: { book_name?: string; boo
   sessionStorage.removeItem('rstne_books_cache_time_v2');
 
   const response = await fetch(`${API_URL}/books/${bookId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(book)
   });
   
@@ -64,7 +64,9 @@ export async function updateBook(bookId: number, book: { book_name?: string; boo
 
 export async function deleteBook(bookId: number): Promise<void> {
   const response = await fetch(`${API_URL}/books/${bookId}`, {
-    method: 'DELETE'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+    body: '{}',
   });
   if (!response.ok) throw new Error('Failed to delete book');
 }

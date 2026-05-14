@@ -32,8 +32,8 @@ export async function createChapter(chapter: { book_id: number; chapter_number: 
 
 export async function updateChapter(chapterId: number, chapter: { book_id?: number; chapter_number?: string; chapter_description?: string; chapter_notes?: string }): Promise<void> {
   const response = await fetch(`${API_URL}/chapters/${chapterId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(chapter)
   });
   if (!response.ok) throw new Error('Failed to update chapter');
@@ -41,7 +41,9 @@ export async function updateChapter(chapterId: number, chapter: { book_id?: numb
 
 export async function deleteChapter(chapterId: number): Promise<void> {
   const response = await fetch(`${API_URL}/chapters/${chapterId}`, {
-    method: 'DELETE'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+    body: '{}',
   });
   if (!response.ok) throw new Error('Failed to delete chapter');
 }

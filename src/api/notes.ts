@@ -40,9 +40,10 @@ export async function createNote(note: NoteInsert): Promise<{ note_id: number }>
 
 export async function updateNote(noteId: number, note: NoteUpdate): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'PUT',
     },
     body: JSON.stringify(note),
   });
@@ -53,7 +54,12 @@ export async function updateNote(noteId: number, note: NoteUpdate): Promise<void
 
 export async function deleteNote(noteId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to delete note');
@@ -85,7 +91,12 @@ export async function linkNoteToVerse(verseNoteData: VerseNoteInsert): Promise<{
 
 export async function unlinkNoteFromVerse(verseNoteId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/verse-notes/${verseNoteId}`, {
-    method: 'DELETE',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-HTTP-Method-Override': 'DELETE',
+    },
+    body: '{}',
   });
   if (!response.ok) {
     throw new Error('Failed to unlink note from verse');

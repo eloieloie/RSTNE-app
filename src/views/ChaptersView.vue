@@ -721,50 +721,62 @@ async function loadChapterVerses(chapterId: number): Promise<void> {
 // Load adjacent chapters (previous and next)
 async function loadAdjacentChapters(chapterId: number): Promise<void> {
   isLoadingAdjacentChapter.value = true;
-  
+
   const prevChapter = getPreviousChapter(chapterId);
   const nextChapter = getNextChapter(chapterId);
+  console.log('[loadAdjacentChapters] for', chapterId, '| prev:', prevChapter?.chapter_id, prevChapter?.chapter_number, '| next:', nextChapter?.chapter_id, nextChapter?.chapter_number);
   const promises: Promise<void>[] = [];
-  
+
   if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
     promises.push(loadChapterVerses(prevChapter.chapter_id));
   }
-  
+
   if (nextChapter && !loadedChapters.value.has(nextChapter.chapter_id)) {
     promises.push(loadChapterVerses(nextChapter.chapter_id));
   }
-  
+
   await Promise.all(promises);
+  console.log('[loadAdjacentChapters] done, map keys:', Array.from(loadedChapters.value.keys()));
   isLoadingAdjacentChapter.value = false;
 }
 
 // Select chapter and load it
 async function selectChapter(chapter: Chapter, skipScroll: boolean = false, skipAdjacentLoad: boolean = false) {
+  console.log('[selectChapter] START chapter_number:', chapter.chapter_number, 'chapter_id:', chapter.chapter_id);
   selectedChapter.value = chapter;
   selectedChapterId.value = chapter.chapter_id;
-  
+
   // Load this chapter if not loaded
   await loadChapterVerses(chapter.chapter_id);
+  console.log('[selectChapter] after loadChapterVerses, loadedChapters has ch6?', loadedChapters.value.has(chapter.chapter_id), 'map size:', loadedChapters.value.size);
   // Load adjacent chapters only if not navigating to a specific verse
   if (!skipAdjacentLoad) {
     await loadAdjacentChapters(chapter.chapter_id);
   }
-  
-  // Scroll to chapter after DOM updates (unless skipScroll is true)
+  console.log('[selectChapter] after loadAdjacent, loadedChapters has ch6?', loadedChapters.value.has(chapter.chapter_id), 'map size:', loadedChapters.value.size, 'keys:', Array.from(loadedChapters.value.keys()));
+
+  // Scroll to chapter after DOM updates (unless skipScroll is true).
+  // Use 'instant' to avoid the topObserver's compensating scroll overriding navigation.
   if (!skipScroll) {
     await nextTick();
-    scrollToChapter(chapter.chapter_id);
+    console.log('[selectChapter] after nextTick, loadedChapters has ch6?', loadedChapters.value.has(chapter.chapter_id), 'el in DOM?', !!document.querySelector(`[data-chapter-id="${chapter.chapter_id}"]`));
+    scrollToChapter(chapter.chapter_id, 'instant');
+    console.log('[selectChapter] scrollY after instant scroll:', window.scrollY);
   }
+  console.log('[selectChapter] END selectedChapterId:', selectedChapterId.value);
 }
 
 // Scroll to chapter
-function scrollToChapter(chapterId: number) {
+function scrollToChapter(chapterId: number, behavior: ScrollBehavior = 'smooth') {
   // Scroll without changing the URL (no hash navigation)
   const el = document.querySelector(`[data-chapter-id="${chapterId}"]`) as HTMLElement;
+  console.log('[scrollToChapter] chapterId:', chapterId, 'el found:', !!el, 'scrollY:', window.scrollY);
   if (el) {
     const navHeight = 90;
-    const top = el.getBoundingClientRect().top + window.scrollY - navHeight - 10;
-    window.scrollTo({ top, behavior: 'smooth' });
+    const rect = el.getBoundingClientRect();
+    const top = rect.top + window.scrollY - navHeight - 10;
+    console.log('[scrollToChapter] rect.top:', rect.top, 'target scrollY:', top, 'behavior:', behavior);
+    window.scrollTo({ top, behavior });
   }
 }
 
@@ -1819,6 +1831,7 @@ function setupIntersectionObserver() {
           
           // Update dropdown to match visible chapter
           if (selectedChapterId.value !== chapterId) {
+            console.log('[intersectionObserver] Overriding selectedChapterId from', selectedChapterId.value, 'to', chapterId, '| scrollY:', window.scrollY);
             selectedChapterId.value = chapterId;
             const chapter = chapters.value.find(ch => ch.chapter_id === chapterId);
             if (chapter) {
@@ -1876,13 +1889,15 @@ function setupIntersectionObserver() {
           const topDistance = rect.top;
           
           // Load previous chapter when we're within 500px of the top
+          console.log('[topObserver] chapterId:', chapterId, 'topDistance:', topDistance, 'scrollY:', window.scrollY);
           if (topDistance < 500 && topDistance > -100) {
             const prevChapter = getPreviousChapter(chapterId);
             if (prevChapter && !loadedChapters.value.has(prevChapter.chapter_id)) {
+              console.log('[topObserver] Loading prev chapter:', prevChapter.chapter_number);
               // Store current scroll position and the chapter element's position
               const currentScrollY = window.scrollY;
               const chapterTop = rect.top + window.scrollY;
-              
+
               loadChapterVerses(prevChapter.chapter_id).then(async () => {
                 // Wait for DOM to update
                 await nextTick();
@@ -1892,6 +1907,7 @@ function setupIntersectionObserver() {
                   const newRect = chapterElement.getBoundingClientRect();
                   const newChapterTop = newRect.top + window.scrollY;
                   const offset = newChapterTop - chapterTop;
+                  console.log('[topObserver] compensating scroll by', offset, '→ new scrollY:', currentScrollY + offset);
                   window.scrollTo({ top: currentScrollY + offset, behavior: 'instant' });
                 }
               });
@@ -2000,7 +2016,7 @@ onMounted(async () => {
     
     if (targetChapterNumber) {
       // New URL format with chapter number
-      targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
+      targetChapter = chapters.value.find(ch => String(ch.chapter_number) === targetChapterNumber) ?? null;
       
       if (!targetChapter) {
         console.error('onMounted: Could not find chapter with chapter_number:', targetChapterNumber);
@@ -2031,32 +2047,27 @@ onMounted(async () => {
     }
     
     if (targetChapter) {
-      // Skip chapter scroll and adjacent loading if we're going to scroll to a specific verse
-      await selectChapter(targetChapter, !!scrollToVerseId, !!scrollToVerseId);
-      
-      // Verify the verse is in one of the loaded chapters
+      // Always skipScroll here — loading=true keeps the chapter DOM hidden (v-if="loading"
+      // shows the spinner overlay), so scrollToChapter would find no element. We turn off
+      // loading first, wait for the DOM to render, then scroll.
+      await selectChapter(targetChapter, true, !!scrollToVerseId);
+
+      // Reveal the chapter DOM before scrolling
+      loading.value = false;
+      await nextTick();
+
       if (scrollToVerseId) {
-        let foundInChapter = null;
-        for (const [chId, chData] of loadedChapters.value.entries()) {
-          const verse = chData.verses.find(v => v.verse_id === scrollToVerseId);
-          if (verse) {
-            foundInChapter = chId;
-            break;
-          }
-        }
-        if (!foundInChapter) {
-          console.error('onMounted: ERROR - Verse', scrollToVerseId, 'not found in any loaded chapter!');
-          console.error('onMounted: Target chapter was:', targetChapter.chapter_id, 'with number:', targetChapter.chapter_number);
-        }
-      }
-      
-      if (scrollToVerseId) {
-        await nextTick();
         scrollToVerse(scrollToVerseId);
+      } else {
+        scrollToChapter(targetChapter.chapter_id, 'instant');
       }
     } else if (chapters.value.length > 0) {
-      // Select first chapter by default
-      await selectChapter(sortedChapters.value[0]);
+      // Default: load and show the first chapter
+      const defaultChapter = sortedChapters.value[0];
+      await selectChapter(defaultChapter, true);
+      loading.value = false;
+      await nextTick();
+      scrollToChapter(defaultChapter.chapter_id, 'instant');
     }
     
     // Setup intersection observer after initial load
@@ -2099,8 +2110,16 @@ onMounted(async () => {
 });
 
 // Watch for route changes (when navigating to different book or chapter via verse picker)
-watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber, route.params.verseNumber] as const, 
+watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber, route.params.verseNumber] as const,
   async ([newId, newBookName, newChapterNumber, newVerseNumber], [oldId, oldBookName, oldChapterNumber, oldVerseNumber]) => {
+  // Skip on initial mount: old values are all undefined when the component first renders.
+  // onMounted handles the initial load; this watch is only for subsequent in-app navigations.
+  console.log('[watch] fired old:', [oldId, oldBookName, oldChapterNumber, oldVerseNumber], 'new:', [newId, newBookName, newChapterNumber, newVerseNumber]);
+  if (oldId === undefined && oldBookName === undefined && oldChapterNumber === undefined && oldVerseNumber === undefined) {
+    console.log('[watch] SKIPPING — initial mount');
+    return;
+  }
+
   // Check if book or chapter/verse changed
   const bookChanged = (newId && newId !== oldId) || (newBookName && newBookName !== oldBookName);
   const sameBookNavigated = !bookChanged && ((newChapterNumber && newChapterNumber !== oldChapterNumber) || (newVerseNumber && newVerseNumber !== oldVerseNumber));
@@ -2186,7 +2205,7 @@ watch(() => [route.params.id, route.params.bookName, route.params.chapterNumber,
       
       if (targetChapterNumber) {
         // New URL format with chapter number
-        targetChapter = chapters.value.find(ch => ch.chapter_number === targetChapterNumber) ?? null;
+        targetChapter = chapters.value.find(ch => String(ch.chapter_number) === targetChapterNumber) ?? null;
         
         if (targetChapter && targetVerseNumber) {
           // Pre-load the chapter verses before selecting
