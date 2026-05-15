@@ -3,6 +3,7 @@ import BooksView from '@/views/BooksView.vue';
 import ChaptersView from '@/views/ChaptersView.vue';
 import BroadcastView from '@/views/BroadcastView.vue';
 import WeeklyReadingView from '@/views/WeeklyReadingView.vue';
+import TimelineView from '@/views/TimelineView.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ManageBooks from '@/views/admin/ManageBooks.vue';
 import ManageChapters from '@/views/admin/ManageChapters.vue';
@@ -10,6 +11,7 @@ import ChapterEditor from '@/views/admin/ChapterEditor.vue';
 import FindReplace from '@/views/admin/FindReplace.vue';
 import CompareBook from '@/views/admin/CompareBook.vue';
 import PushNotificationsAdmin from '@/views/admin/PushNotificationsAdmin.vue';
+import ManageTimelineEvents from '@/views/admin/ManageTimelineEvents.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
 
@@ -60,6 +62,16 @@ const router = createRouter({
       path: '/weekly-reading',
       name: 'weekly-reading',
       component: WeeklyReadingView
+    },
+    {
+      path: '/timeline',
+      name: 'timeline',
+      component: TimelineView
+    },
+    {
+      path: '/admin/timeline-events',
+      name: 'admin-timeline-events',
+      component: ManageTimelineEvents
     },
     {
       path: '/reading-pane',

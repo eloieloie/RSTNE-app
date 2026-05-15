@@ -49,6 +49,15 @@
           Send Notification
         </router-link>
       </div>
+
+      <div class="dashboard-card">
+        <div class="card-icon">📜</div>
+        <h2>Timeline Events</h2>
+        <p>Manage the 6,000-year Biblical history timeline — add, edit, or delete events with AM year, BC/AD year, Jubilee, and Shemittah markers</p>
+        <router-link to="/admin/timeline-events" class="action-btn">
+          Manage Timeline
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

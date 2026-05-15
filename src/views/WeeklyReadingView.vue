@@ -38,6 +38,14 @@
           </svg>
           DSS Today: {{ dssToday.month }}M / {{ dssToday.day }}th · Day {{ dssToday.dayOfYear }} of 364 · Week {{ currentWeek }}
         </div>
+
+        <div class="am-jubilee-badge">
+          <span class="am-badge-label">Anno Mundi</span>
+          <span class="am-badge-year">AM {{ currentDSSYear }}</span>
+          <span class="am-badge-sep">·</span>
+          <span class="am-badge-label">Jubilee Ref</span>
+          <span class="am-badge-jubilee">{{ currentJubileeRef }}</span>
+        </div>
       </div>
     </div>
 
@@ -293,6 +301,19 @@ function getCurrentWeek(): number {
 
 const currentWeek = getCurrentWeek();
 
+function getJubileeRef(amYear: number): string {
+  const onah      = Math.ceil(amYear / 500);
+  const inOnah    = amYear - (onah - 1) * 500;
+  const jubilee   = Math.ceil(inOnah / 50);
+  const inJubilee = inOnah - (jubilee - 1) * 50;
+  if (inJubilee === 50) return `J${jubilee} O${onah}`;
+  const shemittah   = Math.ceil(inJubilee / 7);
+  const inShemittah = inJubilee - (shemittah - 1) * 7;
+  return `Y${inShemittah} S${shemittah} J${jubilee} O${onah}`;
+}
+
+const currentJubileeRef = getJubileeRef(currentDSSYear);
+
 // Group parshas by DSS month
 const parshasByMonth = computed(() => {
   const groups = new Map<number, Parasha[]>();
@@ -486,6 +507,46 @@ onMounted(() => {
   font-weight: 700;
   letter-spacing: 0.03em;
   margin-top: 0.25rem;
+}
+
+.am-jubilee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 1.1rem;
+  background: linear-gradient(135deg, #3b1200, #8B4513);
+  color: #fff;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-top: 0.15rem;
+}
+
+.am-badge-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.am-badge-year {
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.am-badge-sep {
+  opacity: 0.5;
+}
+
+.am-badge-jubilee {
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ffd79a;
 }
 
 /* Grid */

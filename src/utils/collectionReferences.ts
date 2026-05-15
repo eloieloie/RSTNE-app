@@ -318,3 +318,73 @@ export const APP_VERSION_COLUMNS = {
   MIN_VERSION: 'min_version',
   MAX_VERSION: 'max_version',
 } as const;
+
+export interface TimelineEvent {
+  event_id: number;
+  title: string;
+  description: string | null;
+  am_year: number;
+  bc_ad_year: number | null;
+  is_bc: number; // 1 = BC, 0 = AD
+  month_name: string | null;
+  day_number: number | null;
+  is_shemittah: number; // 1 = yes, 0 = no
+  is_jubilee: number;   // 1 = yes, 0 = no
+  jubilee_ref: string | null;
+  category: string | null;
+  bible_ref: string | null;
+  sort_order: number | null;
+  dt_added: string;
+  dt_modified: string;
+}
+
+export interface TimelineEventInsert {
+  title: string;
+  description?: string;
+  am_year: number;
+  bc_ad_year?: number;
+  is_bc?: number;
+  month_name?: string;
+  day_number?: number;
+  is_shemittah?: number;
+  is_jubilee?: number;
+  jubilee_ref?: string;
+  category?: string;
+  bible_ref?: string;
+  sort_order?: number;
+}
+
+export interface TimelineEventUpdate {
+  title?: string;
+  description?: string;
+  am_year?: number;
+  bc_ad_year?: number;
+  is_bc?: number;
+  month_name?: string;
+  day_number?: number;
+  is_shemittah?: number;
+  is_jubilee?: number;
+  jubilee_ref?: string;
+  category?: string;
+  bible_ref?: string;
+  sort_order?: number;
+}
+
+export const TIMELINE_EVENT_COLUMNS = {
+  ID: 'event_id',
+  TITLE: 'title',
+  DESCRIPTION: 'description',
+  AM_YEAR: 'am_year',
+  BC_AD_YEAR: 'bc_ad_year',
+  IS_BC: 'is_bc',
+  MONTH_NAME: 'month_name',
+  DAY_NUMBER: 'day_number',
+  IS_SHEMITTAH: 'is_shemittah',
+  IS_JUBILEE: 'is_jubilee',
+  JUBILEE_REF: 'jubilee_ref',
+  CATEGORY: 'category',
+  BIBLE_REF: 'bible_ref',
+  SORT_ORDER: 'sort_order',
+  DATE_ADDED: 'dt_added',
+  DATE_MODIFIED: 'dt_modified',
+} as const;
