@@ -7,24 +7,21 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Home
         </router-link>
-        <h1 class="tl-title">
-          <span class="tl-title-icon">📜</span>
-          Biblical Timeline
-        </h1>
-        <p class="tl-subtitle">6,000 Years of Sacred History</p>
+        <div class="tl-title-group">
+          <h1 class="tl-title">
+            <span class="tl-title-icon">📜</span>
+            Biblical Timeline
+          </h1>
+          <p class="tl-subtitle">6,000 Years of Sacred History</p>
+        </div>
       </div>
       <div class="tl-header-right">
-        <div class="tl-zoom">
-          <button class="zoom-btn" @click="decreaseZoom" :disabled="zoom <= 1" title="Zoom out">−</button>
-          <span class="zoom-label">{{ Math.round(zoom * 100) }}%</span>
-          <button class="zoom-btn" @click="increaseZoom" :disabled="zoom >= 6" title="Zoom in">+</button>
-        </div>
         <div class="legend-toggle" @click="showLegend = !showLegend">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-          Legend
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <span class="legend-toggle-label">Legend</span>
         </div>
-        <button class="filter-icon-btn" @click="showFilters = !showFilters" :class="{ active: activeFiltersCount > 0 }" title="Filters & Era Navigation">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+        <button class="filter-icon-btn" @click="showFilters = !showFilters" :class="{ active: activeFiltersCount > 0 }" title="Filters &amp; Era Navigation">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
           <span class="filter-icon-label">Filters</span>
           <span v-if="activeFiltersCount > 0" class="filter-count-badge">{{ activeFiltersCount }}</span>
         </button>
@@ -58,181 +55,115 @@
     </div>
     <div v-else-if="error" class="tl-error">{{ error }}</div>
 
-    <!-- Timeline -->
-    <div v-else class="tl-scroll-container" ref="scrollContainer">
-      <div class="tl-canvas" :style="{ width: canvasWidth + 'px' }">
+    <!-- Vertical Timeline -->
+    <main v-else class="tl-main">
+      <div class="tl-container">
 
-        <!-- Era backgrounds -->
-        <div class="era-backgrounds">
-          <div
-            v-for="era in ERAS"
-            :key="era.label"
-            class="era-bg"
-            :style="{
-              left: amToX(era.startAM) + 'px',
-              width: (amToX(era.endAM) - amToX(era.startAM)) + 'px',
-              background: era.bgColor,
-            }"
-          >
-            <span class="era-label" :style="{ color: era.color }">{{ era.label }}</span>
-          </div>
-        </div>
+        <template v-for="era in ERAS" :key="era.label">
+          <template v-if="eventsForEra(era).length > 0">
 
-        <!-- Events above the line -->
-        <div class="events-above">
-          <div
-            v-for="(ev, i) in aboveEvents"
-            :key="ev.event_id"
-            class="event-above"
-            :style="{ left: amToX(ev.am_year) + 'px', '--stagger': i % 4 }"
-          >
+            <!-- Era section header (sticky) -->
             <div
-              class="event-card"
-              :class="[`cat-${ev.category || 'default'}`, { 'is-jubilee': ev.is_jubilee, 'is-shemittah': ev.is_shemittah, 'is-active': selectedEvent?.event_id === ev.event_id }]"
-              :style="{ '--cat-color': getCategoryColor(ev.category) }"
-              @click="selectEvent(ev)"
+              class="era-section-header"
+              :style="{ '--era-color': era.color, '--era-bg': era.bgColor }"
+              :data-era="era.label"
             >
-              <span v-if="ev.is_jubilee" class="badge jubilee-badge">Jubilee</span>
-              <span v-else-if="ev.is_shemittah" class="badge shemittah-badge">Shemittah</span>
-              <div class="card-title">{{ ev.title }}</div>
-              <div class="card-year">{{ formatYear(ev) }}</div>
+              <div class="era-header-inner">
+                <span class="era-header-label">{{ era.label }}</span>
+                <span class="era-header-range">AM {{ era.startAM.toLocaleString() }} – {{ era.endAM.toLocaleString() }}</span>
+                <span class="era-header-count">{{ eventsForEra(era).length }}</span>
+              </div>
             </div>
-            <div class="connector-line"></div>
-          </div>
-        </div>
 
-        <!-- The timeline line -->
-        <div class="tl-line" ref="timelineLine">
-          <!-- Year scale ticks -->
-          <div
-            v-for="tick in yearTicks"
-            :key="tick.year"
-            class="year-tick"
-            :class="{ major: tick.major }"
-            :style="{ left: amToX(tick.year) + 'px' }"
-          >
-            <div class="tick-mark" :class="{ major: tick.major }"></div>
-            <div v-if="tick.major" class="tick-label">AM {{ tick.year }}</div>
-          </div>
-
-          <!-- Event dots -->
-          <div
-            v-for="ev in filteredEvents"
-            :key="'dot-' + ev.event_id"
-            class="event-dot-wrapper"
-            :style="{ left: amToX(ev.am_year) + 'px' }"
-            @click="selectEvent(ev)"
-            :title="ev.title"
-          >
+            <!-- Events in era -->
             <div
-              class="event-dot"
-              :class="{ 'is-jubilee': ev.is_jubilee, 'is-shemittah': ev.is_shemittah, 'is-active': selectedEvent?.event_id === ev.event_id }"
-              :style="{ background: getCategoryColor(ev.category) }"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Events below the line -->
-        <div class="events-below">
-          <div
-            v-for="(ev, i) in belowEvents"
-            :key="ev.event_id"
-            class="event-below"
-            :style="{ left: amToX(ev.am_year) + 'px', '--stagger': i % 4 }"
-          >
-            <div class="connector-line"></div>
-            <div
-              class="event-card"
-              :class="[`cat-${ev.category || 'default'}`, { 'is-jubilee': ev.is_jubilee, 'is-shemittah': ev.is_shemittah, 'is-active': selectedEvent?.event_id === ev.event_id }]"
-              :style="{ '--cat-color': getCategoryColor(ev.category) }"
-              @click="selectEvent(ev)"
+              v-for="ev in eventsForEra(era)"
+              :key="ev.event_id"
+              class="tl-item"
             >
-              <span v-if="ev.is_jubilee" class="badge jubilee-badge">Jubilee</span>
-              <span v-else-if="ev.is_shemittah" class="badge shemittah-badge">Shemittah</span>
-              <div class="card-title">{{ ev.title }}</div>
-              <div class="card-year">{{ formatYear(ev) }}</div>
+              <!-- Year column -->
+              <div class="item-year-col">
+                <div class="item-am">AM {{ ev.am_year }}</div>
+                <div class="item-bcad">{{ formatYear(ev) }}</div>
+              </div>
+
+              <!-- Spine -->
+              <div class="item-spine">
+                <div
+                  class="spine-dot"
+                  :class="{ 'is-jubilee': ev.is_jubilee, 'is-shemittah': ev.is_shemittah, 'is-open': expandedEventId === ev.event_id }"
+                  :style="{ '--dot-color': getCategoryColor(ev.category) }"
+                ></div>
+                <div class="spine-line"></div>
+              </div>
+
+              <!-- Card -->
+              <div class="item-card-col">
+                <div
+                  class="tl-card"
+                  :class="{ expanded: expandedEventId === ev.event_id }"
+                  :style="{ '--cat-color': getCategoryColor(ev.category) }"
+                  @click="toggleExpand(ev)"
+                >
+                  <div class="card-top">
+                    <div class="card-main">
+                      <div class="card-badges">
+                        <span class="cat-badge" :style="{ background: getCategoryColor(ev.category) }">{{ getCategoryLabel(ev.category) }}</span>
+                        <span v-if="ev.is_jubilee" class="spec-badge jubilee-badge">Jubilee</span>
+                        <span v-else-if="ev.is_shemittah" class="spec-badge shemittah-badge">Shemittah</span>
+                      </div>
+                      <div class="card-title">{{ ev.title }}</div>
+                    </div>
+                    <div class="expand-chevron" :class="{ open: expandedEventId === ev.event_id }">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                  </div>
+
+                  <!-- Expanded details -->
+                  <transition name="expand-fade">
+                    <div v-if="expandedEventId === ev.event_id" class="card-details">
+                      <div class="detail-years-row">
+                        <div class="detail-year-block">
+                          <div class="dy-value am">AM {{ ev.am_year }}</div>
+                          <div class="dy-label">Anno Mundi</div>
+                        </div>
+                        <div class="dy-sep">·</div>
+                        <div class="detail-year-block">
+                          <div class="dy-value bc">{{ formatYearFull(ev) }}</div>
+                          <div class="dy-label">{{ ev.is_bc ? 'Before Messiah' : 'After Messiah' }}</div>
+                        </div>
+                        <template v-if="ev.month_name">
+                          <div class="dy-sep">·</div>
+                          <div class="detail-year-block">
+                            <div class="dy-value heb">{{ ev.month_name }}{{ ev.day_number ? ' ' + ev.day_number : '' }}</div>
+                            <div class="dy-label">Hebrew Date</div>
+                          </div>
+                        </template>
+                      </div>
+
+                      <p v-if="ev.description" class="detail-desc">{{ ev.description }}</p>
+
+                      <div class="detail-meta-row">
+                        <div v-if="ev.jubilee_ref" class="meta-chip">
+                          <span class="meta-chip-label">Jubilee Ref</span>
+                          <span class="meta-chip-val jubilee-val">{{ ev.jubilee_ref }}</span>
+                        </div>
+                        <div v-if="ev.bible_ref" class="meta-chip">
+                          <span class="meta-chip-label">Scripture</span>
+                          <span class="meta-chip-val bible-val">{{ ev.bible_ref }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </transition>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Year scale labels at bottom -->
-        <div class="year-scale">
-          <div
-            v-for="tick in majorYearTicks"
-            :key="'scale-' + tick.year"
-            class="scale-label"
-            :style="{ left: amToX(tick.year) + 'px' }"
-          >
-            <div class="scale-year">AM {{ tick.year }}</div>
-            <div class="scale-bc">{{ tick.year <= 3925 ? (3926 - tick.year) + ' BC' : (tick.year - 3925) + ' AD' }}</div>
-          </div>
-        </div>
+          </template>
+        </template>
 
-      </div><!-- end tl-canvas -->
-    </div><!-- end tl-scroll-container -->
-
-    <!-- Event detail panel (fade-in) -->
-    <transition name="detail-fade">
-      <div v-if="selectedEvent" class="detail-panel">
-        <button class="detail-close" @click="selectedEvent = null">✕</button>
-
-        <div class="detail-header">
-          <div class="detail-badge-row">
-            <span
-              class="detail-cat-badge"
-              :style="{ background: getCategoryColor(selectedEvent.category) }"
-            >{{ getCategoryLabel(selectedEvent.category) }}</span>
-            <span v-if="selectedEvent.is_jubilee" class="badge jubilee-badge">Jubilee Year</span>
-            <span v-if="selectedEvent.is_shemittah" class="badge shemittah-badge">Shemittah Year</span>
-          </div>
-          <h2 class="detail-title">{{ selectedEvent.title }}</h2>
-        </div>
-
-        <div class="detail-body">
-          <div class="detail-years">
-            <div class="detail-year-block am">
-              <div class="year-value">AM {{ selectedEvent.am_year }}</div>
-              <div class="year-sub">Anno Mundi</div>
-            </div>
-            <div class="detail-year-sep">·</div>
-            <div class="detail-year-block bc">
-              <div class="year-value">{{ formatYearFull(selectedEvent) }}</div>
-              <div class="year-sub">{{ selectedEvent.is_bc ? 'Before Messiah' : 'After Messiah' }}</div>
-            </div>
-            <div v-if="selectedEvent.month_name" class="detail-year-sep">·</div>
-            <div v-if="selectedEvent.month_name" class="detail-year-block date">
-              <div class="year-value">{{ selectedEvent.month_name }}{{ selectedEvent.day_number ? ' ' + selectedEvent.day_number : '' }}</div>
-              <div class="year-sub">Hebrew Date</div>
-            </div>
-          </div>
-
-          <p v-if="selectedEvent.description" class="detail-description">{{ selectedEvent.description }}</p>
-
-          <div class="detail-meta">
-            <div v-if="selectedEvent.jubilee_ref" class="meta-item">
-              <span class="meta-label">Jubilee Ref</span>
-              <span class="meta-value jubilee-ref">{{ selectedEvent.jubilee_ref }}</span>
-            </div>
-            <div v-if="selectedEvent.bible_ref" class="meta-item">
-              <span class="meta-label">Scripture</span>
-              <span class="meta-value bible-ref">{{ selectedEvent.bible_ref }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-nav">
-          <button class="nav-btn" @click="prevEvent" :disabled="!hasPrev">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-            Previous
-          </button>
-          <span class="nav-count">{{ currentEventIndex + 1 }} / {{ filteredEvents.length }}</span>
-          <button class="nav-btn" @click="nextEvent" :disabled="!hasNext">
-            Next
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        </div>
       </div>
-    </transition>
+    </main>
 
     <!-- Empty state -->
     <div v-if="!loading && !error && filteredEvents.length === 0" class="empty-state">
@@ -267,16 +198,8 @@
             <div class="filter-section">
               <label class="filter-label">Special Events</label>
               <div class="filter-toggles">
-                <button
-                  class="filter-toggle-chip"
-                  :class="{ active: showOnlyJubilee }"
-                  @click="showOnlyJubilee = !showOnlyJubilee"
-                >Jubilee Years</button>
-                <button
-                  class="filter-toggle-chip"
-                  :class="{ active: showOnlyShemittah }"
-                  @click="showOnlyShemittah = !showOnlyShemittah"
-                >Shemittah Years</button>
+                <button class="filter-toggle-chip" :class="{ active: showOnlyJubilee }" @click="showOnlyJubilee = !showOnlyJubilee">Jubilee Years</button>
+                <button class="filter-toggle-chip" :class="{ active: showOnlyShemittah }" @click="showOnlyShemittah = !showOnlyShemittah">Shemittah Years</button>
               </div>
             </div>
           </div>
@@ -295,19 +218,15 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { getAllTimelineEvents } from '@/api/timelineEvents';
 import type { TimelineEvent } from '@/utils/collectionReferences';
 
-const TOTAL_AM_YEARS = 6001;
-const BASE_PX_PER_YEAR = 1.8;
-const TIMELINE_PADDING = 80;
-
 const ERAS = [
-  { label: 'Creation', startAM: 1,    endAM: 1656, color: '#059669', bgColor: 'rgba(5,150,105,0.07)' },
-  { label: 'Flood',    startAM: 1656, endAM: 1948, color: '#0891b2', bgColor: 'rgba(8,145,178,0.07)' },
+  { label: 'Creation',   startAM: 1,    endAM: 1656, color: '#059669', bgColor: 'rgba(5,150,105,0.07)' },
+  { label: 'Flood',      startAM: 1656, endAM: 1948, color: '#0891b2', bgColor: 'rgba(8,145,178,0.07)' },
   { label: 'Patriarchs', startAM: 1948, endAM: 2448, color: '#d97706', bgColor: 'rgba(217,119,6,0.07)' },
-  { label: 'Exodus',   startAM: 2448, endAM: 2935, color: '#ea580c', bgColor: 'rgba(234,88,12,0.07)' },
-  { label: 'Temple',   startAM: 2935, endAM: 3338, color: '#7c3aed', bgColor: 'rgba(124,58,237,0.07)' },
-  { label: 'Captivity',startAM: 3338, endAM: 3957, color: '#be123c', bgColor: 'rgba(190,18,60,0.07)' },
-  { label: 'Messiah',  startAM: 3957, endAM: 5873, color: '#1d4ed8', bgColor: 'rgba(29,78,216,0.07)' },
-  { label: 'Modern',   startAM: 5873, endAM: 6001, color: '#b45309', bgColor: 'rgba(180,83,9,0.07)' },
+  { label: 'Exodus',     startAM: 2448, endAM: 2935, color: '#ea580c', bgColor: 'rgba(234,88,12,0.07)' },
+  { label: 'Temple',     startAM: 2935, endAM: 3338, color: '#7c3aed', bgColor: 'rgba(124,58,237,0.07)' },
+  { label: 'Captivity',  startAM: 3338, endAM: 3957, color: '#be123c', bgColor: 'rgba(190,18,60,0.07)' },
+  { label: 'Messiah',    startAM: 3957, endAM: 5873, color: '#1d4ed8', bgColor: 'rgba(29,78,216,0.07)' },
+  { label: 'Modern',     startAM: 5873, endAM: 6001, color: '#b45309', bgColor: 'rgba(180,83,9,0.07)' },
 ];
 
 const CATEGORIES = [
@@ -326,21 +245,13 @@ const CATEGORIES = [
 const events = ref<TimelineEvent[]>([]);
 const loading = ref(true);
 const error = ref('');
-const selectedEvent = ref<TimelineEvent | null>(null);
-const zoom = ref(1.5);
+const expandedEventId = ref<number | null>(null);
 const activeCategory = ref<string | null>(null);
 const showOnlyJubilee = ref(false);
 const showOnlyShemittah = ref(false);
 const activeEra = ref<string | null>(null);
 const showLegend = ref(false);
 const showFilters = ref(false);
-const scrollContainer = ref<HTMLElement | null>(null);
-
-const canvasWidth = computed(() => TOTAL_AM_YEARS * BASE_PX_PER_YEAR * zoom.value + TIMELINE_PADDING * 2);
-
-function amToX(amYear: number): number {
-  return TIMELINE_PADDING + (amYear - 1) / TOTAL_AM_YEARS * (canvasWidth.value - TIMELINE_PADDING * 2);
-}
 
 const filteredEvents = computed(() => {
   let evs = events.value;
@@ -350,35 +261,12 @@ const filteredEvents = computed(() => {
   return evs.sort((a, b) => a.am_year - b.am_year);
 });
 
-// Alternate events above/below the line
-const aboveEvents = computed(() => filteredEvents.value.filter((_, i) => i % 2 === 0));
-const belowEvents = computed(() => filteredEvents.value.filter((_, i) => i % 2 !== 0));
-
-const yearTicks = computed(() => {
-  const ticks = [];
-  const step = zoom.value < 1.5 ? 500 : zoom.value < 3 ? 200 : 100;
-  for (let y = 0; y <= TOTAL_AM_YEARS; y += step) {
-    ticks.push({ year: y, major: y % (step * 2) === 0 });
-  }
-  return ticks;
-});
-
-const majorYearTicks = computed(() => {
-  const step = zoom.value < 1.5 ? 1000 : zoom.value < 3 ? 500 : 200;
-  const ticks = [];
-  for (let y = 0; y <= TOTAL_AM_YEARS; y += step) {
-    ticks.push({ year: y });
-  }
-  return ticks;
-});
-
-const currentEventIndex = computed(() => {
-  if (!selectedEvent.value) return -1;
-  return filteredEvents.value.findIndex(e => e.event_id === selectedEvent.value!.event_id);
-});
-
-const hasPrev = computed(() => currentEventIndex.value > 0);
-const hasNext = computed(() => currentEventIndex.value < filteredEvents.value.length - 1);
+function eventsForEra(era: typeof ERAS[0]): TimelineEvent[] {
+  const isLast = era === ERAS[ERAS.length - 1];
+  return filteredEvents.value.filter(ev =>
+    ev.am_year >= era.startAM && (isLast ? ev.am_year <= era.endAM : ev.am_year < era.endAM)
+  );
+}
 
 const activeFiltersCount = computed(() => {
   let count = 0;
@@ -387,6 +275,10 @@ const activeFiltersCount = computed(() => {
   if (showOnlyShemittah.value) count++;
   return count;
 });
+
+function toggleExpand(ev: TimelineEvent) {
+  expandedEventId.value = expandedEventId.value === ev.event_id ? null : ev.event_id;
+}
 
 function getCategoryColor(category: string | null): string {
   return CATEGORIES.find(c => c.key === category)?.color ?? '#6b7280';
@@ -407,42 +299,16 @@ function formatYearFull(ev: TimelineEvent): string {
   return ev.is_bc ? `${ev.bc_ad_year} BC` : `AD ${ev.bc_ad_year}`;
 }
 
-function selectEvent(ev: TimelineEvent) {
-  selectedEvent.value = ev;
-  scrollToEventDot(ev);
-}
-
-function scrollToEventDot(ev: TimelineEvent) {
-  const container = scrollContainer.value;
-  if (!container) return;
-  const x = amToX(ev.am_year);
-  container.scrollTo({ left: x - container.clientWidth / 2, behavior: 'smooth' });
-}
-
-function prevEvent() {
-  if (hasPrev.value) selectEvent(filteredEvents.value[currentEventIndex.value - 1]);
-}
-
-function nextEvent() {
-  if (hasNext.value) selectEvent(filteredEvents.value[currentEventIndex.value + 1]);
-}
-
-function scrollToEra(era: typeof ERAS[0]) {
-  activeEra.value = era.label;
-  const container = scrollContainer.value;
-  if (!container) return;
-  const x = amToX(era.startAM);
-  container.scrollTo({ left: x - 40, behavior: 'smooth' });
-}
-
 function onEraSelect(event: Event) {
   const val = (event.target as HTMLSelectElement).value;
-  const era = ERAS.find(e => e.label === val);
-  if (era) scrollToEra(era);
+  if (!val) return;
+  activeEra.value = val;
+  showFilters.value = false;
+  setTimeout(() => {
+    const el = document.querySelector(`[data-era="${val}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
 }
-
-function increaseZoom() { zoom.value = Math.min(6, +(zoom.value + 0.5).toFixed(1)); }
-function decreaseZoom() { zoom.value = Math.max(1, +(zoom.value - 0.5).toFixed(1)); }
 
 function resetFilters() {
   activeCategory.value = null;
@@ -451,17 +317,14 @@ function resetFilters() {
 }
 
 watch(filteredEvents, () => {
-  if (selectedEvent.value && !filteredEvents.value.find(e => e.event_id === selectedEvent.value!.event_id)) {
-    selectedEvent.value = null;
+  if (expandedEventId.value && !filteredEvents.value.find(e => e.event_id === expandedEventId.value)) {
+    expandedEventId.value = null;
   }
 });
 
 onMounted(async () => {
   try {
     events.value = await getAllTimelineEvents();
-    if (events.value.length > 0) {
-      selectedEvent.value = events.value[0];
-    }
   } catch (e) {
     error.value = 'Failed to load timeline events. Please try again.';
   } finally {
@@ -473,8 +336,7 @@ onMounted(async () => {
 <style scoped>
 /* ── Page layout ─────────────────────────────────────────────────── */
 .timeline-page {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   background: #f8f6f0;
   display: flex;
   flex-direction: column;
@@ -483,112 +345,131 @@ onMounted(async () => {
 
 /* ── Header ─────────────────────────────────────────────────────── */
 .tl-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   background: linear-gradient(135deg, #1a0a00 0%, #3b1a00 50%, #1a0a00 100%);
   color: white;
-  padding: 1.25rem 2rem;
+  padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  min-height: 56px;
 }
 
-.tl-header-left { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-.tl-header-right { display: flex; align-items: center; gap: 1rem; }
+.tl-header-left { display: flex; align-items: center; gap: 1rem; }
+.tl-header-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
 
 .back-link {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   color: rgba(255,255,255,0.8);
   text-decoration: none;
-  font-size: 0.9rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
   background: rgba(255,255,255,0.1);
   transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .back-link:hover { background: rgba(255,255,255,0.2); color: white; }
 
+.tl-title-group { display: flex; flex-direction: column; gap: 0.05rem; }
+
 .tl-title {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: 800;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
-.tl-title-icon { font-size: 1.4rem; }
+.tl-title-icon { font-size: 1.1rem; }
 
 .tl-subtitle {
-  color: rgba(255,255,255,0.6);
-  font-size: 0.85rem;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.75rem;
   margin: 0;
 }
-
-/* ── Zoom controls ───────────────────────────────────────────────── */
-.tl-zoom {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255,255,255,0.1);
-  border-radius: 8px;
-  padding: 0.3rem 0.6rem;
-}
-.zoom-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.1rem;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 0.15s;
-}
-.zoom-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
-.zoom-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.zoom-label { font-size: 0.85rem; min-width: 40px; text-align: center; }
 
 .legend-toggle {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   color: rgba(255,255,255,0.8);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
   background: rgba(255,255,255,0.1);
   transition: background 0.2s;
+  white-space: nowrap;
 }
 .legend-toggle:hover { background: rgba(255,255,255,0.2); }
+
+.filter-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.filter-icon-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+.filter-icon-btn.active { background: rgba(255,255,255,0.22); color: white; }
+.filter-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.58rem;
+  font-weight: 700;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #1a0a00;
+}
 
 /* ── Legend ─────────────────────────────────────────────────────── */
 .legend-panel {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  padding: 0.75rem 2rem;
+  padding: 0.65rem 1.5rem;
 }
 .legend-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
+  gap: 0.5rem 1.25rem;
+  max-width: 860px;
+  margin: 0 auto;
 }
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
+  gap: 0.35rem;
+  font-size: 0.78rem;
   color: #374151;
 }
 .legend-dot {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -613,316 +494,296 @@ onMounted(async () => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Timeline scroll container ───────────────────────────────────── */
-.tl-scroll-container {
-  height: 380px;
-  flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+/* ── Main ────────────────────────────────────────────────────────── */
+.tl-main { flex: 1; }
+
+.tl-container {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0.5rem 1.25rem 4rem;
+}
+
+/* ── Era section header ─────────────────────────────────────────── */
+.era-section-header {
+  position: sticky;
+  top: 56px;
+  z-index: 20;
   background: #f8f6f0;
-  cursor: grab;
-  -webkit-overflow-scrolling: touch;
-}
-.tl-scroll-container:active { cursor: grabbing; }
-
-/* ── Canvas ─────────────────────────────────────────────────────── */
-.tl-canvas {
-  position: relative;
-  height: 380px;
-  padding-top: 170px; /* space for above-cards */
-  padding-bottom: 40px;
+  padding: 0.75rem 0 0.4rem;
+  margin-top: 0.5rem;
 }
 
-/* ── Era backgrounds ─────────────────────────────────────────────── */
-.era-backgrounds {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-}
-.era-bg {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+.era-header-inner {
   display: flex;
-  align-items: flex-start;
-  padding-top: 6px;
-  padding-left: 6px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.9rem;
+  background: var(--era-bg);
+  border-left: 4px solid var(--era-color);
+  border-radius: 0 8px 8px 0;
 }
-.era-label {
-  font-size: 0.7rem;
-  font-weight: 700;
+
+.era-header-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--era-color);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.85;
-  white-space: nowrap;
+  letter-spacing: 0.07em;
 }
 
-/* ── Events above the line ───────────────────────────────────────── */
-.events-above {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 170px; /* matches padding-top of canvas */
-  width: 100%;
-}
-.event-above {
-  position: absolute;
-  transform: translateX(-50%);
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.connector-line {
-  width: 1.5px;
-  height: 20px;
-  background: #d1d5db;
-  flex-shrink: 0;
-}
-
-/* ── The timeline line ───────────────────────────────────────────── */
-.tl-line {
-  position: absolute;
-  top: 170px;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: linear-gradient(90deg, #c9b99a 0%, #8B4513 30%, #5a2d00 60%, #1d4ed8 85%, #b45309 100%);
-  border-radius: 3px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-/* ── Year ticks ─────────────────────────────────────────────────── */
-.year-tick {
-  position: absolute;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  top: 0;
-}
-.tick-mark {
-  width: 1px;
-  height: 10px;
-  background: rgba(0,0,0,0.2);
-  margin-top: -2px;
-}
-.tick-mark.major { height: 14px; width: 1.5px; background: rgba(0,0,0,0.35); margin-top: -4px; }
-.tick-label {
-  font-size: 0.6rem;
-  color: rgba(0,0,0,0.4);
-  white-space: nowrap;
-  margin-top: 2px;
-}
-
-/* ── Event dots on the line ──────────────────────────────────────── */
-.event-dot-wrapper {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  z-index: 2;
-}
-.event-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2.5px solid white;
-  box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.event-dot-wrapper:hover .event-dot { transform: scale(1.4); }
-.event-dot.is-active { transform: scale(1.6); box-shadow: 0 0 0 3px rgba(0,0,0,0.3); }
-.event-dot.is-jubilee { width: 18px; height: 18px; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.3); }
-.event-dot.is-shemittah { border-color: #8b5cf6; }
-
-/* ── Events below the line ───────────────────────────────────────── */
-.events-below {
-  position: absolute;
-  top: 176px;
-  left: 0;
-  width: 100%;
-}
-.event-below {
-  position: absolute;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* ── Event cards ─────────────────────────────────────────────────── */
-.event-card {
-  background: white;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 0.5rem 0.7rem;
-  max-width: 130px;
-  min-width: 90px;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  border-top: 3px solid var(--cat-color);
-}
-.event-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  border-color: var(--cat-color);
-}
-.event-card.is-active {
-  border-color: var(--cat-color);
-  box-shadow: 0 0 0 2px var(--cat-color), 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 3;
-}
-.event-card.is-jubilee { border-top-color: #f59e0b; }
-.event-card.is-shemittah { border-top-color: #8b5cf6; }
-
-.badge {
-  display: inline-block;
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.2rem;
-}
-.jubilee-badge { background: #fef3c7; color: #92400e; }
-.shemittah-badge { background: #ede9fe; color: #5b21b6; }
-
-.card-title {
+.era-header-range {
   font-size: 0.72rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.era-header-count {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  background: white;
+  padding: 0.08rem 0.4rem;
+  border-radius: 8px;
   font-weight: 700;
-  color: #1f2937;
+  margin-left: auto;
+}
+
+/* ── Timeline item ──────────────────────────────────────────────── */
+.tl-item {
+  display: grid;
+  grid-template-columns: 76px 26px 1fr;
+}
+
+/* ── Year column ────────────────────────────────────────────────── */
+.item-year-col {
+  text-align: right;
+  padding: 9px 8px 0 0;
+}
+.item-am {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #8B4513;
+  white-space: nowrap;
   line-height: 1.3;
 }
-.card-year {
-  font-size: 0.65rem;
-  color: #6b7280;
-  margin-top: 0.2rem;
-  font-weight: 600;
+.item-bcad {
+  font-size: 0.6rem;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.3;
 }
 
-/* ── Year scale at bottom ────────────────────────────────────────── */
-.year-scale {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  width: 100%;
-}
-.scale-label {
-  position: absolute;
-  transform: translateX(-50%);
-  text-align: center;
-}
-.scale-year { font-size: 0.72rem; font-weight: 700; color: #374151; }
-.scale-bc { font-size: 0.62rem; color: #9ca3af; }
-
-/* ── Detail panel ────────────────────────────────────────────────── */
-.detail-panel {
-  flex-shrink: 0;
-  background: white;
-  border-top: 2px solid #e5e7eb;
-  padding: 1.25rem 2rem;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-}
-.detail-close {
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  color: #6b7280;
+/* ── Spine ──────────────────────────────────────────────────────── */
+.item-spine {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
 }
-.detail-close:hover { background: #e5e7eb; color: #111; }
 
-.detail-header { margin-bottom: 0.75rem; }
-.detail-badge-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem; align-items: center; }
-.detail-cat-badge {
+.spine-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--dot-color);
+  border: 2.5px solid white;
+  box-shadow: 0 0 0 2px var(--dot-color);
+  flex-shrink: 0;
+  margin-top: 9px;
+  z-index: 1;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.spine-dot.is-open {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 3px var(--dot-color), 0 0 10px rgba(0,0,0,0.12);
+}
+
+.spine-dot.is-jubilee {
+  width: 17px;
+  height: 17px;
+  background: #f59e0b;
+  box-shadow: 0 0 0 2.5px #f59e0b;
+  margin-top: 7px;
+}
+
+.spine-dot.is-shemittah {
+  box-shadow: 0 0 0 2px #8b5cf6;
+}
+
+.spine-line {
+  flex: 1;
+  width: 2px;
+  background: #d1d5db;
+  min-height: 6px;
+}
+
+/* ── Card column ────────────────────────────────────────────────── */
+.item-card-col {
+  padding: 0 0 10px 9px;
+}
+
+.tl-card {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-left: 3px solid var(--cat-color);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tl-card:hover {
+  border-color: var(--cat-color);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  transform: translateX(2px);
+}
+
+.tl-card.expanded {
+  border-color: var(--cat-color);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+  background: #fafafa;
+  transform: none;
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.card-main { flex: 1; min-width: 0; }
+
+.card-badges {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.18rem;
+}
+
+.cat-badge {
   display: inline-block;
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
+  padding: 0.08rem 0.42rem;
+  border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.detail-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #111827;
-  margin: 0;
+
+.spec-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.08rem 0.42rem;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.detail-body { display: flex; flex-direction: column; gap: 0.75rem; }
+.jubilee-badge  { background: #fef3c7; color: #92400e; }
+.shemittah-badge { background: #ede9fe; color: #5b21b6; }
 
-.detail-years {
+.card-title {
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.35;
+}
+
+.expand-chevron {
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-top: 3px;
+  transition: transform 0.25s ease, color 0.2s;
+}
+.expand-chevron.open {
+  transform: rotate(180deg);
+  color: var(--cat-color, #6b7280);
+}
+
+/* ── Expanded details ───────────────────────────────────────────── */
+.card-details {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.detail-years-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
 }
-.detail-year-block { text-align: center; }
-.year-value { font-size: 1.1rem; font-weight: 800; color: #111827; }
-.year-sub { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-.detail-year-sep { color: #d1d5db; font-size: 1.5rem; font-weight: 300; }
-.detail-year-block.am .year-value { color: #8B4513; }
-.detail-year-block.bc .year-value { color: #1d4ed8; }
-.detail-year-block.date .year-value { color: #059669; }
 
-.detail-description {
-  font-size: 0.9rem;
+.detail-year-block { text-align: center; }
+
+.dy-value { font-size: 0.95rem; font-weight: 800; color: #111827; }
+.dy-value.am  { color: #8B4513; }
+.dy-value.bc  { color: #1d4ed8; }
+.dy-value.heb { color: #059669; }
+
+.dy-label {
+  font-size: 0.58rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dy-sep { color: #d1d5db; font-size: 1.2rem; font-weight: 300; }
+
+.detail-desc {
+  font-size: 0.86rem;
   color: #374151;
   line-height: 1.6;
   margin: 0;
 }
 
-.detail-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; }
-.meta-item { display: flex; flex-direction: column; gap: 0.15rem; }
-.meta-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-.meta-value { font-size: 0.85rem; font-weight: 600; color: #1f2937; }
-.jubilee-ref { font-family: monospace; color: #7c3aed; }
-.bible-ref { color: #8B4513; }
+.detail-meta-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
 
-.detail-nav {
+.meta-chip {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f3f4f6;
-}
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
+  flex-direction: column;
+  gap: 0.08rem;
   background: #f9fafb;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 0.4rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.15s;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  padding: 0.28rem 0.6rem;
 }
-.nav-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #9ca3af; }
-.nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.nav-count { font-size: 0.8rem; color: #9ca3af; flex: 1; text-align: center; }
+
+.meta-chip-label {
+  font-size: 0.58rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.meta-chip-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.jubilee-val { font-family: monospace; color: #7c3aed; }
+.bible-val   { color: #8B4513; }
+
+/* ── Expand transition ──────────────────────────────────────────── */
+.expand-fade-enter-active { transition: opacity 0.22s ease, transform 0.22s ease; }
+.expand-fade-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.expand-fade-enter-from, .expand-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 
 /* ── Empty state ─────────────────────────────────────────────────── */
 .empty-state {
@@ -930,14 +791,14 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 5rem 2rem;
   gap: 1rem;
   color: #6b7280;
 }
 .empty-icon { font-size: 2.5rem; }
 .empty-state p { font-size: 1rem; margin: 0; }
 .reset-btn {
-  padding: 0.6rem 1.5rem;
+  padding: 0.55rem 1.4rem;
   background: #8B4513;
   color: white;
   border: none;
@@ -948,46 +809,9 @@ onMounted(async () => {
 }
 .reset-btn:hover { background: #723a10; }
 
-/* ── Transitions ─────────────────────────────────────────────────── */
-.detail-fade-enter-active, .detail-fade-leave-active { transition: all 0.3s ease; }
-.detail-fade-enter-from, .detail-fade-leave-to { opacity: 0; transform: translateY(20px); }
-
+/* ── Legend transition ───────────────────────────────────────────── */
 .legend-fade-enter-active, .legend-fade-leave-active { transition: all 0.2s ease; }
 .legend-fade-enter-from, .legend-fade-leave-to { opacity: 0; max-height: 0; }
-
-/* ── Filter icon button ──────────────────────────────────────────── */
-.filter-icon-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: rgba(255,255,255,0.8);
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.1);
-  border: none;
-  transition: background 0.2s;
-}
-.filter-icon-btn:hover { background: rgba(255,255,255,0.2); color: white; }
-.filter-icon-btn.active { background: rgba(255,255,255,0.22); color: white; }
-.filter-count-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 700;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid #1a0a00;
-}
 
 /* ── Filter Modal ────────────────────────────────────────────────── */
 .filter-modal-overlay {
@@ -1016,17 +840,12 @@ onMounted(async () => {
   background: linear-gradient(135deg, #1a0a00 0%, #3b1a00 100%);
   color: white;
 }
-.filter-modal-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin: 0;
-}
+.filter-modal-title { font-size: 0.95rem; font-weight: 700; margin: 0; }
 .filter-modal-close {
   background: rgba(255,255,255,0.15);
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 28px; height: 28px;
   font-size: 0.75rem;
   cursor: pointer;
   color: white;
@@ -1121,21 +940,27 @@ onMounted(async () => {
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .tl-header { padding: 0.6rem 0.85rem; gap: 0.5rem; }
+  .tl-header { padding: 0.6rem 0.85rem; min-height: 50px; }
   .tl-title { font-size: 1rem; }
-  .tl-title-icon { font-size: 1rem; }
+  .tl-title-icon { font-size: 0.95rem; }
   .tl-subtitle { display: none; }
-  .back-link { font-size: 0.8rem; padding: 0.3rem 0.55rem; }
-  .zoom-label { min-width: 32px; font-size: 0.78rem; }
-  .legend-toggle { font-size: 0.78rem; padding: 0.3rem 0.55rem; }
+  .back-link { font-size: 0.78rem; padding: 0.3rem 0.5rem; }
+  .legend-toggle-label { display: none; }
+  .legend-toggle { padding: 0.3rem 0.5rem; }
   .filter-icon-label { display: none; }
-  .filter-icon-btn { padding: 0.35rem 0.55rem; }
+  .filter-icon-btn { padding: 0.3rem 0.5rem; }
+  .era-section-header { top: 50px; }
+  .tl-container { padding: 0.5rem 0.85rem 3rem; }
   .filter-modal-overlay { align-items: flex-end; padding: 0; }
   .filter-modal { border-radius: 20px 20px 0 0; max-width: 100%; }
-  .tl-scroll-container { height: 320px; }
-  .tl-canvas { height: 320px; }
-  .detail-panel { padding: 1rem; }
-  .detail-title { font-size: 1rem; }
-  .year-value { font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .tl-item { grid-template-columns: 62px 24px 1fr; }
+  .item-am { font-size: 0.62rem; }
+  .item-bcad { font-size: 0.56rem; }
+  .card-title { font-size: 0.82rem; }
+  .tl-card { padding: 0.5rem 0.7rem; }
+  .tl-container { padding: 0.25rem 0.65rem 3rem; }
 }
 </style>
