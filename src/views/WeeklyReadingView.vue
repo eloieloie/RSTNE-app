@@ -378,6 +378,27 @@ const currentCardRef = ref<HTMLElement | null>(null);
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
 const showAmModal = ref(false);
 
+function isBroadcastMode(): boolean {
+  try {
+    const saved = localStorage.getItem('rstne-settings');
+    return saved ? !!JSON.parse(saved).broadcastMode : false;
+  } catch { return false; }
+}
+
+function goToReading(bookSlug: string, chapter: number, verse?: number) {
+  if (isBroadcastMode()) {
+    router.push({
+      name: 'broadcast-params',
+      params: { bookName: bookSlug, chapterNumber: String(chapter), ...(verse ? { verseNumber: String(verse) } : {}) },
+    });
+  } else {
+    router.push({
+      name: 'book-chapter-verse',
+      params: { bookName: bookSlug, chapterNumber: String(chapter), ...(verse ? { verseNumber: String(verse) } : {}) },
+    });
+  }
+}
+
 interface HaftarahRef {
   label: string;
   bookSlug: string;
@@ -563,24 +584,12 @@ const parshasByMonth = computed(() => {
 });
 
 function navigateHaftarah(ref: HaftarahRef) {
-  router.push({
-    name: 'book-chapter-verse',
-    params: { bookName: ref.bookSlug, chapterNumber: String(ref.chapter), verseNumber: String(ref.verse) },
-  });
+  goToReading(ref.bookSlug, ref.chapter, ref.verse);
 }
 
 function navigate(parasha: Parasha, side: 'torah' | 'nc') {
   const reading = side === 'torah' ? parasha.torah : parasha.newCovenant;
-  router.push({
-    name: 'book-chapter-verse',
-    params: { bookName: reading.bookSlug, chapterNumber: String(reading.startChapter) },
-    state: {
-      parashaWeek: parasha.week,
-      parashaName: parasha.hebrewName,
-      parashaTorahText: parasha.torah.displayText,
-      parashaNcText: parasha.newCovenant.displayText,
-    },
-  });
+  goToReading(reading.bookSlug, reading.startChapter);
 }
 
 
