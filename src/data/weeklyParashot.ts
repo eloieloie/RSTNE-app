@@ -7,6 +7,7 @@ export interface ParashaReading {
 export interface Parasha {
   week: number;
   hebrewName: string;
+  meaning?: string;
   dssMonth: number;
   dssDay: number;
   note?: string;
@@ -18,6 +19,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 1,
     hebrewName: "Bareshith",
+    meaning: '"In the beginning" — the first word of Genesis',
     dssMonth: 1, dssDay: 4,
     torah: { displayText: "Genesis 1–4", bookSlug: "genesis", startChapter: 1 },
     newCovenant: { displayText: "Matthew 1–6", bookSlug: "matthew", startChapter: 1 },
@@ -25,6 +27,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 2,
     hebrewName: "Ahdahm v'Chawa",
+    meaning: '"Adam and Eve (Chavah)" — Ahdahm = "man/humanity from red earth"; Chawa = "life-giver"',
     dssMonth: 1, dssDay: 11,
     note: "Read on First Yom of Unleavened Bread",
     torah: { displayText: "Genesis 5–8", bookSlug: "genesis", startChapter: 5 },
@@ -33,6 +36,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 3,
     hebrewName: "Vayevarech",
+    meaning: '"And He blessed"',
     dssMonth: 1, dssDay: 18,
     note: "Yom Ha Bikkur · Read on Last Yom of Unleavened Bread",
     torah: { displayText: "Genesis 9–12", bookSlug: "genesis", startChapter: 9 },
@@ -41,6 +45,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 4,
     hebrewName: "Vayaal Avram",
+    meaning: '"And Abram went up" — Avram = "exalted father"',
     dssMonth: 1, dssDay: 25,
     note: "FFO Barley on 1M/26th",
     torah: { displayText: "Genesis 13–16", bookSlug: "genesis", startChapter: 13 },
@@ -49,6 +54,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 5,
     hebrewName: "Va'yhee Avram",
+    meaning: '"And Abram was/became"',
     dssMonth: 2, dssDay: 2,
     note: "Omer Count · FFO Wheat · 1st Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 17–20", bookSlug: "genesis", startChapter: 17 },
@@ -57,6 +63,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 6,
     hebrewName: "V'YAHUAH Paqad",
+    meaning: '"And YAHUAH visited/remembered" — paqad = to attend to, to appoint',
     dssMonth: 2, dssDay: 9,
     note: "Omer Count · FFO Wheat · 2nd Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 21–24", bookSlug: "genesis", startChapter: 21 },
@@ -65,6 +72,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 7,
     hebrewName: "Vayoseph Avraham",
+    meaning: '"And Abraham added/continued" — Avraham = "father of a multitude"',
     dssMonth: 2, dssDay: 16,
     note: "Omer Count · FFO Wheat · 3rd Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 25–28", bookSlug: "genesis", startChapter: 25 },
@@ -73,6 +81,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 8,
     hebrewName: "Vayesah Yaaqov Raglav",
+    meaning: '"And Jacob lifted his feet" — Yaaqov = "he grasps the heel / supplanter"',
     dssMonth: 2, dssDay: 23,
     note: "Omer Count · FFO Wheat · 4th Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 29–32", bookSlug: "genesis", startChapter: 29 },
@@ -81,6 +90,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 9,
     hebrewName: "Vayesah Yaaqov Einav",
+    meaning: '"And Jacob lifted his eyes"',
     dssMonth: 2, dssDay: 30,
     note: "Omer Count · FFO Wheat · 5th Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 33–36", bookSlug: "genesis", startChapter: 33 },
@@ -89,6 +99,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 10,
     hebrewName: "Vayeshev",
+    meaning: '"And he dwelt/settled"',
     dssMonth: 3, dssDay: 7,
     note: "Omer Count · FFO Wheat · 6th Shabat / 1st Pentecost",
     torah: { displayText: "Genesis 37–40", bookSlug: "genesis", startChapter: 37 },
@@ -97,6 +108,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 11,
     hebrewName: "Miqeitz",
+    meaning: '"At the end of / After" — lit. "from the end"',
     dssMonth: 3, dssDay: 14,
     note: "Omer Count · FFO Wheat · 7th Shabat / 1st Pentecost (49th Yom)",
     torah: { displayText: "Genesis 41–44", bookSlug: "genesis", startChapter: 41 },
@@ -105,6 +117,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 12,
     hebrewName: "V'lo Yachol",
+    meaning: '"And he could not" — Joseph could not restrain himself',
     dssMonth: 3, dssDay: 21,
     note: "Omer Count · FFO Wine · 1st Shabat / 2nd Pentecost",
     torah: { displayText: "Genesis 45–48", bookSlug: "genesis", startChapter: 45 },
@@ -113,6 +126,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 13,
     hebrewName: "Vayiqra Yaaqov",
+    meaning: '"And Jacob called" — deathbed scene, Jacob calls his sons',
     dssMonth: 3, dssDay: 28,
     note: "Omer Count · FFO Wine · 2nd Shabat / 2nd Pentecost",
     torah: { displayText: "Genesis 49–50, Exodus 1–2", bookSlug: "genesis", startChapter: 49 },
@@ -121,6 +135,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 14,
     hebrewName: "U'Moshe Haya",
+    meaning: '"And Moses was" — Moshe = "drawn out (of water)"',
     dssMonth: 4, dssDay: 4,
     note: "Omer Count · FFO Wine · 3rd Shabat / 2nd Pentecost",
     torah: { displayText: "Exodus 3–6", bookSlug: "exodus", startChapter: 3 },
@@ -129,6 +144,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 15,
     hebrewName: "Re'eh Ne'tatecha",
+    meaning: '"See/Behold what I have planted/given you"',
     dssMonth: 4, dssDay: 11,
     note: "Omer Count · FFO Wine · 4th Shabat / 2nd Pentecost",
     torah: { displayText: "Exodus 7–10", bookSlug: "exodus", startChapter: 7 },
@@ -137,6 +153,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 16,
     hebrewName: "Od Nega Achad",
+    meaning: '"Yet one more plague" — the final plague before Exodus',
     dssMonth: 4, dssDay: 18,
     note: "Omer Count · FFO Wine · 5th Shabat / 2nd Pentecost",
     torah: { displayText: "Exodus 11–14", bookSlug: "exodus", startChapter: 11 },
@@ -145,6 +162,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 17,
     hebrewName: "Az Yashir Moshe",
+    meaning: '"Then Moses sang" — the Song of the Sea (Ex. 15)',
     dssMonth: 4, dssDay: 25,
     note: "Omer Count · FFO Wine · 6th Shabat / 2nd Pentecost",
     torah: { displayText: "Exodus 15–18", bookSlug: "exodus", startChapter: 15 },
@@ -153,6 +171,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 18,
     hebrewName: "Ba'Chodesh Ha'shlishi",
+    meaning: '"In the third month" — arrival at Sinai',
     dssMonth: 5, dssDay: 2,
     note: "Omer Count · FFO Wine · 7th Shabat / 2nd Pentecost · FFO Wine on 5M/3rd",
     torah: { displayText: "Exodus 19–22", bookSlug: "exodus", startChapter: 19 },
@@ -161,6 +180,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 19,
     hebrewName: "Lo Tisa",
+    meaning: '"You shall not take/lift" — 3rd commandment: do not take the Name in vain',
     dssMonth: 5, dssDay: 9,
     note: "Omer Count · FFO Olive Oil · 1st Shabat / 3rd Pentecost",
     torah: { displayText: "Exodus 23–26", bookSlug: "exodus", startChapter: 23 },
@@ -169,6 +189,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 20,
     hebrewName: "Hamizbe'ach",
+    meaning: '"The Altar"',
     dssMonth: 5, dssDay: 16,
     note: "Omer Count · FFO Olive Oil · 2nd Shabat / 3rd Pentecost",
     torah: { displayText: "Exodus 27–30", bookSlug: "exodus", startChapter: 27 },
@@ -177,6 +198,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 21,
     hebrewName: "Betzalel",
+    meaning: '"In the shadow of El (God)" — master craftsman of the Tabernacle',
     dssMonth: 5, dssDay: 23,
     note: "Omer Count · FFO Olive Oil · 3rd Shabat / 3rd Pentecost",
     torah: { displayText: "Exodus 31–34", bookSlug: "exodus", startChapter: 31 },
@@ -185,6 +207,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 22,
     hebrewName: "Vayakel Moshe",
+    meaning: '"And Moses assembled/gathered"',
     dssMonth: 5, dssDay: 30,
     note: "Omer Count · FFO Olive Oil · 4th Shabat / 3rd Pentecost",
     torah: { displayText: "Exodus 35–38", bookSlug: "exodus", startChapter: 35 },
@@ -193,6 +216,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 23,
     hebrewName: "Oo-Min Ha'tchelet",
+    meaning: '"And from the blue/violet (thread)" — the blue thread of the Tabernacle',
     dssMonth: 6, dssDay: 7,
     note: "Omer Count · FFO Olive Oil · 5th Shabat / 3rd Pentecost",
     torah: { displayText: "Exodus 39–40, Leviticus 1–2", bookSlug: "exodus", startChapter: 39 },
@@ -201,6 +225,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 24,
     hebrewName: "V'im Zevach Shlamim",
+    meaning: '"And if a peace/fellowship offering" — shlamim from shalom = wholeness, peace',
     dssMonth: 6, dssDay: 14,
     note: "Omer Count · FFO Olive Oil · 6th Shabat / 3rd Pentecost",
     torah: { displayText: "Leviticus 3–6", bookSlug: "leviticus", startChapter: 3 },
@@ -209,6 +234,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 25,
     hebrewName: "Torat Ha-Asham",
+    meaning: '"The instruction of the guilt offering" — asham = guilt/trespass',
     dssMonth: 6, dssDay: 21,
     note: "Omer Count · FFO Olive Oil · 7th Shabat / 3rd Pentecost · FFO Olive Oil on 6M/22nd",
     torah: { displayText: "Leviticus 7–10", bookSlug: "leviticus", startChapter: 7 },
@@ -217,6 +243,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 26,
     hebrewName: "Zot Hachaya",
+    meaning: '"This is the living creature" — dietary law distinctions',
     dssMonth: 6, dssDay: 28,
     note: "FFO Wood on 6M/29th",
     torah: { displayText: "Leviticus 11–14", bookSlug: "leviticus", startChapter: 11 },
@@ -225,6 +252,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 27,
     hebrewName: "Ki Yeyeh Zav",
+    meaning: '"When a man has a discharge" — bodily purity laws',
     dssMonth: 7, dssDay: 4,
     torah: { displayText: "Leviticus 15–18", bookSlug: "leviticus", startChapter: 15 },
     newCovenant: { displayText: "Hebrews 1–5", bookSlug: "hebrews", startChapter: 1 },
@@ -232,6 +260,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 28,
     hebrewName: "Kedoshim Teeh'Yu",
+    meaning: '"You shall be holy" — the holiness code',
     dssMonth: 7, dssDay: 11,
     torah: { displayText: "Leviticus 19–22", bookSlug: "leviticus", startChapter: 19 },
     newCovenant: { displayText: "Hebrews 6–13", bookSlug: "hebrews", startChapter: 6 },
@@ -239,6 +268,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 29,
     hebrewName: "Moadei YaHUaH",
+    meaning: '"The appointed times/feasts of YAHUAH" — moadim = divine appointments',
     dssMonth: 7, dssDay: 18,
     torah: { displayText: "Leviticus 23–26", bookSlug: "leviticus", startChapter: 23 },
     newCovenant: { displayText: "1 Peter 1–5", bookSlug: "first-peter", startChapter: 1 },
@@ -246,6 +276,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 30,
     hebrewName: "Yaflee Nehder",
+    meaning: '"Who makes a special/extraordinary vow"',
     dssMonth: 7, dssDay: 25,
     torah: { displayText: "Leviticus 27, Numbers 1–3", bookSlug: "leviticus", startChapter: 27 },
     newCovenant: { displayText: "2 Peter 1–3", bookSlug: "second-peter", startChapter: 1 },
@@ -253,6 +284,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 31,
     hebrewName: "Nasa Et Rosh",
+    meaning: '"Lift up the head" — idiom for taking a census',
     dssMonth: 8, dssDay: 2,
     torah: { displayText: "Numbers 4–7", bookSlug: "numbers", startChapter: 4 },
     newCovenant: { displayText: "1 John 1–5", bookSlug: "first-john", startChapter: 1 },
@@ -260,6 +292,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 32,
     hebrewName: "Baha'Alotcha",
+    meaning: '"When you set up/raise" — setting up the lamps of the menorah',
     dssMonth: 8, dssDay: 9,
     torah: { displayText: "Numbers 8–10", bookSlug: "numbers", startChapter: 8 },
     newCovenant: { displayText: "2 John, 3 John & Jude", bookSlug: "second-john", startChapter: 1 },
@@ -267,6 +300,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 33,
     hebrewName: "Vayehee Ha'Am",
+    meaning: '"And the people were/became" — the people complained',
     dssMonth: 8, dssDay: 16,
     torah: { displayText: "Numbers 11–14", bookSlug: "numbers", startChapter: 11 },
     newCovenant: { displayText: "Romans 1–5", bookSlug: "romans", startChapter: 1 },
@@ -274,6 +308,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 34,
     hebrewName: "Kee Tavo'oo",
+    meaning: '"When you come/enter" — entering the Land',
     dssMonth: 8, dssDay: 23,
     torah: { displayText: "Numbers 15–18", bookSlug: "numbers", startChapter: 15 },
     newCovenant: { displayText: "Romans 6–10", bookSlug: "romans", startChapter: 6 },
@@ -281,6 +316,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 35,
     hebrewName: "Zot Chukat HaTorah",
+    meaning: '"This is the statute of the Torah" — the red heifer ordinance',
     dssMonth: 8, dssDay: 30,
     torah: { displayText: "Numbers 19–22", bookSlug: "numbers", startChapter: 19 },
     newCovenant: { displayText: "Romans 11–13", bookSlug: "romans", startChapter: 11 },
@@ -288,6 +324,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 36,
     hebrewName: "Balak",
+    meaning: 'Moabite king\'s name; means "he devastated / he emptied"',
     dssMonth: 9, dssDay: 7,
     torah: { displayText: "Numbers 23–26", bookSlug: "numbers", startChapter: 23 },
     newCovenant: { displayText: "Romans 14–16", bookSlug: "romans", startChapter: 14 },
@@ -295,6 +332,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 37,
     hebrewName: "Banot Tzelaphachad",
+    meaning: '"The daughters of Zelophehad" — Tzelaphachad = "shadow of fear"',
     dssMonth: 9, dssDay: 14,
     torah: { displayText: "Numbers 27–30", bookSlug: "numbers", startChapter: 27 },
     newCovenant: { displayText: "1 Corinthians 1–5", bookSlug: "first-corinthians", startChapter: 1 },
@@ -302,6 +340,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 38,
     hebrewName: "N'kam Nikmat B'nai Yasrahal",
+    meaning: '"Take vengeance for the children of Yasrahal (Israel)"',
     dssMonth: 9, dssDay: 21,
     torah: { displayText: "Numbers 31–34", bookSlug: "numbers", startChapter: 31 },
     newCovenant: { displayText: "1 Corinthians 6–10", bookSlug: "first-corinthians", startChapter: 6 },
@@ -309,6 +348,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 39,
     hebrewName: "V'nat'nu LaLewiyim",
+    meaning: '"And they shall give to the Levites" — Levi = "joined/attached"',
     dssMonth: 9, dssDay: 28,
     torah: { displayText: "Numbers 35–36, Deuteronomy 1–2", bookSlug: "numbers", startChapter: 35 },
     newCovenant: { displayText: "1 Corinthians 11–16", bookSlug: "first-corinthians", startChapter: 11 },
@@ -316,6 +356,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 40,
     hebrewName: "Derech HaBashan",
+    meaning: '"The road/way of Bashan" — Bashan = fertile highland region east of Jordan',
     dssMonth: 10, dssDay: 4,
     torah: { displayText: "Deuteronomy 3–6", bookSlug: "deuteronomy", startChapter: 3 },
     newCovenant: { displayText: "2 Corinthians 1–5", bookSlug: "second-corinthians", startChapter: 1 },
@@ -323,6 +364,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 41,
     hebrewName: "Ki Yeviyacha",
+    meaning: '"When He brings you" — entering the land of promise',
     dssMonth: 10, dssDay: 11,
     torah: { displayText: "Deuteronomy 7–10", bookSlug: "deuteronomy", startChapter: 7 },
     newCovenant: { displayText: "2 Corinthians 6–10", bookSlug: "second-corinthians", startChapter: 6 },
@@ -330,6 +372,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 42,
     hebrewName: "V'Ahavtah",
+    meaning: '"And you shall love" — core of the Shema, "love YAHUAH your God"',
     dssMonth: 10, dssDay: 18,
     torah: { displayText: "Deuteronomy 11–14", bookSlug: "deuteronomy", startChapter: 11 },
     newCovenant: { displayText: "2 Corinthians 11–13", bookSlug: "second-corinthians", startChapter: 11 },
@@ -337,6 +380,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 43,
     hebrewName: "Miqetz",
+    meaning: '"At the end of / After" — same root as week 11',
     dssMonth: 10, dssDay: 25,
     torah: { displayText: "Deuteronomy 15–18", bookSlug: "deuteronomy", startChapter: 15 },
     newCovenant: { displayText: "Galatians 1–6", bookSlug: "galatians", startChapter: 1 },
@@ -344,6 +388,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 44,
     hebrewName: "Ki Yachrit",
+    meaning: '"When He cuts off/destroys" — the nations before Israel',
     dssMonth: 11, dssDay: 2,
     torah: { displayText: "Deuteronomy 19–22", bookSlug: "deuteronomy", startChapter: 19 },
     newCovenant: { displayText: "Ephesians 1–6", bookSlug: "ephesians", startChapter: 1 },
@@ -351,6 +396,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 45,
     hebrewName: "Yikach",
+    meaning: '"He shall take" — instructions about marriage/relationships',
     dssMonth: 11, dssDay: 9,
     torah: { displayText: "Deuteronomy 23–26", bookSlug: "deuteronomy", startChapter: 23 },
     newCovenant: { displayText: "Philippians 1–4", bookSlug: "philippians", startChapter: 1 },
@@ -358,6 +404,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 46,
     hebrewName: "Vayitzav",
+    meaning: '"And he commanded" — Moses\' final charges',
     dssMonth: 11, dssDay: 16,
     torah: { displayText: "Deuteronomy 27–30", bookSlug: "deuteronomy", startChapter: 27 },
     newCovenant: { displayText: "Colossians 1–4", bookSlug: "colossians", startChapter: 1 },
@@ -365,6 +412,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 47,
     hebrewName: "Vayelech",
+    meaning: '"And he went" — Moses went and spoke to Israel',
     dssMonth: 11, dssDay: 23,
     torah: { displayText: "Deuteronomy 31–32", bookSlug: "deuteronomy", startChapter: 31 },
     newCovenant: { displayText: "1 Thessalonians 1–5", bookSlug: "first-thessalonians", startChapter: 1 },
@@ -372,6 +420,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 48,
     hebrewName: "V'Zot HaBracha",
+    meaning: '"And this is the blessing" — Moses\' final blessing over the tribes',
     dssMonth: 11, dssDay: 30,
     torah: { displayText: "Deuteronomy 33–34", bookSlug: "deuteronomy", startChapter: 33 },
     newCovenant: { displayText: "2 Thessalonians 1–3 & Philemon", bookSlug: "second-thessalonians", startChapter: 1 },
@@ -379,6 +428,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 49,
     hebrewName: "V'Yavo Yoseph",
+    meaning: '"And Joseph came" — Yoseph = "He (God) adds/increases"',
     dssMonth: 12, dssDay: 7,
     torah: { displayText: "Genesis 47–50", bookSlug: "genesis", startChapter: 47 },
     newCovenant: { displayText: "1 Timothy 1–6", bookSlug: "first-timothy", startChapter: 1 },
@@ -386,6 +436,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 50,
     hebrewName: "HaChodesh Hazeh",
+    meaning: '"This month" — the sanctification of the new month, Passover command',
     dssMonth: 12, dssDay: 14,
     torah: { displayText: "Exodus 12–13, Leviticus 25–26", bookSlug: "exodus", startChapter: 12 },
     newCovenant: { displayText: "Titus 1–3", bookSlug: "titus", startChapter: 1 },
@@ -393,6 +444,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 51,
     hebrewName: "Vayisu",
+    meaning: '"And they journeyed/set out" — the wilderness wanderings',
     dssMonth: 12, dssDay: 21,
     torah: { displayText: "Numbers 22–25", bookSlug: "numbers", startChapter: 22 },
     newCovenant: { displayText: "Revelation 9–13", bookSlug: "revelation", startChapter: 9 },
@@ -400,6 +452,7 @@ export const WEEKLY_PARASHOT: Parasha[] = [
   {
     week: 52,
     hebrewName: "Shema",
+    meaning: '"Hear! / Listen!" — the foundational declaration of faith',
     dssMonth: 12, dssDay: 28,
     torah: { displayText: "Deuteronomy 4–6 & 31–34", bookSlug: "deuteronomy", startChapter: 4 },
     newCovenant: { displayText: "Revelation 14–22", bookSlug: "revelation", startChapter: 14 },

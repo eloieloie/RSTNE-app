@@ -39,13 +39,136 @@
           DSS Today: {{ dssToday.month }}M / {{ dssToday.day }}th · Day {{ dssToday.dayOfYear }} of 364 · Week {{ currentWeek }}
         </div>
 
-        <div class="am-jubilee-badge">
-          <span class="am-badge-label">Anno Mundi</span>
-          <span class="am-badge-year">AM {{ currentDSSYear }}</span>
-          <span class="am-badge-sep">·</span>
-          <span class="am-badge-label">Jubilee Ref</span>
-          <span class="am-badge-jubilee">{{ currentJubileeRef }}</span>
+        <div class="am-jubilee-row">
+          <div class="am-jubilee-badge">
+            <span class="am-badge-label">Anno Mundi</span>
+            <span class="am-badge-year">AM {{ currentDSSYear }}</span>
+            <span class="am-badge-sep">·</span>
+            <span class="am-badge-label">Jubilee Ref</span>
+            <span class="am-badge-jubilee">{{ currentJubileeRef }}</span>
+          </div>
+          <button class="info-icon-btn" @click="showAmModal = true" title="How to read these dates">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="8"></line>
+              <line x1="12" y1="12" x2="12" y2="16"></line>
+            </svg>
+          </button>
         </div>
+
+        <!-- AM & Jubilee Ref Info Modal -->
+        <Teleport to="body">
+          <div v-if="showAmModal" class="am-modal-overlay" @click.self="showAmModal = false">
+            <div class="am-modal">
+              <div class="am-modal-header">
+                <h2>Understanding AM &amp; Jubilee Ref</h2>
+                <button class="am-modal-close" @click="showAmModal = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="am-modal-body">
+
+                <section class="info-section">
+                  <h3>Anno Mundi (AM)</h3>
+                  <p><strong>Anno Mundi</strong> means <em>"Year of the World"</em> — it counts years from Creation (AM 1 = 3925 BC on the Gregorian calendar).</p>
+                  <div class="formula-box">
+                    <span class="formula-label">Formula</span>
+                    <code>AM Year = Gregorian year + 3925</code>
+                  </div>
+                  <p class="example-text">So today's DSS year <strong>{{ currentDSSYear }}</strong> = <strong>{{ currentDSSYear - 3925 }}</strong> AD + 3925 = AM {{ currentDSSYear }}.</p>
+                </section>
+
+                <section class="info-section">
+                  <h3>Jubilee Reference</h3>
+                  <p>The Jubilee calendar divides time into nested cycles:</p>
+                  <div class="cycle-list">
+                    <div class="cycle-item">
+                      <span class="cycle-badge">Y</span>
+                      <div><strong>Year in Shemittah</strong> — 1–7 (every 7th year is a Shemittah / Sabbatical year)</div>
+                    </div>
+                    <div class="cycle-item">
+                      <span class="cycle-badge">S</span>
+                      <div><strong>Shemittah cycle</strong> — 1–7 within the Jubilee (7 × 7 = 49 years)</div>
+                    </div>
+                    <div class="cycle-item">
+                      <span class="cycle-badge">J</span>
+                      <div><strong>Jubilee</strong> — every 50th year is declared holy (Lev 25:10)</div>
+                    </div>
+                    <div class="cycle-item">
+                      <span class="cycle-badge">O</span>
+                      <div><strong>Onah</strong> — a 500-year era; there are multiple Onahs in history</div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="info-section">
+                  <h3>How to Read the Ref Code</h3>
+                  <div class="ref-example-box">
+                    <span class="ref-code">{{ currentJubileeRef }}</span>
+                    <span class="ref-arrow">← Today</span>
+                  </div>
+                  <p>Reading left to right — the smallest cycle first:</p>
+                  <ul class="reading-list">
+                    <li v-if="currentJubileeRef.startsWith('Y')">
+                      <strong>Y{{ currentJubileeRef.match(/Y(\d+)/)?.[1] }}</strong> — year {{ currentJubileeRef.match(/Y(\d+)/)?.[1] }} of the current 7-year Shemittah cycle
+                    </li>
+                    <li v-if="currentJubileeRef.includes('S')">
+                      <strong>S{{ currentJubileeRef.match(/S(\d+)/)?.[1] }}</strong> — Shemittah cycle {{ currentJubileeRef.match(/S(\d+)/)?.[1] }} within the current Jubilee
+                    </li>
+                    <li>
+                      <strong>J{{ currentJubileeRef.match(/J(\d+)/)?.[1] }}</strong> — Jubilee {{ currentJubileeRef.match(/J(\d+)/)?.[1] }} of the current Onah
+                    </li>
+                    <li>
+                      <strong>O{{ currentJubileeRef.match(/O(\d+)/)?.[1] }}</strong> — Onah {{ currentJubileeRef.match(/O(\d+)/)?.[1] }} (500-year era)
+                    </li>
+                  </ul>
+                </section>
+
+                <section class="info-section">
+                  <h3>Calculation Formula</h3>
+                  <div class="formula-steps">
+                    <div class="formula-step">
+                      <span class="step-num">1</span>
+                      <code>onah = ⌈AM ÷ 500⌉</code>
+                      <span class="step-note">500-year era</span>
+                    </div>
+                    <div class="formula-step">
+                      <span class="step-num">2</span>
+                      <code>inOnah = AM − (onah − 1) × 500</code>
+                      <span class="step-note">year within the Onah</span>
+                    </div>
+                    <div class="formula-step">
+                      <span class="step-num">3</span>
+                      <code>jubilee = ⌈inOnah ÷ 50⌉</code>
+                      <span class="step-note">which Jubilee cycle</span>
+                    </div>
+                    <div class="formula-step">
+                      <span class="step-num">4</span>
+                      <code>inJubilee = inOnah − (jubilee − 1) × 50</code>
+                      <span class="step-note">year within Jubilee (1–50)</span>
+                    </div>
+                    <div class="formula-step">
+                      <span class="step-num">5</span>
+                      <code>shemittah = ⌈inJubilee ÷ 7⌉</code>
+                      <span class="step-note">which 7-year cycle</span>
+                    </div>
+                    <div class="formula-step">
+                      <span class="step-num">6</span>
+                      <code>Y = inJubilee − (shemittah − 1) × 7</code>
+                      <span class="step-note">year in the Shemittah</span>
+                    </div>
+                  </div>
+                  <p class="note-text">If <code>inJubilee = 50</code>, that year itself is the Jubilee year and is written simply as <code>J{{ currentJubileeRef.match(/J(\d+)/)?.[1] }} O{{ currentJubileeRef.match(/O(\d+)/)?.[1] }}</code> (no Y or S).</p>
+                </section>
+
+              </div>
+            </div>
+          </div>
+        </Teleport>
       </div>
     </div>
 
@@ -67,6 +190,13 @@
         </svg>
         By Month
       </button>
+      <button class="tab-btn tab-btn--purple" :class="{ active: activeTab === 'roshChodesh' }" @click="activeTab = 'roshChodesh'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2z"></path>
+          <path d="M12 2a6.5 6.5 0 0 0 0 13A6.5 6.5 0 0 0 12 2z" fill="currentColor" opacity="0.25"></path>
+        </svg>
+        Rosh Chodesh
+      </button>
     </div>
 
     <!-- Weekly Grid -->
@@ -85,6 +215,7 @@
             <span v-if="isCurrentYear && parasha.week === currentWeek" class="this-week-label">This Week</span>
           </div>
           <h3 class="hebrew-name">{{ parasha.hebrewName }}</h3>
+          <div v-if="parasha.meaning" class="parasha-meaning">{{ parasha.meaning }}</div>
           <div v-if="parasha.note" class="parasha-note">{{ parasha.note }}</div>
         </div>
 
@@ -156,6 +287,7 @@
                 <span v-if="isCurrentYear && parasha.week === currentWeek" class="this-week-label">This Week</span>
               </div>
               <h3 class="hebrew-name">{{ parasha.hebrewName }}</h3>
+              <div v-if="parasha.meaning" class="parasha-meaning">{{ parasha.meaning }}</div>
               <div v-if="parasha.note" class="parasha-note">{{ parasha.note }}</div>
             </div>
 
@@ -192,6 +324,47 @@
       </div>
     </div>
 
+    <!-- Rosh Chodesh — 12 Month Prophetic Readings -->
+    <div v-if="activeTab === 'roshChodesh'" class="rosh-chodesh-container">
+      <div class="rosh-chodesh-intro">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2z"></path>
+          <path d="M12 2a6.5 6.5 0 0 0 0 13A6.5 6.5 0 0 0 12 2z"></path>
+        </svg>
+        Chodesh · New Month Yom Haftarah — Readings From the Prophets · Monthly Portions
+      </div>
+
+      <div class="rosh-chodesh-grid">
+        <div
+          v-for="entry in MONTHLY_HAFTARAH"
+          :key="entry.month"
+          class="rc-card"
+          :class="{ 'rc-card--current': isCurrentYear && entry.month === dssToday.month }"
+        >
+          <div class="rc-card-header">
+            <span class="rc-month-badge">{{ entry.month }}M</span>
+            <span class="rc-month-name">{{ DSS_MONTH_NAMES[entry.month] }}</span>
+            <span v-if="isCurrentYear && entry.month === dssToday.month" class="rc-current-pill">This Month</span>
+          </div>
+
+          <div class="rc-refs">
+            <button
+              v-for="(ref, i) in entry.refs"
+              :key="i"
+              class="rc-ref-btn"
+              @click="navigateHaftarah(ref)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+              {{ ref.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -202,7 +375,72 @@ import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha } from '@/data/weeklyPar
 
 const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);
-const activeTab = ref<'weekly' | 'byMonth'>('weekly');
+const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
+const showAmModal = ref(false);
+
+interface HaftarahRef {
+  label: string;
+  bookSlug: string;
+  chapter: number;
+  verse: number;
+}
+
+interface MonthlyHaftarah {
+  month: number;
+  refs: HaftarahRef[];
+}
+
+const MONTHLY_HAFTARAH: MonthlyHaftarah[] = [
+  { month: 1,  refs: [
+    { label: 'Yeshayahu-Isaiah 42:5–43:10',    bookSlug: 'isaiah',     chapter: 42, verse: 5  },
+    { label: 'Yirmeyahu-Jeremiah 46:13–28',     bookSlug: 'jeremiah',   chapter: 46, verse: 13 },
+  ]},
+  { month: 2,  refs: [
+    { label: 'Hoshea-Hosea 12:13–14:10',        bookSlug: 'hosea',      chapter: 12, verse: 13 },
+    { label: 'Yeshayahu-Isaiah 9:1–6',          bookSlug: 'isaiah',     chapter: 9,  verse: 1  },
+    { label: 'Yeshayahu-Isaiah 49:1–6',         bookSlug: 'isaiah',     chapter: 49, verse: 1  },
+  ]},
+  { month: 3,  refs: [
+    { label: 'Hoshea-Hosea 11:7–12:12',         bookSlug: 'hosea',      chapter: 11, verse: 7  },
+    { label: 'Yeshayahu-Isaiah 60:1–22',        bookSlug: 'isaiah',     chapter: 60, verse: 1  },
+  ]},
+  { month: 4,  refs: [
+    { label: 'Yechezkel-Ezekiel 37:15–28',      bookSlug: 'ezekiel',    chapter: 37, verse: 15 },
+    { label: 'Yeshayahu-Isaiah 61:1–63:9',      bookSlug: 'isaiah',     chapter: 61, verse: 1  },
+  ]},
+  { month: 5,  refs: [
+    { label: 'Shophtim-Judges 4:4–5:31',        bookSlug: 'judges',     chapter: 4,  verse: 4  },
+    { label: 'Hoshea-Hosea 14:2–10',            bookSlug: 'hosea',      chapter: 14, verse: 2  },
+  ]},
+  { month: 6,  refs: [
+    { label: 'Yeshayahu-Isaiah 6:1–7:14',       bookSlug: 'isaiah',     chapter: 6,  verse: 1  },
+    { label: 'Yahoshua-Joshua 1:1–18',          bookSlug: 'joshua',     chapter: 1,  verse: 1  },
+  ]},
+  { month: 7,  refs: [
+    { label: 'Yeshayahu-Isaiah 53:1–12',        bookSlug: 'isaiah',     chapter: 53, verse: 1  },
+    { label: 'Hoshea-Hosea 2:1–22',             bookSlug: 'hosea',      chapter: 2,  verse: 1  },
+  ]},
+  { month: 8,  refs: [
+    { label: 'Melechim Alef-First Kings 18:1–39', bookSlug: 'first-kings', chapter: 18, verse: 1  },
+    { label: 'Yirmeyahu-Jeremiah 16:19–17:14',  bookSlug: 'jeremiah',   chapter: 16, verse: 19 },
+  ]},
+  { month: 9,  refs: [
+    { label: 'Yeshayahu-Isaiah 43:21–44:23',    bookSlug: 'isaiah',     chapter: 43, verse: 21 },
+    { label: 'Ahmos-Amos 9:7–15',               bookSlug: 'amos',       chapter: 9,  verse: 7  },
+  ]},
+  { month: 10, refs: [
+    { label: 'Yirmeyahu-Jeremiah 34:8–22',      bookSlug: 'jeremiah',   chapter: 34, verse: 8  },
+    { label: 'Yirmeyahu-Jeremiah 31:31–34',     bookSlug: 'jeremiah',   chapter: 31, verse: 31 },
+  ]},
+  { month: 11, refs: [
+    { label: 'Micha-Mika 5:6–6:8',              bookSlug: 'micah',      chapter: 5,  verse: 6  },
+    { label: 'Yirmeyahu-Jeremiah 1:1–2:3',      bookSlug: 'jeremiah',   chapter: 1,  verse: 1  },
+  ]},
+  { month: 12, refs: [
+    { label: 'Yeshayahu-Isaiah 1:1–27',         bookSlug: 'isaiah',     chapter: 1,  verse: 1  },
+    { label: 'Yeshayahu-Isaiah 40:1–26',        bookSlug: 'isaiah',     chapter: 40, verse: 1  },
+  ]},
+];
 
 // DSS year = Gregorian year-start year + this offset (2026 → 5951)
 const DSS_YEAR_OFFSET = 3925;
@@ -323,6 +561,13 @@ const parshasByMonth = computed(() => {
   }
   return groups;
 });
+
+function navigateHaftarah(ref: HaftarahRef) {
+  router.push({
+    name: 'book-chapter-verse',
+    params: { bookName: ref.bookSlug, chapterNumber: String(ref.chapter), verseNumber: String(ref.verse) },
+  });
+}
 
 function navigate(parasha: Parasha, side: 'torah' | 'nc') {
   const reading = side === 'torah' ? parasha.torah : parasha.newCovenant;
@@ -633,6 +878,13 @@ onMounted(() => {
   line-height: 1.3;
 }
 
+.parasha-meaning {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
 .parasha-note {
   font-size: 0.82rem;
   font-weight: 500;
@@ -941,6 +1193,459 @@ onMounted(() => {
   .read-btn {
     font-size: 0.72rem;
     padding: 0.45rem 0.2rem;
+  }
+}
+
+/* AM / Jubilee info icon */
+.am-jubilee-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.info-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(139, 69, 19, 0.4);
+  background: rgba(255, 248, 220, 0.25);
+  color: #c0763a;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.info-icon-btn:hover {
+  background: #fff8dc;
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+/* Modal overlay */
+.am-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.am-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.am-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1.5px solid #e5e7eb;
+  background: linear-gradient(135deg, #3b1200, #8B4513);
+  border-radius: 16px 16px 0 0;
+}
+
+.am-modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.am-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.am-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.am-modal-body {
+  overflow-y: auto;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.info-section h3 {
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #8B4513;
+  margin: 0 0 0.6rem;
+}
+
+.info-section p {
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0 0 0.5rem;
+}
+
+.formula-box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: #FFF8DC;
+  border: 1px solid #DEB887;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.formula-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #92400e;
+  white-space: nowrap;
+}
+
+.formula-box code {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7c2d12;
+}
+
+.example-text {
+  font-size: 0.82rem !important;
+  color: #6b7280 !important;
+}
+
+.cycle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.cycle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.cycle-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #8B4513, #c0763a);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-family: monospace;
+}
+
+.cycle-item div {
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.ref-example-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  margin: 0.3rem 0 0.6rem;
+}
+
+.ref-code {
+  font-family: monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #7c2d12;
+  letter-spacing: 0.06em;
+}
+
+.ref-arrow {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.reading-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.reading-list li {
+  font-size: 0.85rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.formula-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.6rem;
+}
+
+.formula-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8B4513;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.formula-step code {
+  font-size: 0.78rem;
+  color: #7c2d12;
+  font-weight: 600;
+  flex: 1;
+}
+
+.step-note {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.note-text {
+  font-size: 0.82rem !important;
+  color: #6b7280 !important;
+  font-style: italic;
+}
+
+.note-text code {
+  font-style: normal;
+  background: #f3f4f6;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #374151;
+}
+
+@media (max-width: 480px) {
+  .am-modal-body {
+    padding: 1rem;
+  }
+
+  .formula-step {
+    flex-wrap: wrap;
+  }
+
+  .step-note {
+    white-space: normal;
+  }
+}
+
+/* ── Rosh Chodesh tab button variant ─────────────────────── */
+.tab-btn--purple:not(.active) {
+  border-color: #D8B4FE;
+  color: #6B21A8;
+}
+
+.tab-btn--purple:not(.active):hover {
+  border-color: #6B21A8;
+  background: #F3E8FF;
+  color: #6B21A8;
+}
+
+.tab-btn--purple.active {
+  background: linear-gradient(135deg, #6B21A8, #9333ea);
+}
+
+/* ── Rosh Chodesh view ───────────────────────────────────── */
+.rosh-chodesh-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rosh-chodesh-intro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6B21A8;
+  background: #F3E8FF;
+  border: 1px solid #D8B4FE;
+  border-radius: 50px;
+  padding: 0.5rem 1.2rem;
+  text-align: center;
+  align-self: center;
+}
+
+.rosh-chodesh-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.rc-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.rc-card:hover {
+  box-shadow: 0 6px 20px rgba(107, 33, 168, 0.12);
+  transform: translateY(-2px);
+}
+
+.rc-card--current {
+  border: 2px solid #6B21A8;
+  box-shadow: 0 0 0 4px rgba(107, 33, 168, 0.12), 0 4px 16px rgba(107, 33, 168, 0.15);
+}
+
+.rc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #6B21A8, #9333ea);
+  flex-wrap: wrap;
+}
+
+.rc-month-badge {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(255,255,255,0.2);
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  letter-spacing: 0.04em;
+}
+
+.rc-month-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+.rc-current-pill {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6B21A8;
+  background: #fff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+}
+
+.rc-refs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+}
+
+.rc-ref-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: #F3E8FF;
+  border: 1px solid #D8B4FE;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B21A8;
+  cursor: pointer;
+  line-height: 1.45;
+  transition: all 0.15s ease;
+}
+
+.rc-ref-btn svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #6B21A8;
+}
+
+.rc-ref-btn:hover {
+  background: #6B21A8;
+  border-color: #6B21A8;
+  color: #fff;
+}
+
+.rc-ref-btn:hover svg {
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  .rosh-chodesh-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .rosh-chodesh-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .rosh-chodesh-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
