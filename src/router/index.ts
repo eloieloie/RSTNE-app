@@ -12,6 +12,7 @@ import FindReplace from '@/views/admin/FindReplace.vue';
 import CompareBook from '@/views/admin/CompareBook.vue';
 import PushNotificationsAdmin from '@/views/admin/PushNotificationsAdmin.vue';
 import ManageTimelineEvents from '@/views/admin/ManageTimelineEvents.vue';
+import FeastsView from '@/views/FeastsView.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
 
@@ -67,6 +68,11 @@ const router = createRouter({
       path: '/timeline',
       name: 'timeline',
       component: TimelineView
+    },
+    {
+      path: '/feasts',
+      name: 'feasts',
+      component: FeastsView
     },
     {
       path: '/admin/timeline-events',

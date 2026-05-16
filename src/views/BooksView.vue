@@ -34,6 +34,12 @@
           </svg>
           Biblical Timeline
         </button>
+        <button class="feasts-btn" @click="router.push({ name: 'feasts' })">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Annual Feasts
+        </button>
       </div>
     </div>
     
@@ -425,14 +431,15 @@ onMounted(async () => {
 }
 
 .weekly-reading-btn,
-.timeline-btn {
+.timeline-btn,
+.feasts-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.55rem 1.2rem;
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 50px;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
@@ -457,6 +464,16 @@ onMounted(async () => {
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(26,10,0,0.45);
   background: linear-gradient(135deg, #0d0500, #2a1200);
+}
+
+.feasts-btn {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.35);
+}
+.feasts-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(5,150,105,0.45);
+  background: linear-gradient(135deg, #047857, #065f46);
 }
 
 .page-footer {
