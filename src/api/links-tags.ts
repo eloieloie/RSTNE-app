@@ -1,10 +1,8 @@
 import type { VerseLink, VerseLinkInsert, Tag, TagInsert, TagUpdate, VerseTagInsert } from '@/utils/collectionReferences';
+import { API_URL, API_HEADERS } from './client';
 
-const API_BASE_URL = 'https://rstne.eloi.in/api';
-
-// Verse Links API
 export async function getLinkedVerses(verseId: number): Promise<{ source: number[], target: number[] }> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}/links`);
+  const response = await fetch(`${API_URL}/verses/${verseId}/links`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch linked verses');
   }
@@ -12,7 +10,7 @@ export async function getLinkedVerses(verseId: number): Promise<{ source: number
 }
 
 export async function getLinkDetails(linkId: number): Promise<VerseLink> {
-  const response = await fetch(`${API_BASE_URL}/verse-links/${linkId}`);
+  const response = await fetch(`${API_URL}/verse-links/${linkId}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch link details');
   }
@@ -20,11 +18,9 @@ export async function getLinkDetails(linkId: number): Promise<VerseLink> {
 }
 
 export async function createVerseLink(linkData: VerseLinkInsert): Promise<{ link_id: number }> {
-  const response = await fetch(`${API_BASE_URL}/verse-links`, {
+  const response = await fetch(`${API_URL}/verse-links`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(linkData),
   });
   if (!response.ok) {
@@ -34,12 +30,9 @@ export async function createVerseLink(linkData: VerseLinkInsert): Promise<{ link
 }
 
 export async function deleteVerseLink(linkId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/verse-links/${linkId}`, {
+  const response = await fetch(`${API_URL}/verse-links/${linkId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -47,9 +40,8 @@ export async function deleteVerseLink(linkId: number): Promise<void> {
   }
 }
 
-// Tags API
 export async function getAllTags(): Promise<Tag[]> {
-  const response = await fetch(`${API_BASE_URL}/tags`);
+  const response = await fetch(`${API_URL}/tags`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch tags');
   }
@@ -57,7 +49,7 @@ export async function getAllTags(): Promise<Tag[]> {
 }
 
 export async function getTagById(tagId: number): Promise<Tag> {
-  const response = await fetch(`${API_BASE_URL}/tags/${tagId}`);
+  const response = await fetch(`${API_URL}/tags/${tagId}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch tag');
   }
@@ -65,11 +57,9 @@ export async function getTagById(tagId: number): Promise<Tag> {
 }
 
 export async function createTag(tag: TagInsert): Promise<{ tag_id: number }> {
-  const response = await fetch(`${API_BASE_URL}/tags`, {
+  const response = await fetch(`${API_URL}/tags`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(tag),
   });
   if (!response.ok) {
@@ -79,12 +69,9 @@ export async function createTag(tag: TagInsert): Promise<{ tag_id: number }> {
 }
 
 export async function updateTag(tagId: number, tag: TagUpdate): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
+  const response = await fetch(`${API_URL}/tags/${tagId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'PUT',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(tag),
   });
   if (!response.ok) {
@@ -93,12 +80,9 @@ export async function updateTag(tagId: number, tag: TagUpdate): Promise<void> {
 }
 
 export async function deleteTag(tagId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
+  const response = await fetch(`${API_URL}/tags/${tagId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -106,9 +90,8 @@ export async function deleteTag(tagId: number): Promise<void> {
   }
 }
 
-// Verse Tags API
 export async function getTagsByVerseId(verseId: number): Promise<Tag[]> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}/tags`);
+  const response = await fetch(`${API_URL}/verses/${verseId}/tags`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch tags for verse');
   }
@@ -116,11 +99,9 @@ export async function getTagsByVerseId(verseId: number): Promise<Tag[]> {
 }
 
 export async function linkTagToVerse(verseTagData: VerseTagInsert): Promise<{ verse_tag_id: number }> {
-  const response = await fetch(`${API_BASE_URL}/verse-tags`, {
+  const response = await fetch(`${API_URL}/verse-tags`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(verseTagData),
   });
   if (!response.ok) {
@@ -130,12 +111,9 @@ export async function linkTagToVerse(verseTagData: VerseTagInsert): Promise<{ ve
 }
 
 export async function unlinkTagFromVerse(verseTagId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/verse-tags/${verseTagId}`, {
+  const response = await fetch(`${API_URL}/verse-tags/${verseTagId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -144,24 +122,23 @@ export async function unlinkTagFromVerse(verseTagId: number): Promise<void> {
 }
 
 export async function getVersesByTagId(tagId: number): Promise<number[]> {
-  const response = await fetch(`${API_BASE_URL}/tags/${tagId}/verses`);
+  const response = await fetch(`${API_URL}/tags/${tagId}/verses`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch verses for tag');
   }
   return response.json();
 }
 
-// Verse search for linking
-export async function searchVerses(query: string): Promise<Array<{ 
-  verse_id: number, 
-  chapter_id: number, 
-  verse_index: number, 
+export async function searchVerses(query: string): Promise<Array<{
+  verse_id: number,
+  chapter_id: number,
+  verse_index: number,
   verse: string,
   chapter_number: string,
   book_name: string,
   book_index: number
 }>> {
-  const response = await fetch(`${API_BASE_URL}/verses/search?q=${encodeURIComponent(query)}`);
+  const response = await fetch(`${API_URL}/verses/search?q=${encodeURIComponent(query)}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to search verses');
   }

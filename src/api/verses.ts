@@ -1,8 +1,6 @@
 import type { Verse, VerseInsert, VerseUpdate } from '@/utils/collectionReferences';
+import { API_URL, API_HEADERS } from './client';
 
-const API_BASE_URL = 'https://rstne.eloi.in/api';
-
-// Types for data returned in verses endpoint
 export interface VerseLinkData {
   link_id: number;
   source_verse_id: number;
@@ -29,7 +27,7 @@ export interface VerseWithLinks extends Verse {
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const response = await fetch(`${API_BASE_URL}/chapters/${chapterId}/verses`);
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch verses');
   }
@@ -38,7 +36,7 @@ export async function getVersesByChapterId(chapterId: number): Promise<VerseWith
 }
 
 export async function getVerseById(verseId: number): Promise<Verse> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}`);
+  const response = await fetch(`${API_URL}/verses/${verseId}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch verse');
   }
@@ -46,11 +44,9 @@ export async function getVerseById(verseId: number): Promise<Verse> {
 }
 
 export async function createVerse(verse: VerseInsert): Promise<Verse> {
-  const response = await fetch(`${API_BASE_URL}/verses`, {
+  const response = await fetch(`${API_URL}/verses`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(verse),
   });
   if (!response.ok) {
@@ -60,12 +56,9 @@ export async function createVerse(verse: VerseInsert): Promise<Verse> {
 }
 
 export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<Verse> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}`, {
+  const response = await fetch(`${API_URL}/verses/${verseId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'PUT',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(verse),
   });
   if (!response.ok) {
@@ -75,12 +68,9 @@ export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<
 }
 
 export async function deleteVerse(verseId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}`, {
+  const response = await fetch(`${API_URL}/verses/${verseId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -96,7 +86,7 @@ export interface VerseSearchResult extends VerseWithLinks {
 }
 
 export async function searchVersesByText(searchText: string): Promise<VerseSearchResult[]> {
-  const response = await fetch(`${API_BASE_URL}/verses/search?q=${encodeURIComponent(searchText)}`);
+  const response = await fetch(`${API_URL}/verses/search?q=${encodeURIComponent(searchText)}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to search verses');
   }

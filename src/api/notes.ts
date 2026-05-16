@@ -1,15 +1,12 @@
 import type { Note, NoteInsert, NoteUpdate, VerseNoteInsert } from '@/utils/collectionReferences';
+import { API_URL, API_HEADERS } from './client';
 
-const API_BASE_URL = 'https://rstne.eloi.in/api';
-
-// Extended Note type with verse_note_id for deletion
 export interface NoteWithVerseNoteId extends Note {
   verse_note_id: number;
 }
 
-// Notes API
 export async function getAllNotes(): Promise<Note[]> {
-  const response = await fetch(`${API_BASE_URL}/notes`);
+  const response = await fetch(`${API_URL}/notes`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch notes');
   }
@@ -17,7 +14,7 @@ export async function getAllNotes(): Promise<Note[]> {
 }
 
 export async function getNoteById(noteId: number): Promise<Note> {
-  const response = await fetch(`${API_BASE_URL}/notes/${noteId}`);
+  const response = await fetch(`${API_URL}/notes/${noteId}`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch note');
   }
@@ -25,11 +22,9 @@ export async function getNoteById(noteId: number): Promise<Note> {
 }
 
 export async function createNote(note: NoteInsert): Promise<{ note_id: number }> {
-  const response = await fetch(`${API_BASE_URL}/notes`, {
+  const response = await fetch(`${API_URL}/notes`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(note),
   });
   if (!response.ok) {
@@ -39,12 +34,9 @@ export async function createNote(note: NoteInsert): Promise<{ note_id: number }>
 }
 
 export async function updateNote(noteId: number, note: NoteUpdate): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
+  const response = await fetch(`${API_URL}/notes/${noteId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'PUT',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(note),
   });
   if (!response.ok) {
@@ -53,12 +45,9 @@ export async function updateNote(noteId: number, note: NoteUpdate): Promise<void
 }
 
 export async function deleteNote(noteId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
+  const response = await fetch(`${API_URL}/notes/${noteId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -66,9 +55,8 @@ export async function deleteNote(noteId: number): Promise<void> {
   }
 }
 
-// Verse Notes API (linking notes to verses)
 export async function getNotesByVerseId(verseId: number): Promise<NoteWithVerseNoteId[]> {
-  const response = await fetch(`${API_BASE_URL}/verses/${verseId}/notes`);
+  const response = await fetch(`${API_URL}/verses/${verseId}/notes`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch notes for verse');
   }
@@ -76,11 +64,9 @@ export async function getNotesByVerseId(verseId: number): Promise<NoteWithVerseN
 }
 
 export async function linkNoteToVerse(verseNoteData: VerseNoteInsert): Promise<{ verse_note_id: number }> {
-  const response = await fetch(`${API_BASE_URL}/verse-notes`, {
+  const response = await fetch(`${API_URL}/verse-notes`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
     body: JSON.stringify(verseNoteData),
   });
   if (!response.ok) {
@@ -90,12 +76,9 @@ export async function linkNoteToVerse(verseNoteData: VerseNoteInsert): Promise<{
 }
 
 export async function unlinkNoteFromVerse(verseNoteId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/verse-notes/${verseNoteId}`, {
+  const response = await fetch(`${API_URL}/verse-notes/${verseNoteId}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-HTTP-Method-Override': 'DELETE',
-    },
+    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -104,7 +87,7 @@ export async function unlinkNoteFromVerse(verseNoteId: number): Promise<void> {
 }
 
 export async function getVersesByNoteId(noteId: number): Promise<number[]> {
-  const response = await fetch(`${API_BASE_URL}/notes/${noteId}/verses`);
+  const response = await fetch(`${API_URL}/notes/${noteId}/verses`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch verses for note');
   }
