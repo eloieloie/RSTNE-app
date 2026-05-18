@@ -11,7 +11,7 @@
           <span class="header-icon">🕍</span>
           Annual Feasts · Moadeem
         </h1>
-        <p class="header-sub">YAHWEH's Appointed Times — Leviticus 23</p>
+        <p class="header-sub">YaHUaH's Appointed Times — Leviticus 23</p>
       </div>
     </header>
 
@@ -121,7 +121,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Aviv',
     dayLabel: '14',
     color: '#be123c',
-    description: 'The memorial of YAHWEH delivering Israel from Egypt. Observed on the night of Aviv 14, always on a Tuesday night. The lamb is slain and its blood applied to the doorposts. Follow the Passover Booklet for the full observance.',
+    description: 'The memorial of YaHUaH delivering Israel from Egypt. Observed on the night of Aviv 14, always on a Tuesday night. The lamb is slain and its blood applied to the doorposts. Follow the Passover Booklet for the full observance.',
     refs: [],
     note: 'Use the Passover Booklet for the full Seder observance.',
   },
@@ -149,7 +149,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Aviv',
     dayLabel: '18',
     color: '#059669',
-    description: 'The day YAHSHUA rose from the dead as the First Fruit of the resurrection — the singular First Fruit wave-sheaf offered on the third day after Passover, Aviv 18, which always falls on the weekly Shabbat within Unleavened Bread.',
+    description: 'The day YaHUShA rose from the dead as the First Fruit of the resurrection — the singular First Fruit wave-sheaf offered on the third day after Passover, Aviv 18, which always falls on the weekly Shabbat within Unleavened Bread.',
     refs: [
       { label: 'Matthew 28',             book: 'matthew',           chapter: 28       },
       { label: 'Mark 16',                book: 'mark',              chapter: 16       },
@@ -167,7 +167,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Aviv',
     dayLabel: '26',
     color: '#16a34a',
-    description: 'The plural first fruits — the barley harvest offering brought to YAHWEH on Aviv 26. Connected to the many saints who were resurrected at Messiah\'s death, representing the broader first fruits harvest.',
+    description: 'The plural first fruits — the barley harvest offering brought to YaHUaH on Aviv 26. Connected to the many saints who were resurrected at Messiah\'s death, representing the broader first fruits harvest.',
     refs: [
       { label: '1 Corinthians 15',       book: 'first-corinthians', chapter: 15       },
       { label: 'Matthew 27:45–54',       book: 'matthew',           chapter: 27, verse: 45 },
@@ -182,7 +182,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 3',
     dayLabel: 'Day 15',
     color: '#1d4ed8',
-    description: 'Fifty days from the First Fruit wave-sheaf. YAHWEH gave the Torah at Sinai and the Ruach HaKodesh was poured out at Jerusalem. A High Sabbath with wheat harvest offerings. Read the Book of Ruth.',
+    description: 'Fifty days from the First Fruit wave-sheaf. YaHUaH gave the Torah at Sinai and the Ruach HaKodesh was poured out at Jerusalem. A High Sabbath with wheat harvest offerings. Read the Book of Ruth.',
     refs: [
       { label: 'Exodus 19',              book: 'exodus',            chapter: 19       },
       { label: 'Exodus 20',              book: 'exodus',            chapter: 20       },
@@ -237,7 +237,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 7',
     dayLabel: 'Day 10',
     color: '#991b1b',
-    description: 'The most solemn day of the year — a complete fast, a Sabbath of Sabbaths. The High Priest entered the Most Set-Apart Place with the blood of atonement. Prophetically fulfilled by YAHSHUA as our eternal High Priest.',
+    description: 'The most solemn day of the year — a complete fast, a Sabbath of Sabbaths. The High Priest entered the Most Set-Apart Place with the blood of atonement. Prophetically fulfilled by YaHUShA as our eternal High Priest.',
     refs: [
       { label: 'Leviticus 16',           book: 'leviticus', chapter: 16       },
       { label: 'Numbers 29:7–11',        book: 'numbers',   chapter: 29, verse: 7  },
@@ -257,7 +257,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 7',
     dayLabel: 'Days 15–21',
     color: '#ea580c',
-    description: 'Seven days of dwelling in booths, commemorating Israel\'s wilderness journey and pointing to YAHWEH tabernacling with His people in the Millennial Kingdom. The first and last days are High Sabbaths. Rejoice before YAHWEH!',
+    description: 'Seven days of dwelling in booths, commemorating Israel\'s wilderness journey and pointing to YaHUaH tabernacling with His people in the Millennial Kingdom. The first and last days are High Sabbaths. Rejoice before YaHUaH!',
     refs: [
       { label: 'Leviticus 23:34–44',     book: 'leviticus', chapter: 23, verse: 34 },
       { label: 'Jubilees 16',            book: 'jubilees',  chapter: 16       },
@@ -274,7 +274,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 7',
     dayLabel: 'Day 22',
     color: '#1e40af',
-    description: 'The eighth day following Sukkot — a separate High Sabbath assembly. Prophetically pictures eternity, the new heavens and new earth, and the final chapter of YAHWEH\'s redemptive plan when all things are made new.',
+    description: 'The eighth day following Sukkot — a separate High Sabbath assembly. Prophetically pictures eternity, the new heavens and new earth, and the final chapter of YaHUaH\'s redemptive plan when all things are made new.',
     refs: [
       { label: 'Leviticus 23:36–44',     book: 'leviticus',  chapter: 23, verse: 36 },
       { label: 'Numbers 29:35–39',       book: 'numbers',    chapter: 29, verse: 35 },
@@ -292,7 +292,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 12',
     dayLabel: 'Days 14–15',
     color: '#0891b2',
-    description: 'Commemorates YAHWEH\'s deliverance of the Jewish people through Esther and Mordecai from Haman\'s plot. A day of feasting, joy, and giving gifts. Read the complete Scroll of Esther.',
+    description: 'Commemorates YaHUaH\'s deliverance of the Jewish people through Esther and Mordecai from Haman\'s plot. A day of feasting, joy, and giving gifts. Read the complete Scroll of Esther.',
     refs: [
       { label: 'Exodus 17:8–16',         book: 'exodus',  chapter: 17, verse: 8 },
       { label: 'Esther 1',               book: 'esther',  chapter: 1            },
@@ -307,7 +307,7 @@ const FEASTS: Feast[] = [
     monthLabel: 'Month 9',
     dayLabel: 'Days 25–',
     color: '#0369a1',
-    description: 'Eight-day feast of rededication celebrating the rededication of the Temple by the Maccabees after its defilement by Antiochus IV Epiphanes. YAHSHUA walked in Solomon\'s Porch during this feast (John 10). Light increases each night.',
+    description: 'Eight-day feast of rededication celebrating the rededication of the Temple by the Maccabees after its defilement by Antiochus IV Epiphanes. YaHUShA walked in Solomon\'s Porch during this feast (John 10). Light increases each night.',
     refs: [
       { label: 'John 10',                book: 'john',    chapter: 10       },
       { label: '1 Maccabees' },
