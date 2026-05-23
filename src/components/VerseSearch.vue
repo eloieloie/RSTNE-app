@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
+import { API_HEADERS } from '../api/client';
 
 interface SearchResult {
   verse_id: number;
@@ -156,7 +157,7 @@ async function performSearch() {
     const url = `https://rstne.eloi.in/api/verses/text-search?q=${encodeURIComponent(query)}`;
     console.log('Request URL:', url);
     
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: API_HEADERS });
     
     console.log('Response status:', response.status);
     console.log('Response ok:', response.ok);

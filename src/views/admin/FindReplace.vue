@@ -120,6 +120,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { API_HEADERS } from '@/api/client';
 
 const API_BASE_URL = 'https://rstne.eloi.in';
 
@@ -164,7 +165,7 @@ async function searchVerses() {
       caseSensitive: String(caseSensitive.value)
     });
 
-    const response = await fetch(`${API_BASE_URL}/api/verses/search-text?${params}`);
+    const response = await fetch(`${API_BASE_URL}/api/verses/search-text?${params}`, { headers: API_HEADERS });
     
     if (!response.ok) {
       throw new Error('Failed to search verses');
@@ -200,6 +201,7 @@ async function replaceAll() {
     const response = await fetch(`${API_BASE_URL}/api/verses/replace-text`, {
       method: 'POST',
       headers: {
+        ...API_HEADERS,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

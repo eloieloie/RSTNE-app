@@ -123,6 +123,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { API_HEADERS } from '@/api/client'
 
 const API_BASE = 'https://rstne.eloi.in/api'
 const FCM_BASE = 'https://us-central1-rstne-app-2025.cloudfunctions.net/api/api'
@@ -154,7 +155,7 @@ onMounted(async () => {
   try {
     const [countRes, booksRes] = await Promise.all([
       fetch(`${FCM_BASE}/fcm-tokens/count`),
-      fetch(`${API_BASE}/books`),
+      fetch(`${API_BASE}/books`, { headers: API_HEADERS }),
     ])
     deviceCount.value = (await countRes.json()).count ?? 0
     books.value = await booksRes.json()
@@ -170,7 +171,7 @@ async function onBookChange() {
   verses.value = []
   if (!form.value.bookId) return
   try {
-    const res = await fetch(`${API_BASE}/books/${form.value.bookId}/chapters`)
+    const res = await fetch(`${API_BASE}/books/${form.value.bookId}/chapters`, { headers: API_HEADERS })
     chapters.value = await res.json()
   } catch {
     chapters.value = []
@@ -182,7 +183,7 @@ async function onChapterChange() {
   verses.value = []
   if (!form.value.chapterId) return
   try {
-    const res = await fetch(`${API_BASE}/chapters/${form.value.chapterId}/verses`)
+    const res = await fetch(`${API_BASE}/chapters/${form.value.chapterId}/verses`, { headers: API_HEADERS })
     verses.value = await res.json()
   } catch {
     verses.value = []

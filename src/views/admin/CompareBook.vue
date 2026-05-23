@@ -131,6 +131,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { API_HEADERS } from '@/api/client';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
@@ -406,7 +407,7 @@ async function loadComparison() {
 
 async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }> {
   const encoded = encodeURIComponent(url);
-  const response = await fetch(`${API_URL}/proxy-rstne?url=${encoded}`);
+  const response = await fetch(`${API_URL}/proxy-rstne?url=${encoded}`, { headers: API_HEADERS });
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: 'Network error' }));
     throw new Error(err.error ?? `HTTP ${response.status}`);

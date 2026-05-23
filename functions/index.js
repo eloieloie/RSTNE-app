@@ -18,13 +18,14 @@ const db = admin.firestore();
 // Register or refresh a device FCM token
 app.post("/api/fcm-token", async (req, res) => {
   try {
-    const {token, platform} = req.body;
+    const {token, platform, app_version} = req.body;
     if (!token || typeof token !== "string") {
       return res.status(400).json({error: "token is required"});
     }
     await db.collection("fcm_tokens").doc(token).set({
       token,
-      platform: platform || "unknown",
+      platform: platform === "ios" || platform === "android" ? platform : "unknown",
+      app_version: app_version || null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, {merge: true});
     res.json({ok: true});

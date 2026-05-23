@@ -228,7 +228,7 @@
               </svg>
               Turah
             </div>
-            <div class="reading-text">{{ parasha.torah.displayText }}</div>
+            <div class="reading-text">{{ getLocalizedReadingText(parasha.torah) }}</div>
           </div>
 
           <div class="reading-block nc-block">
@@ -239,7 +239,7 @@
               </svg>
               Brit Chadasha
             </div>
-            <div class="reading-text">{{ parasha.newCovenant.displayText }}</div>
+            <div class="reading-text">{{ getLocalizedReadingText(parasha.newCovenant) }}</div>
           </div>
         </div>
 
@@ -300,7 +300,7 @@
                   </svg>
                   Turah
                 </div>
-                <div class="reading-text">{{ parasha.torah.displayText }}</div>
+                <div class="reading-text">{{ getLocalizedReadingText(parasha.torah) }}</div>
               </div>
 
               <div class="reading-block nc-block">
@@ -311,7 +311,7 @@
                   </svg>
                   Brit Chadasha
                 </div>
-                <div class="reading-text">{{ parasha.newCovenant.displayText }}</div>
+                <div class="reading-text">{{ getLocalizedReadingText(parasha.newCovenant) }}</div>
               </div>
             </div>
 
@@ -358,7 +358,7 @@
                 <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                 <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
               </svg>
-              {{ ref.label }}
+              {{ getLocalizedHaftarahLabel(ref) }}
             </button>
           </div>
         </div>
@@ -371,12 +371,38 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha } from '@/data/weeklyParashot';
+import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } from '@/data/weeklyParashot';
+import { getAllBooks } from '@/api/books';
+import { useBookLanguage } from '@/composables/useBookLanguage';
+import type { Book } from '@/utils/collectionReferences';
 
 const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
 const showAmModal = ref(false);
+
+const { getBookName } = useBookLanguage();
+const booksCache = ref<Book[]>([]);
+
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+function getLocalizedReadingText(reading: ParashaReading): string {
+  const book = booksCache.value.find(b => toSlug(b.book_name) === reading.bookSlug);
+  if (!book) return reading.displayText;
+  const chapterPart = reading.displayText.slice(book.book_name.length).trim();
+  return `${getBookName(book)} ${chapterPart}`;
+}
+
+function getLocalizedHaftarahLabel(ref: HaftarahRef): string {
+  const book = booksCache.value.find(b => toSlug(b.book_name) === ref.bookSlug);
+  if (!book) return ref.label;
+  const idx = ref.label.toLowerCase().indexOf(book.book_name.toLowerCase());
+  if (idx === -1) return ref.label;
+  const chapterPart = ref.label.slice(idx + book.book_name.length).trim();
+  return `${getBookName(book)} ${chapterPart}`;
+}
 
 function isBroadcastMode(): boolean {
   try {
@@ -597,6 +623,7 @@ onMounted(() => {
   if (currentCardRef.value) {
     currentCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+  getAllBooks().then(b => { booksCache.value = b; });
 });
 </script>
 
