@@ -246,6 +246,15 @@
         <div class="card-actions">
           <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
           <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
+          <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -318,6 +327,15 @@
             <div class="card-actions">
               <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
               <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
+              <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -375,11 +393,13 @@ import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } f
 import { getAllBooks } from '@/api/books';
 import { useBookLanguage } from '@/composables/useBookLanguage';
 import type { Book } from '@/utils/collectionReferences';
+import { generateReadingPlanCardImage } from '@/utils/paleoBora';
 
 const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
 const showAmModal = ref(false);
+const shareLoading = ref(false);
 
 const { getBookName } = useBookLanguage();
 const booksCache = ref<Book[]>([]);
@@ -618,6 +638,40 @@ function navigate(parasha: Parasha, side: 'torah' | 'nc') {
   goToReading(reading.bookSlug, reading.startChapter);
 }
 
+async function shareParasha(parasha: Parasha) {
+  shareLoading.value = true;
+  try {
+    const cardFile = await generateReadingPlanCardImage({
+      week: parasha.week,
+      hebrewName: parasha.hebrewName,
+      meaning: parasha.meaning,
+      dssMonth: parasha.dssMonth,
+      dssDay: parasha.dssDay,
+      torahText: parasha.torah.displayText,
+      newCovenantText: parasha.newCovenant.displayText,
+      note: parasha.note,
+      isCurrentWeek: isCurrentYear.value && parasha.week === currentWeek,
+    });
+    const title = `Week ${parasha.week} — ${parasha.hebrewName}`;
+    const shareUrl = 'https://eat-rstne-26.web.app/weekly-reading';
+    if (typeof navigator.share === 'function') {
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [cardFile] })) {
+        // Pass URL as `text` (not `url`) to avoid iOS generating a second rich link preview card
+        await navigator.share({ title, text: shareUrl, files: [cardFile] });
+      } else {
+        await navigator.share({
+          title,
+          text: `${parasha.hebrewName} — Week ${parasha.week}\nTurah: ${parasha.torah.displayText}\nBrit Chadasha: ${parasha.newCovenant.displayText}`,
+          url: shareUrl,
+        });
+      }
+    }
+  } catch {
+    // user cancelled or share not supported
+  } finally {
+    shareLoading.value = false;
+  }
+}
 
 onMounted(() => {
   if (currentCardRef.value) {
@@ -1013,6 +1067,28 @@ onMounted(() => {
   background: #1E40AF;
   color: #fff;
   border-color: #1E40AF;
+}
+
+.share-btn {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.65rem;
+  background: #F9FAFB;
+  color: #6B7280;
+  border-color: #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-btn:hover:not(:disabled) {
+  background: #6B7280;
+  color: #fff;
+  border-color: #6B7280;
+}
+
+.share-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Tab Toggle */

@@ -316,3 +316,214 @@ export async function generatePaleoBoraImagesForText(
   return new Map<string, string>();
 }
 
+/**
+ * Generates a portrait reading-plan share card as a PNG File.
+ */
+export async function generateReadingPlanCardImage(params: {
+  week: number;
+  hebrewName: string;
+  meaning?: string;
+  dssMonth: number;
+  dssDay: number;
+  torahText: string;
+  newCovenantText: string;
+  note?: string;
+  isCurrentWeek?: boolean;
+}): Promise<File> {
+  const { week, hebrewName, meaning, dssMonth, dssDay, torahText, newCovenantText, note, isCurrentWeek } = params;
+
+  await document.fonts.load('24px Georgia');
+
+  const CANVAS_WIDTH = 400;
+  const DPR = 3;
+  const SCALE = CANVAS_WIDTH / 720;
+  const FONT_SIZE = Math.round(17 * SCALE * 1.6);
+  const PADDING = Math.round(60 * SCALE);
+  const MAX_TEXT_WIDTH = CANVAS_WIDTH - PADDING * 2;
+  const SECTION_GAP = FONT_SIZE * 0.9;
+
+  const BG_TOP = '#1a0800';
+  const BG_BOTTOM = '#2d1200';
+  const ACCENT_COLOR = '#D4A017';
+  const TITLE_COLOR = '#F5DEB3';
+  const LABEL_COLOR = '#D4A017';
+  const TEXT_COLOR = '#F0E0C0';
+  const DIM_COLOR = '#B8A090';
+  const DIVIDER_COLOR = '#6B3A1F';
+  const FOOTER_COLOR = '#D4A017';
+  const CURRENT_ACCENT = '#FFD700';
+
+  const accentColor = isCurrentWeek ? CURRENT_ACCENT : ACCENT_COLOR;
+
+  const measure = document.createElement('canvas');
+  const mctx = measure.getContext('2d')!;
+
+  const SMALL = Math.round(FONT_SIZE * 0.72);
+  const MEDIUM = Math.round(FONT_SIZE * 0.88);
+  const LARGE = Math.round(FONT_SIZE * 1.4);
+  const APP_SIZE = Math.round(FONT_SIZE * 0.65);
+  const SMALL_LH = SMALL * 1.5;
+  const MEDIUM_LH = MEDIUM * 1.6;
+  const LARGE_LH = LARGE * 1.4;
+
+  const INDENT = Math.round(52 * SCALE);
+  const READING_WRAP_W = MAX_TEXT_WIDTH - INDENT;
+  const torahRuns = wrapRuns(mctx, tokenize(torahText, 'regular'), READING_WRAP_W, MEDIUM);
+  const ncRuns = wrapRuns(mctx, tokenize(newCovenantText, 'regular'), READING_WRAP_W, MEDIUM);
+  const noteRuns = note ? wrapRuns(mctx, tokenize(note, 'regular'), MAX_TEXT_WIDTH, SMALL) : [];
+  const meaningRuns = meaning ? wrapRuns(mctx, tokenize(meaning, 'regular'), MAX_TEXT_WIDTH, MEDIUM) : [];
+
+  const headingH = PADDING + SMALL_LH * 0.9 + SMALL_LH + SECTION_GAP * 0.4;
+  const nameH = LARGE_LH + (meaningRuns.length > 0 ? meaningRuns.length * MEDIUM_LH + SECTION_GAP * 0.4 : 0);
+  const divider1H = 2 + SECTION_GAP;
+  const readingsH = MEDIUM_LH + torahRuns.length * MEDIUM_LH + SECTION_GAP * 0.6 + MEDIUM_LH + ncRuns.length * MEDIUM_LH;
+  const noteH = noteRuns.length > 0 ? SECTION_GAP + SMALL_LH * 0.5 + noteRuns.length * SMALL_LH : 0;
+  const footerH = APP_SIZE * 2.8;
+
+  const totalH = headingH + SECTION_GAP + nameH + divider1H + SECTION_GAP + readingsH + noteH + SECTION_GAP + footerH;
+  const CANVAS_HEIGHT = Math.ceil(totalH);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = CANVAS_WIDTH * DPR;
+  canvas.height = CANVAS_HEIGHT * DPR;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(DPR, DPR);
+
+  const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+  grad.addColorStop(0, BG_TOP);
+  grad.addColorStop(1, BG_BOTTOM);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  const glow = ctx.createRadialGradient(CANVAS_WIDTH / 2, 0, 0, CANVAS_WIDTH / 2, 0, CANVAS_WIDTH * 0.75);
+  glow.addColorStop(0, 'rgba(212,160,23,0.14)');
+  glow.addColorStop(1, 'rgba(212,160,23,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT / 2);
+
+  const BAR_W = Math.round(6 * SCALE);
+  ctx.fillStyle = accentColor;
+  ctx.beginPath();
+  ctx.roundRect(0, PADDING, BAR_W, CANVAS_HEIGHT - PADDING * 2, BAR_W / 2);
+  ctx.fill();
+
+  const TEXT_X = PADDING + BAR_W + Math.round(14 * SCALE);
+  let y = PADDING + SMALL_LH * 0.85;
+
+  ctx.textBaseline = 'alphabetic';
+
+  ctx.font = `bold ${SMALL}px Georgia, serif`;
+  ctx.fillStyle = accentColor;
+  ctx.fillText(`Week ${week} / 52`, TEXT_X, y);
+
+  if (isCurrentWeek) {
+    const BADGE_FS = Math.round(SMALL * 0.82);
+    const BADGE_PH = Math.round(7 * SCALE);
+    const BADGE_PV = Math.round(3 * SCALE);
+    ctx.font = `bold ${BADGE_FS}px Georgia, serif`;
+    const badgeText = 'This Week';
+    const badgeTextW = ctx.measureText(badgeText).width;
+    const badgeW = badgeTextW + BADGE_PH * 2;
+    const badgeH = BADGE_FS + BADGE_PV * 2;
+    const bx = CANVAS_WIDTH - PADDING - badgeW;
+    const by = y - BADGE_FS - BADGE_PV;
+    ctx.fillStyle = CURRENT_ACCENT;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, badgeW, badgeH, badgeH / 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a0800';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeText, bx + badgeW / 2, by + BADGE_FS + BADGE_PV * 0.6);
+    ctx.textAlign = 'left';
+  }
+
+  y += SMALL_LH * 0.9;
+
+  ctx.font = `${SMALL}px Georgia, serif`;
+  ctx.fillStyle = DIM_COLOR;
+  ctx.fillText(`DSS ${dssMonth}M  ·  Day ${dssDay}`, TEXT_X, y);
+
+  y += SMALL_LH + SECTION_GAP * 0.4;
+
+  ctx.font = `bold ${LARGE}px Georgia, serif`;
+  ctx.fillStyle = TITLE_COLOR;
+  ctx.fillText(hebrewName, TEXT_X, y);
+  y += LARGE_LH;
+
+  if (meaningRuns.length > 0) {
+    y += SECTION_GAP * 0.4;
+    for (const lineRuns of meaningRuns) {
+      let x = TEXT_X;
+      for (const run of lineRuns) {
+        drawRun(ctx, run, x, y, MEDIUM, DIM_COLOR);
+        x += measureRun(ctx, run, MEDIUM);
+      }
+      y += MEDIUM_LH;
+    }
+  }
+
+  y += SECTION_GAP * 0.6;
+
+  ctx.fillStyle = DIVIDER_COLOR;
+  ctx.fillRect(PADDING, y, MAX_TEXT_WIDTH, 2);
+  y += 2 + SECTION_GAP;
+
+  ctx.font = `bold ${MEDIUM}px Georgia, serif`;
+  ctx.fillStyle = LABEL_COLOR;
+  ctx.fillText('Turah', TEXT_X, y);
+  y += MEDIUM_LH;
+  for (const lineRuns of torahRuns) {
+    let x = TEXT_X + INDENT;
+    for (const run of lineRuns) {
+      drawRun(ctx, run, x, y, MEDIUM, TEXT_COLOR);
+      x += measureRun(ctx, run, MEDIUM);
+    }
+    y += MEDIUM_LH;
+  }
+
+  y += SECTION_GAP * 0.6;
+
+  ctx.font = `bold ${MEDIUM}px Georgia, serif`;
+  ctx.fillStyle = LABEL_COLOR;
+  ctx.fillText('Brit Chadasha', TEXT_X, y);
+  y += MEDIUM_LH;
+  for (const lineRuns of ncRuns) {
+    let x = TEXT_X + INDENT;
+    for (const run of lineRuns) {
+      drawRun(ctx, run, x, y, MEDIUM, TEXT_COLOR);
+      x += measureRun(ctx, run, MEDIUM);
+    }
+    y += MEDIUM_LH;
+  }
+
+  if (noteRuns.length > 0) {
+    y += SECTION_GAP * 0.8;
+    ctx.fillStyle = DIVIDER_COLOR;
+    ctx.fillRect(PADDING, y, MAX_TEXT_WIDTH, 1);
+    y += SMALL_LH * 0.8;
+    for (const lineRuns of noteRuns) {
+      let x = TEXT_X;
+      for (const run of lineRuns) {
+        drawRun(ctx, run, x, y, SMALL, DIM_COLOR);
+        x += measureRun(ctx, run, SMALL);
+      }
+      y += SMALL_LH;
+    }
+  }
+
+  y = CANVAS_HEIGHT - PADDING - APP_SIZE * 0.4;
+  ctx.fillStyle = DIVIDER_COLOR;
+  ctx.fillRect(PADDING, y - Math.round(APP_SIZE * 1.4), MAX_TEXT_WIDTH, 1);
+  ctx.font = `bold ${APP_SIZE}px Georgia, serif`;
+  ctx.fillStyle = FOOTER_COLOR;
+  ctx.textAlign = 'right';
+  ctx.fillText('EAT-RSTNE-26', CANVAS_WIDTH - PADDING, y);
+  ctx.textAlign = 'left';
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(new File([blob!], 'reading-plan.png', { type: 'image/png' }));
+    }, 'image/png');
+  });
+}
+
