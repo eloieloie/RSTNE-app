@@ -246,7 +246,7 @@
         <div class="card-actions">
           <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
           <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
-          <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+          <button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
@@ -327,7 +327,7 @@
             <div class="card-actions">
               <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
               <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
-              <button class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+              <button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="18" cy="5" r="3"></circle>
                   <circle cx="6" cy="12" r="3"></circle>
