@@ -287,7 +287,7 @@
             </div>
             <div class="month-meta">
               <span class="gregorian-range">{{ getMonthGregorianRange(month) }}</span>
-              <span class="day-range-label">Days {{ (month - 1) * 30 + 1 }}–{{ month * 30 }} of 364</span>
+              <span class="day-range-label">Days {{ getDSSMonthStart(month) }}–{{ getDSSMonthStart(month) + getDSSMonthLength(month) - 1 }} of 364</span>
             </div>
           </div>
         </div>
@@ -525,8 +525,20 @@ const MONTHLY_HAFTARAH: MonthlyHaftarah[] = [
 // DSS year = Gregorian year-start year + this offset (2026 → 5951)
 const DSS_YEAR_OFFSET = 3925;
 
-// --- DSS Calendar (364-day solar, 12 months × 30 days) ---
+// --- DSS Calendar (364-day solar) ---
+// Structure: 4 quarters × 91 days = 364 days
+// Months 3, 6, 9, 12 have 31 days (Tekufah/seasonal day); all others have 30 days
 // Year starts on the Wednesday nearest to the spring equinox (March 20)
+function getDSSMonthLength(month: number): number {
+  return month % 3 === 0 ? 31 : 30;
+}
+
+// Returns day-of-year (1-based) on which the given DSS month starts
+function getDSSMonthStart(month: number): number {
+  let d = 1;
+  for (let m = 1; m < month; m++) d += getDSSMonthLength(m);
+  return d;
+}
 function getDSSYearStart(gregorianYear: number): Date {
   const equinox = new Date(gregorianYear, 2, 20);
   const dow = equinox.getDay(); // 0=Sun … 6=Sat; 3=Wed
@@ -549,12 +561,14 @@ function getDSSDate(date: Date): { month: number; day: number; dayOfYear: number
     const ys2 = getDSSYearStart(date.getFullYear() + 1);
     if (utcDay(date) >= utcDay(ys2)) {
       const d2 = Math.floor((utcDay(date) - utcDay(ys2)) / 86400000) + 1;
-      const m2 = Math.min(12, Math.ceil(d2 / 30));
-      return { month: m2, day: Math.min(30, d2 - (m2 - 1) * 30), dayOfYear: d2 };
+      let m2 = 1;
+      while (m2 < 12 && getDSSMonthStart(m2 + 1) <= d2) m2++;
+      return { month: m2, day: d2 - getDSSMonthStart(m2) + 1, dayOfYear: d2 };
     }
   }
-  const month = Math.min(12, Math.ceil(dayOfYear / 30));
-  const day = Math.min(30, dayOfYear - (month - 1) * 30);
+  let month = 1;
+  while (month < 12 && getDSSMonthStart(month + 1) <= dayOfYear) month++;
+  const day = dayOfYear - getDSSMonthStart(month) + 1;
   return { month, day, dayOfYear };
 }
 
@@ -598,19 +612,20 @@ const isCurrentYear = computed(() => selectedDSSYear.value === currentDSSYear);
 
 function getMonthGregorianRange(dssMonth: number): string {
   const ys = selectedYearStart.value;
+  const startOffset = getDSSMonthStart(dssMonth) - 1;
   const start = new Date(ys);
-  start.setDate(start.getDate() + (dssMonth - 1) * 30);
+  start.setDate(start.getDate() + startOffset);
   const end = new Date(ys);
-  end.setDate(end.getDate() + dssMonth * 30 - 1);
+  end.setDate(end.getDate() + startOffset + getDSSMonthLength(dssMonth) - 1);
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return `${fmt(start)} – ${fmt(end)}`;
 }
 
 function getCurrentWeek(): number {
-  const todayDayNum = (dssToday.month - 1) * 30 + dssToday.day;
+  const todayDayNum = dssToday.dayOfYear;
   let week = 1;
   for (const p of WEEKLY_PARASHOT) {
-    const pDay = (p.dssMonth - 1) * 30 + p.dssDay;
+    const pDay = getDSSMonthStart(p.dssMonth) + p.dssDay - 1;
     if (pDay <= todayDayNum) week = p.week;
     else break;
   }
