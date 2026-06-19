@@ -1,5 +1,5 @@
 <template>
-  <div class="timeline-page">
+  <div class="timeline-page" :class="{ 'broadcast-mode': settings.broadcastMode }">
     <!-- Header -->
     <header class="tl-header">
       <div class="tl-header-left">
@@ -16,6 +16,9 @@
         </div>
       </div>
       <div class="tl-header-right">
+        <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+          <span class="settings-label">SE</span>
+        </button>
         <div class="legend-toggle" @click="showLegend = !showLegend">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
           <span class="legend-toggle-label">Legend</span>
@@ -165,6 +168,10 @@
       </div>
     </main>
 
+    <div v-if="settings.broadcastMode" class="timeline-broadcast-panel" aria-hidden="true"></div>
+
+    <Settings :is-open="showSettingsModal" @close="showSettingsModal = false" />
+
     <!-- Empty state -->
     <div v-if="!loading && !error && filteredEvents.length === 0" class="empty-state">
       <div class="empty-icon">🔍</div>
@@ -216,6 +223,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { getAllTimelineEvents } from '@/api/timelineEvents';
+import Settings from '@/components/Settings.vue';
+import { useReaderSettings } from '@/composables/useReaderSettings';
 import type { TimelineEvent } from '@/utils/collectionReferences';
 
 const ERAS = [
@@ -252,6 +261,8 @@ const showOnlyShemittah = ref(false);
 const activeEra = ref<string | null>(null);
 const showLegend = ref(false);
 const showFilters = ref(false);
+const showSettingsModal = ref(false);
+const { settings } = useReaderSettings();
 
 const filteredEvents = computed(() => {
   let evs = events.value;
@@ -343,6 +354,22 @@ onMounted(async () => {
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 
+.timeline-page.broadcast-mode {
+  padding-right: max(30vw, 320px);
+}
+
+.timeline-broadcast-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: max(30vw, 320px);
+  height: 100vh;
+  border-left: 1px solid #e8e8e8;
+  background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ── Header ─────────────────────────────────────────────────────── */
 .tl-header {
   position: sticky;
@@ -361,6 +388,33 @@ onMounted(async () => {
 
 .tl-header-left { display: flex; align-items: center; gap: 1rem; }
 .tl-header-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 0.45rem;
+  border-radius: 6px;
+  border: 1.5px solid #c9c9c9;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  border-color: #9fa7b0;
+  background: #f6f8fa;
+}
+
+.settings-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #000;
+}
 
 .back-link {
   display: flex;
@@ -953,6 +1007,9 @@ onMounted(async () => {
   .tl-container { padding: 0.5rem 0.85rem 3rem; }
   .filter-modal-overlay { align-items: flex-end; padding: 0; }
   .filter-modal { border-radius: 20px 20px 0 0; max-width: 100%; }
+
+  .timeline-page.broadcast-mode { padding-right: 0.85rem; }
+  .timeline-broadcast-panel { display: none; }
 }
 
 @media (max-width: 480px) {

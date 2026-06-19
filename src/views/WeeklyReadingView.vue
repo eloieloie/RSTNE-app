@@ -1,5 +1,9 @@
 <template>
-  <div class="weekly-page">
+  <div
+    class="weekly-page"
+    :class="{ 'broadcast-mode': settings.broadcastMode }"
+    :style="{ '--weekly-font-scale': String(fontScale) }"
+  >
     <!-- Header -->
     <div class="page-header">
       <button class="back-btn" @click="router.push({ name: 'books' })" title="Back to Books">
@@ -53,6 +57,9 @@
               <line x1="12" y1="8" x2="12" y2="8"></line>
               <line x1="12" y1="12" x2="12" y2="16"></line>
             </svg>
+          </button>
+          <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+            <span class="settings-label">SE</span>
           </button>
         </div>
 
@@ -169,8 +176,12 @@
             </div>
           </div>
         </Teleport>
+
+        <Settings :is-open="showSettingsModal" @close="showSettingsModal = false" />
       </div>
     </div>
+
+    <div v-if="settings.broadcastMode" class="weekly-broadcast-panel" aria-hidden="true"></div>
 
     <!-- Tab Toggle -->
     <div class="view-tabs">
@@ -392,6 +403,8 @@ import { useRouter } from 'vue-router';
 import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } from '@/data/weeklyParashot';
 import { getAllBooks } from '@/api/books';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+import { useReaderSettings } from '@/composables/useReaderSettings';
+import Settings from '@/components/Settings.vue';
 import type { Book } from '@/utils/collectionReferences';
 import { generateReadingPlanCardImage } from '@/utils/paleoBora';
 
@@ -399,10 +412,13 @@ const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
 const showAmModal = ref(false);
+const showSettingsModal = ref(false);
 const shareLoading = ref(false);
 
 const { getBookName } = useBookLanguage();
+const { settings } = useReaderSettings();
 const booksCache = ref<Book[]>([]);
+const fontScale = computed(() => settings.fontSize / 16);
 
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -425,10 +441,7 @@ function getLocalizedHaftarahLabel(ref: HaftarahRef): string {
 }
 
 function isBroadcastMode(): boolean {
-  try {
-    const saved = localStorage.getItem('rstne-settings');
-    return saved ? !!JSON.parse(saved).broadcastMode : false;
-  } catch { return false; }
+  return !!settings.broadcastMode;
 }
 
 function goToReading(bookSlug: string, chapter: number, verse?: number) {
@@ -683,9 +696,27 @@ onMounted(() => {
 
 <style scoped>
 .weekly-page {
+  --weekly-font-scale: 1;
   max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem 2rem 3rem;
+}
+
+.weekly-page.broadcast-mode {
+  max-width: 100%;
+  padding-right: max(30vw, 320px);
+}
+
+.weekly-broadcast-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: max(30vw, 320px);
+  height: 100vh;
+  border-left: 1px solid #e8e8e8;
+  background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Header */
@@ -734,7 +765,7 @@ onMounted(() => {
   background: linear-gradient(135deg, #8B4513, #c0763a);
   color: #fff;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--weekly-font-scale));
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -742,7 +773,7 @@ onMounted(() => {
 
 .page-header h1 {
   color: #1a1a1a;
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-size: calc(clamp(1.6rem, 4vw, 2.4rem) * var(--weekly-font-scale));
   font-weight: 800;
   margin: 0;
   line-height: 1.15;
@@ -750,7 +781,7 @@ onMounted(() => {
 
 .subtitle {
   color: #6b7280;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--weekly-font-scale));
   margin: 0;
 }
 
@@ -762,7 +793,7 @@ onMounted(() => {
 }
 
 .year-label {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--weekly-font-scale));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -770,7 +801,7 @@ onMounted(() => {
 }
 
 .year-number {
-  font-size: 1.7rem;
+  font-size: calc(1.7rem * var(--weekly-font-scale));
   font-weight: 900;
   color: #1a1a1a;
   letter-spacing: -0.02em;
@@ -791,7 +822,7 @@ onMounted(() => {
   border: 2px solid #e5e7eb;
   background: #fff;
   color: #4b5563;
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--weekly-font-scale));
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -838,7 +869,7 @@ onMounted(() => {
   background: linear-gradient(135deg, #1e3a5f, #2563eb);
   color: #fff;
   border-radius: 20px;
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--weekly-font-scale));
   font-weight: 700;
   letter-spacing: 0.03em;
   margin-top: 0.25rem;
@@ -852,14 +883,14 @@ onMounted(() => {
   background: linear-gradient(135deg, #3b1200, #8B4513);
   color: #fff;
   border-radius: 20px;
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--weekly-font-scale));
   font-weight: 700;
   letter-spacing: 0.03em;
   margin-top: 0.15rem;
 }
 
 .am-badge-label {
-  font-size: 0.65rem;
+  font-size: calc(0.65rem * var(--weekly-font-scale));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -867,7 +898,7 @@ onMounted(() => {
 }
 
 .am-badge-year {
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--weekly-font-scale));
   font-weight: 900;
   letter-spacing: -0.01em;
 }
@@ -878,7 +909,7 @@ onMounted(() => {
 
 .am-badge-jubilee {
   font-family: monospace;
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--weekly-font-scale));
   font-weight: 800;
   letter-spacing: 0.04em;
   color: #ffd79a;
@@ -933,14 +964,14 @@ onMounted(() => {
 }
 
 .week-badge {
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--weekly-font-scale));
   font-weight: 700;
   letter-spacing: 0.03em;
   color: #4b5563;
 }
 
 .dss-date-badge {
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--weekly-font-scale));
   font-weight: 700;
   color: #fff;
   background: linear-gradient(135deg, #1e3a5f, #2563eb);
@@ -950,7 +981,7 @@ onMounted(() => {
 }
 
 .this-week-label {
-  font-size: 0.65rem;
+  font-size: calc(0.65rem * var(--weekly-font-scale));
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -962,21 +993,21 @@ onMounted(() => {
 
 .hebrew-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: calc(1rem * var(--weekly-font-scale));
   font-weight: 700;
   color: #111827;
   line-height: 1.3;
 }
 
 .parasha-meaning {
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--weekly-font-scale));
   font-style: italic;
   color: #6b7280;
   line-height: 1.4;
 }
 
 .parasha-note {
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--weekly-font-scale));
   font-weight: 500;
   color: #374151;
   line-height: 1.4;
@@ -1009,7 +1040,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--weekly-font-scale));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -1021,7 +1052,7 @@ onMounted(() => {
 .reading-icon { flex-shrink: 0; }
 
 .reading-text {
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--weekly-font-scale));
   font-weight: 500;
   color: #374151;
   line-height: 1.4;
@@ -1037,7 +1068,7 @@ onMounted(() => {
   flex: 1;
   padding: 0.5rem 0.25rem;
   border-radius: 8px;
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--weekly-font-scale));
   font-weight: 700;
   cursor: pointer;
   border: 2px solid transparent;
@@ -1108,7 +1139,7 @@ onMounted(() => {
   border-radius: 10px;
   background: #fff;
   color: #6b7280;
-  font-size: 0.88rem;
+  font-size: calc(0.88rem * var(--weekly-font-scale));
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1242,6 +1273,14 @@ onMounted(() => {
     padding: 1rem 1rem 2.5rem;
   }
 
+  .weekly-page.broadcast-mode {
+    padding-right: 1rem;
+  }
+
+  .weekly-broadcast-panel {
+    display: none;
+  }
+
   .page-header {
     margin-bottom: 1.75rem;
     padding-top: 3rem;
@@ -1281,6 +1320,10 @@ onMounted(() => {
 @media (max-width: 480px) {
   .weekly-page {
     padding: 0.75rem 0.75rem 2rem;
+  }
+
+  .weekly-page.broadcast-mode {
+    padding-right: 0.75rem;
   }
 
   .parashot-grid,
@@ -1336,6 +1379,33 @@ onMounted(() => {
   background: #fff8dc;
   border-color: #8B4513;
   color: #8B4513;
+}
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 22px;
+  padding: 0 0.45rem;
+  border-radius: 6px;
+  border: 1.5px solid #c9c9c9;
+  background: #ffffff;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  border-color: #9fa7b0;
+  background: #f6f8fa;
+}
+
+.settings-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #000;
 }
 
 /* Modal overlay */

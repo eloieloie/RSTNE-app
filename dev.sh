@@ -1,7 +1,7 @@
 #!/bin/bash
-# Kill any process on port 7500 and start the dev server on port 7500
+# Kill any process on port 5200 and start the dev server on port 5200
 
-echo "Clearing port 7500..."
-lsof -ti:7500 | xargs kill -9 2>/dev/null
-echo "Starting dev server on port 7500..."
-PORT=7500 npx vite --port 7500 --host 0.0.0.0
+echo "Clearing port 5200..."
+lsof -ti:5200 | xargs kill -9 2>/dev/null
+echo "Starting dev server on port 5200..."
+PORT=5200 npx vite --port 5200 --host 0.0.0.0

@@ -111,29 +111,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue';
+import { watch } from 'vue';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { useReaderSettings, type ReaderSettings } from '@/composables/useReaderSettings';
 
 interface Props {
   isOpen: boolean;
 }
 
-interface Settings {
-  showEnglish: boolean;
-  showTelugu: boolean;
-  showNotes: boolean;
-  showCrossReferences: boolean;
-  showSuperscript: boolean;
-  fontSize: number;
-  boldVerseText: boolean;
-  broadcastMode: boolean;
-}
-
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];
-  settingsChange: [settings: Settings];
+  settingsChange: [settings: ReaderSettings];
 }>();
 
 const { bookNameLanguage } = useBookLanguage();
@@ -144,44 +134,15 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'telugu', label: 'Telugu' },
 ];
 
-// Settings state with localStorage persistence
-const settings = reactive<Settings>({
-  showEnglish: true,
-  showTelugu: true,
-  showNotes: true,
-  showCrossReferences: false,
-  showSuperscript: true,
-  fontSize: 16,
-  boldVerseText: true,
-  broadcastMode: false
-});
+const { settings } = useReaderSettings();
 
-// Load settings from localStorage on mount
-onMounted(() => {
-  const savedSettings = localStorage.getItem('rstne-settings');
-  if (savedSettings) {
-    try {
-      const parsed = JSON.parse(savedSettings);
-      Object.assign(settings, parsed);
-      // Emit initial settings to parent
-      emit('settingsChange', { ...settings });
-    } catch (err) {
-      console.error('Error loading settings from localStorage:', err);
-    }
-  } else {
-    // Emit default settings to parent
-    emit('settingsChange', { ...settings });
-  }
-});
-
-// Watch for settings changes and save to localStorage
+// Emit initial and subsequent settings updates to parent consumers.
 watch(settings, (newSettings) => {
-  localStorage.setItem('rstne-settings', JSON.stringify(newSettings));
   emit('settingsChange', { ...newSettings });
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 // Toggle a boolean setting
-function toggleSetting(key: keyof Settings) {
+function toggleSetting(key: keyof ReaderSettings) {
   if (typeof settings[key] === 'boolean') {
     (settings[key] as boolean) = !(settings[key] as boolean);
   }

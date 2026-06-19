@@ -1,5 +1,9 @@
 <template>
-  <div class="books-page">
+  <div
+    class="books-page"
+    :class="{ 'broadcast-mode': isBroadcastMode }"
+    :style="{ '--books-font-scale': String(fontScale) }"
+  >
     <div class="page-header">
       <h1>Restoration Scriptures True Name Edition</h1>
       <p class="subtitle">Choose a book to start reading - HalleluYAHUA!</p>
@@ -10,6 +14,9 @@
           :class="['lang-btn', { active: bookNameLanguage === opt.value }]"
           @click="bookNameLanguage = opt.value"
         >{{ opt.label }}</button>
+        <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+          <span class="settings-label">SE</span>
+        </button>
       </div>
 
       <div class="header-btns">
@@ -106,6 +113,10 @@
       <span class="footer-divider">·</span>
       <router-link to="/terms-and-conditions">Terms &amp; Conditions</router-link>
     </footer>
+
+    <div v-if="isBroadcastMode" class="broadcast-fixed-panel" aria-hidden="true"></div>
+
+    <Settings :is-open="showSettingsModal" @close="showSettingsModal = false" />
   </div>
 </template>
 
@@ -115,13 +126,19 @@ import { useRouter } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import type { Book } from '@/utils/collectionReferences';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import Settings from '@/components/Settings.vue';
+import { useReaderSettings } from '@/composables/useReaderSettings';
 
 const router = useRouter();
 const books = ref<Book[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const showSettingsModal = ref(false);
 
 const { bookNameLanguage, getBookName } = useBookLanguage();
+const readerSettings = useReaderSettings();
+const isBroadcastMode = computed(() => Boolean(readerSettings?.settings?.broadcastMode));
+const fontScale = computed(() => (readerSettings?.settings?.fontSize ?? 16) / 16);
 
 const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'english', label: 'EN' },
@@ -167,10 +184,34 @@ onMounted(async () => {
 
 <style scoped>
 .books-page {
+  --books-font-scale: 1;
   max-width: 100%;
   width: 100%;
   margin: 0 auto;
   padding: 2rem;
+  position: relative;
+}
+
+.books-page.broadcast-mode {
+  padding-right: max(30vw, 320px);
+}
+
+.broadcast-fixed-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: max(30vw, 320px);
+  height: 100vh;
+  border-left: 1px solid #e8e8e8;
+  background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.books-page.broadcast-mode .page-header,
+.books-page.broadcast-mode .books-container,
+.books-page.broadcast-mode .page-footer {
+  max-width: 100%;
 }
 
 .page-header {
@@ -199,11 +240,39 @@ onMounted(async () => {
   border-radius: 6px;
   border: 1.5px solid #ccc;
   background: #f5f5f5;
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--books-font-scale));
   font-weight: 600;
   cursor: pointer;
   color: #555;
   transition: all 0.15s ease;
+}
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0 0.45rem;
+  height: 30px;
+  border-radius: 6px;
+  border: 1.5px solid #c9c9c9;
+  background: #ffffff;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  border-color: #9fa7b0;
+  background: #f6f8fa;
+  color: #1f2d3a;
+}
+
+.settings-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #000;
 }
 
 .lang-btn:hover {
@@ -220,12 +289,12 @@ onMounted(async () => {
 .page-header h1 {
   color: #2c3e50;
   margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-size: calc(clamp(1.5rem, 4vw, 2.5rem) * var(--books-font-scale));
 }
 
 .subtitle {
   color: #666;
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-size: calc(clamp(1rem, 2.5vw, 1.2rem) * var(--books-font-scale));
   margin: 0;
   font-weight: 500;
 }
@@ -233,7 +302,7 @@ onMounted(async () => {
 .loading, .error, .empty {
   text-align: center;
   padding: 3rem 1rem;
-  font-size: 1.1rem;
+  font-size: calc(1.1rem * var(--books-font-scale));
 }
 
 .error {
@@ -251,7 +320,7 @@ onMounted(async () => {
 
 .category-title {
   text-align: center;
-  font-size: 1.8rem;
+  font-size: calc(1.8rem * var(--books-font-scale));
   font-weight: 700;
   margin-bottom: 1.5rem;
   padding: 0.5rem;
@@ -332,19 +401,27 @@ onMounted(async () => {
 }
 
 .book-name {
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--books-font-scale));
   line-height: 1.2;
   font-weight: 700;
 }
 
 .book-chapters {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--books-font-scale));
   opacity: 0.8;
   font-weight: 500;
 }
 
 /* Tablet and smaller */
 @media (max-width: 1024px) {
+  .books-page.broadcast-mode {
+    padding: 1rem;
+  }
+
+  .broadcast-fixed-panel {
+    display: none;
+  }
+
   .books-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -440,7 +517,7 @@ onMounted(async () => {
   color: #fff;
   border: none;
   border-radius: 50px;
-  font-size: 0.88rem;
+  font-size: calc(0.88rem * var(--books-font-scale));
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -479,7 +556,7 @@ onMounted(async () => {
 .page-footer {
   text-align: center;
   padding: 2rem 0 1rem;
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--books-font-scale));
   color: #888;
 }
 

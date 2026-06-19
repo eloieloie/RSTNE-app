@@ -1,5 +1,5 @@
 <template>
-  <div class="feasts-page">
+  <div class="feasts-page" :class="{ 'broadcast-mode': settings.broadcastMode }">
     <!-- Header -->
     <header class="feasts-header">
       <router-link to="/" class="back-link">
@@ -13,6 +13,9 @@
         </h1>
         <p class="header-sub">YaHUaH's Appointed Times — Leviticus 23</p>
       </div>
+      <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+        <span class="settings-label">SE</span>
+      </button>
     </header>
 
     <!-- Season groups -->
@@ -76,13 +79,22 @@
         </div>
       </div>
     </div>
+
+    <div v-if="settings.broadcastMode" class="feasts-broadcast-panel" aria-hidden="true"></div>
+
+    <Settings :is-open="showSettingsModal" @close="showSettingsModal = false" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Settings from '@/components/Settings.vue';
+import { useReaderSettings } from '@/composables/useReaderSettings';
 
 const router = useRouter();
+const showSettingsModal = ref(false);
+const { settings } = useReaderSettings();
 
 interface VerseRef {
   label: string;
@@ -342,6 +354,22 @@ function navigateRef(ref: VerseRef) {
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 
+.feasts-page.broadcast-mode {
+  padding-right: max(30vw, 320px);
+}
+
+.feasts-broadcast-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: max(30vw, 320px);
+  height: 100vh;
+  border-left: 1px solid #e8e8e8;
+  background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ── Header ─────────────────────────────────────────────────────────── */
 .feasts-header {
   position: sticky;
@@ -354,6 +382,34 @@ function navigateRef(ref: VerseRef) {
   align-items: center;
   gap: 1.25rem;
   box-shadow: 0 2px 14px rgba(0,0,0,0.35);
+}
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 0.45rem;
+  border-radius: 6px;
+  border: 1.5px solid #c9c9c9;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  border-color: #9fa7b0;
+  background: #f6f8fa;
+}
+
+.settings-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #000;
 }
 
 .back-link {
@@ -612,5 +668,8 @@ function navigateRef(ref: VerseRef) {
   .feast-title { font-size: 0.9rem; }
   .feast-desc { font-size: 0.78rem; }
   .ref-pill { font-size: 0.68rem; padding: 0.18rem 0.5rem; }
+
+  .feasts-page.broadcast-mode { padding-right: 0.85rem; }
+  .feasts-broadcast-panel { display: none; }
 }
 </style>
