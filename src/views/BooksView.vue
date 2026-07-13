@@ -14,8 +14,12 @@
           :class="['lang-btn', { active: bookNameLanguage === opt.value }]"
           @click="bookNameLanguage = opt.value"
         >{{ opt.label }}</button>
+        <span class="lang-separator"></span>
         <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
-          <span class="settings-label">SE</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
         </button>
       </div>
 
@@ -112,6 +116,18 @@
       <router-link to="/privacy-policy">Privacy Policy</router-link>
       <span class="footer-divider">·</span>
       <router-link to="/terms-and-conditions">Terms &amp; Conditions</router-link>
+      <span class="footer-divider">·</span>
+      <a
+        href="https://play.google.com/store/apps/details?id=com.rstne.app&hl=en"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="play-store-link"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3.18 23.76c.3.17.65.19.97.07l12.67-7.31-2.79-2.79-10.85 10zm16.55-9.54L16.8 12.5l2.93-1.72-2.93-1.72L3.18.26C2.86.14 2.51.16 2.21.33L13.05 11.17l6.68 3.05zM2.21.33C1.84.56 1.6.97 1.6 1.44v21.12c0 .47.24.88.61 1.11L13.05 12.83 2.21.33zM17.22 9.27l2.51 1.51-2.93 1.72 2.93 1.72-2.51 1.51L14.44 12.5l2.78-3.23z"/>
+        </svg>
+        Get Android App
+      </a>
     </footer>
 
     <div v-if="isBroadcastMode" class="broadcast-fixed-panel" aria-hidden="true"></div>
@@ -247,6 +263,15 @@ onMounted(async () => {
   transition: all 0.15s ease;
 }
 
+.lang-separator {
+  width: 1px;
+  height: 20px;
+  background: #ccc;
+  align-self: center;
+  margin: 0 0.1rem;
+  flex-shrink: 0;
+}
+
 .settings-btn {
   display: inline-flex;
   align-items: center;
@@ -266,13 +291,6 @@ onMounted(async () => {
   border-color: #9fa7b0;
   background: #f6f8fa;
   color: #1f2d3a;
-}
-
-.settings-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #000;
 }
 
 .lang-btn:hover {
@@ -558,6 +576,11 @@ onMounted(async () => {
   padding: 2rem 0 1rem;
   font-size: calc(0.85rem * var(--books-font-scale));
   color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .page-footer a {
@@ -570,7 +593,19 @@ onMounted(async () => {
 }
 
 .footer-divider {
-  margin: 0 0.75rem;
-  color: #888;
+  margin: 0 0.5rem;
+  color: #ccc;
+}
+
+.play-store-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #1a7f37 !important;
+  font-weight: 600;
+}
+
+.play-store-link:hover {
+  text-decoration: underline;
 }
 </style>
