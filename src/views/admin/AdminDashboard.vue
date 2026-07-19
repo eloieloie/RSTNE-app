@@ -58,6 +58,24 @@
           Manage Timeline
         </router-link>
       </div>
+
+      <div class="dashboard-card">
+        <div class="card-icon">📝</div>
+        <h2>Modification Required</h2>
+        <p>Review verses that have no Telugu text — flagged as citation required and awaiting translation</p>
+        <router-link to="/admin/modification-required" class="action-btn">
+          View Verses
+        </router-link>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="card-icon">💬</div>
+        <h2>User Feedback</h2>
+        <p>View, filter, and manage feedback submitted from the mobile app — bug reports, feature requests, and general comments</p>
+        <router-link to="/admin/feedback" class="action-btn">
+          View Feedback
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

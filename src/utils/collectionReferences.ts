@@ -91,6 +91,7 @@ export interface Verse {
   verse_index: number | null;
   verse: string;
   telugu_verse: string | null;
+  citation_required?: number;
   dt_added: Date;
   dt_modified: Date;
 }
