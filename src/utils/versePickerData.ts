@@ -166418,41 +166418,5 @@ export const BOOKS_DATA: VersePickerBook[] = [
         ]
       }
     ]
-  },
-  {
-    "book_id": 84,
-    "book_name": "Weekly Torah Parashot",
-    "book_abbr": null,
-    "hebrew_book_abbr": null,
-    "telugu_book_abbr": null,
-    "hebrew_book_name": null,
-    "book_index": 84,
-    "category_id": 3,
-    "chapter_count": 0,
-    "chapters": []
-  },
-  {
-    "book_id": 85,
-    "book_name": "Annual Moadeem Feasts",
-    "book_abbr": null,
-    "hebrew_book_abbr": null,
-    "telugu_book_abbr": null,
-    "hebrew_book_name": null,
-    "book_index": 85,
-    "category_id": 3,
-    "chapter_count": 0,
-    "chapters": []
-  },
-  {
-    "book_id": 86,
-    "book_name": "RSTNE Glossary",
-    "book_abbr": null,
-    "hebrew_book_abbr": null,
-    "telugu_book_abbr": null,
-    "hebrew_book_name": null,
-    "book_index": 86,
-    "category_id": 3,
-    "chapter_count": 0,
-    "chapters": []
   }
 ];

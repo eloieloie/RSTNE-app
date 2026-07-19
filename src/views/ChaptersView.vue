@@ -320,6 +320,7 @@
       :is-open="showVersePicker"
       :initial-book-id="book?.book_id"
       :initial-chapter-id="selectedChapterId ?? undefined"
+      :broadcast-mode="broadcastMode"
       @close="showVersePicker = false"
       @select="handleVerseSelection"
       @update="handleVersePickerUpdate"

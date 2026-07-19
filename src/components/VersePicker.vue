@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="verse-picker-overlay" @click="close">
+  <div v-if="isOpen" class="verse-picker-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click="close">
     <div class="verse-picker-modal" @click.stop>
       <div class="verse-picker-header">
         <h3>
@@ -173,6 +173,7 @@ const props = defineProps<{
   initialBookId?: number;
   initialChapterId?: number;
   initialVerseId?: number;
+  broadcastMode?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -343,6 +344,10 @@ function close() {
   z-index: 1000;
 }
 
+.verse-picker-overlay.broadcast-mode {
+  right: max(30vw, 320px);
+}
+
 .verse-picker-modal {
   background: white;
   width: 100vw;
@@ -350,6 +355,10 @@ function close() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.verse-picker-overlay.broadcast-mode .verse-picker-modal {
+  width: 100%;
 }
 
 .verse-picker-header {
