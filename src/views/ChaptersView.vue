@@ -1,7 +1,18 @@
 <template>
   <div class="chapters-page" :class="{ 'broadcast-mode': broadcastMode }">
     <!-- Tint overlay when cross-ref tooltip is open -->
-    <div v-if="crossRefTooltip.show" class="chapters-page-tint" :class="{ 'broadcast-mode': broadcastMode }" @click="closeCrossRefTooltip"></div>
+    <AnimatePresence>
+      <motion.div
+        v-if="crossRefTooltip.show"
+        class="chapters-page-tint"
+        :class="{ 'broadcast-mode': broadcastMode }"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.18 }"
+        @click="closeCrossRefTooltip"
+      ></motion.div>
+    </AnimatePresence>
 
     <!-- Parasha flash notification -->
     <Transition name="parasha-flash">
@@ -33,13 +44,13 @@
       <div class="content-layout">
         <nav class="top-nav">
           <div class="nav-container">
-            <button class="nav-back-btn" @click="router.push({ name: 'books' })" title="Back to Books">
+            <motion.button class="nav-back-btn" :while-hover="hoverLift" :while-tap="tapScale" @click="router.push({ name: 'books' })" title="Back to Books">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
-            </button>
+            </motion.button>
 
-            <button class="verse-picker-button" @click="showVersePicker = true">
+            <motion.button class="verse-picker-button" :while-hover="hoverLift" :while-tap="tapScale" @click="showVersePicker = true">
               <div class="book-names">
                 <span class="book-name">{{ displayButtonBookName }}</span>
               </div>
@@ -49,21 +60,21 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-icon">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
-            </button>
+            </motion.button>
 
             <div class="nav-right-group">
-              <button class="search-icon" @click="openSearchModal" title="Search Verses">
+              <motion.button class="search-icon" :while-hover="hoverLift" :while-tap="tapScale" @click="openSearchModal" title="Search Verses">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <path d="m21 21-4.35-4.35"></path>
                 </svg>
-              </button>
-              <button class="settings-icon" @click="showSettingsModal = true" title="Settings">
+              </motion.button>
+              <motion.button class="settings-icon" :while-hover="hoverLift" :while-tap="tapScale" @click="showSettingsModal = true" title="Settings">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
-              </button>
+              </motion.button>
             </div>
           </div>
         </nav>
@@ -134,13 +145,16 @@
               </div>
               
               <div v-else class="verses-list">
-                <div 
-                  v-for="verse in chapterData.verses" 
+                <motion.div
+                  v-for="(verse, verseIndex) in chapterData.verses"
                   :key="verse.verse_id"
                   :id="`verse-${verse.verse_id}`"
                   :data-verse-id="verse.verse_id"
                   class="verse-item"
                   :class="{ 'verse-selected': clickSelectedVerseId === verse.verse_id }"
+                  :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+                  :animate="{ opacity: 1, y: clickSelectedVerseId === verse.verse_id ? -1 : 0 }"
+                  :transition="verseEnterTransition(verseIndex)"
                   @click="selectVerse(verse, $event)"
                 >
                   <div class="verse-main">
@@ -152,36 +166,41 @@
                   <div v-if="showEnglish && showTelugu && verse.telugu_verse" class="verse-telugu" :class="{ 'hide-superscript': !showSuperscript, 'bold-text': boldVerseText }" :style="{ fontSize: fontSize + 'px' }" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
                   
                   <div v-if="verse.links && verse.links.length > 0" class="verse-links">
-                      <a 
-                        v-for="link in verse.links" 
+                      <motion.a
+                        v-for="link in verse.links"
                         :key="link.target_verse_id"
                         href="#"
                         class="link-badge"
                         :title="`Go to ${link.target_book_name} ${link.target_chapter_number}:${link.target_verse_index}`"
+                        :while-hover="hoverLift"
+                        :while-tap="tapScale"
                         @click.prevent="navigateToVerse(link.target_book_id, link.target_chapter_id, link.target_verse_id)"
                       >
                         {{ getBookName(allBooks.find(b => b.book_id === link.target_book_id) || { book_name: link.target_book_name }) }} {{ link.target_chapter_number }}:{{ link.target_verse_index }}
-                      </a>
+                      </motion.a>
                     </div>
-                    
+
                     <div v-if="showCrossReferences && !broadcastMode && verse.crossReferences && verse.crossReferences.length > 0" class="verse-cross-references">
-                      <a 
-                        v-for="crossRef in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 10))" 
+                      <motion.a
+                        v-for="crossRef in (expandedCrossRefs.has(verse.verse_id) ? verse.crossReferences : verse.crossReferences.slice(0, 10))"
                         :key="crossRef.cross_ref_id"
                         href="#"
                         class="cross-ref-badge"
                         :title="`Preview ${crossRef.to_book_name} ${crossRef.to_chapter}:${crossRef.to_verse} (${crossRef.votes} votes)`"
+                        :while-hover="hoverLift"
+                        :while-tap="tapScale"
                         @click="showCrossRefTooltip($event, crossRef)"
                       >
                         {{ getBookAbbr(allBooks.find(b => b.book_id === crossRef.to_book_id) || { book_name: crossRef.to_book_name, book_abbr: crossRef.to_book_abbr, hebrew_book_abbr: crossRef.to_hebrew_book_abbr, telugu_book_abbr: crossRef.to_telugu_book_abbr }) }} {{ crossRef.to_chapter }}:{{ crossRef.to_verse }}
-                      </a>
-                      <span 
-                        v-if="verse.crossReferences.length > 10" 
+                      </motion.a>
+                      <motion.span
+                        v-if="verse.crossReferences.length > 10"
                         class="cross-ref-more"
+                        :while-tap="tapScale"
                         @click="toggleCrossRefs(verse.verse_id)"
                       >
                         {{ expandedCrossRefs.has(verse.verse_id) ? 'show less' : `+${verse.crossReferences.length - 10} more` }}
-                      </span>
+                      </motion.span>
                     </div>
                     
                     <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
@@ -194,9 +213,10 @@
                     <!-- Share action bar (only visible when verse is selected) -->
                     <div v-if="clickSelectedVerseId === verse.verse_id" class="verse-actions" @click.stop>
                       <div class="verse-actions-bar">
-                        <button
+                        <motion.button
                           class="verse-action-btn"
                           :class="{ active: shareMenuVerseId === verse.verse_id }"
+                          :while-tap="tapScale"
                           @click.stop="toggleShareMenu(verse.verse_id)"
                           title="Share verse"
                         >
@@ -208,40 +228,49 @@
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                           </svg>
                           Share
-                        </button>
+                        </motion.button>
                         <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Link copied!</span>
                       </div>
 
                       <!-- Share dropdown -->
-                      <div v-if="shareMenuVerseId === verse.verse_id" class="share-menu">
-                        <button class="share-option" @click.stop="copyVerseLink(verse, chapterData.chapter.chapter_number)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                          </svg>
-                          Copy link
-                        </button>
-                        <button class="share-option" @click.stop="copyVerseText(verse, chapterData.chapter.chapter_number)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                          </svg>
-                          Copy text
-                        </button>
-                        <button v-if="canNativeShare" class="share-option" @click.stop="nativeShareVerse(verse, chapterData.chapter.chapter_number)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                            <polyline points="16 6 12 2 8 6"></polyline>
-                            <line x1="12" y1="2" x2="12" y2="15"></line>
-                          </svg>
-                          Share...
-                        </button>
-                      </div>
+                      <AnimatePresence>
+                        <motion.div
+                          v-if="shareMenuVerseId === verse.verse_id"
+                          class="share-menu"
+                          :initial="prefersReducedMotion ? false : { opacity: 0, y: -4, scale: 0.96 }"
+                          :animate="{ opacity: 1, y: 0, scale: 1 }"
+                          :exit="{ opacity: 0, y: -4, scale: 0.96 }"
+                          :transition="{ duration: 0.15 }"
+                        >
+                          <motion.button class="share-option" :while-tap="tapScale" @click.stop="copyVerseLink(verse, chapterData.chapter.chapter_number)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy link
+                          </motion.button>
+                          <motion.button class="share-option" :while-tap="tapScale" @click.stop="copyVerseText(verse, chapterData.chapter.chapter_number)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Copy text
+                          </motion.button>
+                          <motion.button v-if="canNativeShare" class="share-option" :while-tap="tapScale" @click.stop="nativeShareVerse(verse, chapterData.chapter.chapter_number)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                              <polyline points="16 6 12 2 8 6"></polyline>
+                              <line x1="12" y1="2" x2="12" y2="15"></line>
+                            </svg>
+                            Share...
+                          </motion.button>
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
-                </div>
+                </motion.div>
               </div>
             </div>
 
@@ -279,37 +308,43 @@
           </div>
 
           <!-- Cross-Reference Tooltip -->
-          <div 
-            v-if="crossRefTooltip.show" 
-            class="cross-ref-tooltip"
-            :class="{ 'broadcast-mode': broadcastMode }"
-            :style="{ left: crossRefTooltip.x + 'px', top: crossRefTooltip.y + 'px' }"
-            @click.stop
-          >
-            <div class="tooltip-header" @mousedown.prevent="startTooltipDrag">
-              <span class="tooltip-title">
-                <template v-if="crossRefTooltip.hebrewBookName">{{ crossRefTooltip.hebrewBookName }} / </template>{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}
-              </span>
-              <button class="tooltip-popout" @click="navigateFromTooltip" title="Go to verse">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </button>
-              <button class="tooltip-close" @click="closeCrossRefTooltip">&times;</button>
-            </div>
-            <div class="tooltip-content" @click="handleTooltipVerseRefClick">
-              <div v-if="crossRefTooltip.loading" class="tooltip-loading">
-                <div class="loading-spinner"></div>
-                <p>Loading verse...</p>
+          <AnimatePresence>
+            <motion.div
+              v-if="crossRefTooltip.show"
+              class="cross-ref-tooltip"
+              :class="{ 'broadcast-mode': broadcastMode }"
+              :style="{ left: crossRefTooltip.x + 'px', top: crossRefTooltip.y + 'px' }"
+              :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94 }"
+              :animate="{ opacity: 1, scale: 1 }"
+              :exit="{ opacity: 0, scale: 0.94 }"
+              :transition="tooltipSpring"
+              @click.stop
+            >
+              <div class="tooltip-header" @mousedown.prevent="startTooltipDrag">
+                <span class="tooltip-title">
+                  <template v-if="crossRefTooltip.hebrewBookName">{{ crossRefTooltip.hebrewBookName }} / </template>{{ crossRefTooltip.bookName }} {{ crossRefTooltip.chapterNumber }}:{{ crossRefTooltip.verseNumber }}
+                </span>
+                <motion.button class="tooltip-popout" :while-tap="tapScale" @click="navigateFromTooltip" title="Go to verse">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </motion.button>
+                <motion.button class="tooltip-close" :while-tap="tapScale" @click="closeCrossRefTooltip">&times;</motion.button>
               </div>
-              <div v-else>
-                <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.verseText"></div>
-                <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.teluguVerseText"></div>
+              <div class="tooltip-content" @click="handleTooltipVerseRefClick">
+                <div v-if="crossRefTooltip.loading" class="tooltip-loading">
+                  <div class="loading-spinner"></div>
+                  <p>Loading verse...</p>
+                </div>
+                <div v-else>
+                  <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.verseText"></div>
+                  <div v-if="showTelugu && crossRefTooltip.teluguVerseText" class="tooltip-verse telugu-verse" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.teluguVerseText"></div>
+                </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
         
@@ -335,41 +370,56 @@
     />
 
     <!-- Search Results Navigation -->
-    <div v-if="hasSearchResults" class="search-navigation-bar">
-      <button class="clear-search-btn" @click="clearSearchResults" title="Clear search results">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-      <span class="search-results-text">{{ searchResultsText }}</span>
-      <div class="search-nav-buttons">
-        <button class="search-nav-btn" @click="goToPreviousSearchResult" title="Previous result">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
+    <AnimatePresence>
+      <motion.div
+        v-if="hasSearchResults"
+        class="search-navigation-bar"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: 40, x: '-50%' }"
+        :animate="{ opacity: 1, y: 0, x: '-50%' }"
+        :exit="{ opacity: 0, y: 40, x: '-50%' }"
+        :transition="tooltipSpring"
+      >
+        <motion.button class="clear-search-btn" :while-tap="tapScale" @click="clearSearchResults" title="Clear search results">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </button>
-        <button class="search-nav-btn" @click="goToNextSearchResult" title="Next result">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
-      </div>
-    </div>
+        </motion.button>
+        <span class="search-results-text">{{ searchResultsText }}</span>
+        <div class="search-nav-buttons">
+          <motion.button class="search-nav-btn" :while-tap="tapScale" @click="goToPreviousSearchResult" title="Previous result">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </motion.button>
+          <motion.button class="search-nav-btn" :while-tap="tapScale" @click="goToNextSearchResult" title="Next result">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </motion.button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Context Menu for Verse References -->
-    <div 
-      v-if="contextMenu.show" 
-      class="context-menu"
-      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
-    >
-      <button @click="handleGoToVerse" class="context-menu-item">
-        Go to verse
-      </button>
-      <button @click="handleSearch" class="context-menu-item">
-        Search
-      </button>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        v-if="contextMenu.show"
+        class="context-menu"
+        :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+        :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94 }"
+        :animate="{ opacity: 1, scale: 1 }"
+        :exit="{ opacity: 0, scale: 0.94 }"
+        :transition="{ duration: 0.15 }"
+      >
+        <button @click="handleGoToVerse" class="context-menu-item">
+          Go to verse
+        </button>
+        <button @click="handleSearch" class="context-menu-item">
+          Search
+        </button>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Settings Modal -->
     <Settings
@@ -383,6 +433,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { motion, AnimatePresence, useReducedMotion } from 'motion-v';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
@@ -393,6 +444,20 @@ import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+
+// ── Motion (motion-v) ──────────────────────────────────────────────────────
+// Respect the OS-level "reduce motion" preference across every animated element.
+const prefersReducedMotion = useReducedMotion();
+
+const tooltipSpring = { type: 'spring', stiffness: 380, damping: 32 } as const;
+const tapScale = computed(() => (prefersReducedMotion.value ? {} : { scale: 0.96 }));
+const hoverLift = computed(() => (prefersReducedMotion.value ? {} : { y: -2 }));
+
+// Per-verse stagger entrance — capped so long chapters don't produce a long queued animation.
+function verseEnterTransition(index: number) {
+  if (prefersReducedMotion.value) return { duration: 0 };
+  return { duration: 0.28, delay: Math.min(index, 12) * 0.02, ease: [0.4, 0, 0.2, 1] };
+}
 
 interface Book {
   book_id: number;
@@ -2348,9 +2413,9 @@ defineExpose({ showCrossRefTooltip });
   left: 0;
   right: 0;
   z-index: 1000;
-  background: linear-gradient(135deg, #42b983 0%, #35a373 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   padding: 0.75rem 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-nav);
 }
 
 .chapters-page.broadcast-mode .top-nav {
@@ -2375,12 +2440,12 @@ defineExpose({ showCrossRefTooltip });
 
 .chapter-content {
   position: relative; /* For absolute positioning of content-loading-overlay */
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-card-padding);
   margin: 90px auto 2rem auto;
   max-width: 900px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   min-height: 400px;
 }
 
@@ -2403,25 +2468,20 @@ defineExpose({ showCrossRefTooltip });
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(255 255 255 / 0.95);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default);
   font-size: 1rem;
-  color: #2c3e50;
+  color: var(--color-foreground);
   min-width: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .verse-picker-button:hover {
   background: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.verse-picker-button:active {
-  transform: translateY(0);
+  box-shadow: var(--shadow-nav);
 }
 
 .book-names {
@@ -2464,43 +2524,38 @@ defineExpose({ showCrossRefTooltip });
 
 .chapter-verse {
   font-size: 0.9rem;
-  color: #42b983;
+  color: var(--color-primary);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .chevron-icon {
   flex-shrink: 0;
-  color: #999;
-  transition: transform 0.2s;
+  color: var(--color-muted-foreground);
+  transition: color var(--duration-fast) var(--ease-default);
 }
 
 .verse-picker-button:hover .chevron-icon {
-  color: #42b983;
+  color: var(--color-primary);
 }
 
 .nav-back-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 0.2);
   border: none;
   cursor: pointer;
   padding: 0.75rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default);
   flex-shrink: 0;
   color: white;
 }
 
 .nav-back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.nav-back-btn:active {
-  transform: translateY(0);
+  background: rgb(255 255 255 / 0.3);
+  box-shadow: var(--shadow-nav);
 }
 
 .nav-right-group {
@@ -2512,24 +2567,23 @@ defineExpose({ showCrossRefTooltip });
 
 .search-icon,
 .settings-icon {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 0.2);
   border: none;
   cursor: pointer;
   padding: 0.75rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default);
   flex-shrink: 0;
   color: white;
 }
 
 .search-icon:hover,
 .settings-icon:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgb(255 255 255 / 0.3);
+  box-shadow: var(--shadow-nav);
 }
 
 .search-icon:active,
@@ -2552,40 +2606,30 @@ defineExpose({ showCrossRefTooltip });
 
 .toggle-btn {
   padding: 0.5rem 1rem;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background: white;
-  color: #666;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-default);
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .toggle-btn:hover {
-  border-color: #42b983;
-  color: #42b983;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .toggle-btn.active {
-  background: #42b983;
-  border-color: #42b983;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
 
 .toggle-btn.active:hover {
-  background: #359670;
-  border-color: #359670;
-}
-
-.chapter-content {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  margin: 80px auto 2rem auto;
-  max-width: 900px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  min-height: 400px;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .continuous-scroll-container {
@@ -2601,25 +2645,25 @@ defineExpose({ showCrossRefTooltip });
 .book-header {
   padding: 2rem 0 1rem;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid var(--color-border);
   text-align: center !important;
 }
 
 .book-header h1 {
   margin: 0;
   text-align: center;
-  color: #2c3e50;
+  color: var(--color-foreground);
 }
 
 .chapter-indicator {
   font-size: 1.5rem;
-  color: #42b983;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
 .book-description {
   text-align: center;
-  color: #666;
+  color: var(--color-muted-foreground);
   font-size: 0.95rem;
   margin: 0.5rem 0 0 0;
   line-height: 1.5;
@@ -2630,24 +2674,24 @@ defineExpose({ showCrossRefTooltip });
 .book-footer-section {
   padding: 2rem;
   margin: 2rem 0;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  background-color: var(--color-background-alt);
+  border-radius: var(--radius-sm);
 }
 
 .book-header-section {
   margin-top: 100px;
-  border-bottom: 4px solid #42b983;
+  border-bottom: 4px solid var(--color-primary);
 }
 
 .book-footer-section {
   margin-bottom: 0;
-  border-top: 4px solid #42b983;
+  border-top: 4px solid var(--color-primary);
 }
 
 .section-title {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-foreground);
   margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -2655,8 +2699,8 @@ defineExpose({ showCrossRefTooltip });
 
 .book-header-content,
 .book-footer-content {
-  line-height: 1.8;
-  color: #333;
+  line-height: var(--leading-reading);
+  color: var(--color-neutral-800);
   text-align: left;
 }
 
@@ -2664,17 +2708,17 @@ defineExpose({ showCrossRefTooltip });
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: #999;
+  color: var(--color-muted-foreground);
 }
 
 .error {
-  color: #e74c3c;
+  color: var(--color-error);
 }
 
 .loading-adjacent {
   text-align: center;
   padding: 1rem;
-  color: #999;
+  color: var(--color-muted-foreground);
   font-style: italic;
 }
 
@@ -2700,26 +2744,21 @@ defineExpose({ showCrossRefTooltip });
 }
 
 .verse-item {
-  line-height: 1.8;
-  padding: 5px 10px;
-  transition: all 0.4s ease;
+  line-height: var(--leading-reading);
+  padding: var(--spacing-verse-gap);
+  transition: background var(--duration-normal) var(--ease-default), box-shadow var(--duration-normal) var(--ease-default);
   cursor: pointer;
 }
 
 .verse-item.highlight-verse {
-  background: linear-gradient(90deg, #fff3cd 0%, #fffbf0 100%);
-  /* padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid #ffc107;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3); */
+  background: linear-gradient(90deg, var(--color-highlight-from) 0%, var(--color-highlight-to) 100%);
   animation: highlightPulse 0.6s ease-out;
 }
 
 .verse-item.verse-selected {
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
-  transform: translateY(-1px);
+  border-radius: var(--radius-default);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.8);
+  background: linear-gradient(180deg, var(--color-selected-from) 0%, var(--color-selected-to) 100%);
 }
 
 /* Verse action bar (share) */
@@ -2727,7 +2766,7 @@ defineExpose({ showCrossRefTooltip });
   position: relative;
   margin-top: 0.5rem;
   padding-top: 0.35rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  border-top: 1px solid rgb(0 0 0 / 0.07);
 }
 
 .verse-actions-bar {
@@ -2743,25 +2782,25 @@ defineExpose({ showCrossRefTooltip });
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #555;
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
+  color: var(--color-neutral-600);
+  background: rgb(0 0 0 / 0.05);
+  border: 1px solid rgb(0 0 0 / 0.1);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
   line-height: 1.4;
 }
 
 .verse-action-btn:hover,
 .verse-action-btn.active {
-  background: rgba(66, 185, 131, 0.12);
-  color: #42b983;
-  border-color: rgba(66, 185, 131, 0.3);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: rgb(30 64 175 / 0.3);
 }
 
 .copied-feedback {
   font-size: 0.72rem;
-  color: #42b983;
+  color: var(--color-primary);
   font-weight: 500;
   animation: fadeInOut 2s ease forwards;
 }
@@ -2778,10 +2817,10 @@ defineExpose({ showCrossRefTooltip });
   top: calc(100% + 4px);
   left: 0;
   z-index: 100;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: var(--color-card);
+  border: 1px solid rgb(0 0 0 / 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
   min-width: 150px;
   overflow: hidden;
 }
@@ -2793,30 +2832,27 @@ defineExpose({ showCrossRefTooltip });
   width: 100%;
   padding: 0.55rem 0.85rem;
   font-size: 0.82rem;
-  color: #333;
+  color: var(--color-neutral-800);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s;
+  transition: background var(--duration-fast) var(--ease-default);
 }
 
 .share-option:hover {
-  background: rgba(66, 185, 131, 0.08);
-  color: #42b983;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 @keyframes highlightPulse {
   0% {
-    transform: scale(1);
     box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
   }
   50% {
-    transform: scale(1.02);
     box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
   }
   100% {
-    transform: scale(1);
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
   }
 }
@@ -2828,7 +2864,7 @@ defineExpose({ showCrossRefTooltip });
 .verse-number {
   display: inline;
   font-weight: 700;
-  color: #42b983;
+  color: var(--color-primary);
   font-size: 0.9rem;
   margin-right: 0.5rem;
 }
@@ -2839,7 +2875,8 @@ defineExpose({ showCrossRefTooltip });
 
 .verse-text {
   display: inline;
-  color: #333;
+  color: var(--color-neutral-800);
+  font-family: var(--font-family-body);
 }
 
 .bold-text {
@@ -2854,10 +2891,11 @@ defineExpose({ showCrossRefTooltip });
 
 .verse-telugu {
   display: block;
-  color: #666;
+  color: var(--color-muted-foreground);
   font-size: 0.95rem;
   margin-top: 0.125rem;
   text-align: left;
+  font-family: var(--font-family-telugu);
 }
 
 .verse-telugu.inline {
@@ -2885,35 +2923,32 @@ defineExpose({ showCrossRefTooltip });
 .link-badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
-  background: #e7f3ff;
-  color: #0366d6;
-  border-radius: 4px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
 }
 
 .link-badge:hover {
-  background: #0366d6;
+  background: var(--color-primary);
   color: white;
-  transform: translateY(-1px);
 }
 
 .verse-cross-references {
   display: block;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  /* background: #f9fafb; */
-  /* border-left: 3px solid #10b981; */
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .cross-ref-label {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #059669;
+  color: var(--color-success);
   margin-right: 0.5rem;
   margin-bottom: 0.25rem;
 }
@@ -2922,70 +2957,68 @@ defineExpose({ showCrossRefTooltip });
   display: inline-block;
   padding: 0.2rem 0.4rem;
   margin: 0.25rem 0.25rem 0.25rem 0;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 3px;
+  background: #D1FAE5;
+  color: #065F46;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.2s;
-  border: 1px solid #a7f3d0;
+  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
+  border: 1px solid #A7F3D0;
 }
 
 .cross-ref-badge:hover {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
-  transform: translateY(-1px);
   border-color: #059669;
 }
 
 .cross-ref-more {
   display: inline-block;
   font-size: 0.75rem;
-  color: #059669;
+  color: var(--color-success);
   font-weight: 600;
   font-style: normal;
   margin-left: 0.5rem;
   padding: 0.2rem 0.5rem;
-  background: #f0fdf4;
-  border-radius: 3px;
-  border: 1px solid #bbf7d0;
+  background: #F0FDF4;
+  border-radius: var(--radius-sm);
+  border: 1px solid #BBF7D0;
   vertical-align: middle;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
 }
 
 .cross-ref-more:hover {
-  background: #dcfce7;
-  transform: translateY(-1px);
+  background: #DCFCE7;
   border-color: #059669;
 }
 
 /* Inline verse references within text */
 :deep(.inline-verse-ref) {
-  color: #0366d6;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 1px dotted #0366d6;
-  transition: all 0.2s;
+  border-bottom: 1px dotted var(--color-primary);
+  transition: color var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
   font-size: 0.75em;
   vertical-align: super;
   line-height: 0;
 }
 
 :deep(.inline-verse-ref:hover) {
-  color: #0056b3;
-  border-bottom: 1px solid #0056b3;
+  color: var(--color-primary-hover);
+  border-bottom: 1px solid var(--color-primary-hover);
 }
 
 /* Context Menu */
 .context-menu {
   position: fixed;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-tooltip);
   z-index: 10000;
   padding: 4px 0;
 }
@@ -2999,11 +3032,11 @@ defineExpose({ showCrossRefTooltip });
   border: none;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  transition: background var(--duration-normal) var(--ease-default);
 }
 
 .context-menu-item:hover {
-  background: #f5f5f5;
+  background: var(--color-background-alt);
 }
 
 /* Cross-Reference Tooltip */
@@ -3025,10 +3058,10 @@ body {
 
 .cross-ref-tooltip {
   position: fixed;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-tooltip);
   z-index: 10001;
   min-width: 300px;
   max-width: 700px;
@@ -3047,8 +3080,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--color-background-alt);
+  border-bottom: 1px solid var(--color-border);
   gap: 8px;
   cursor: move;
 }
@@ -3056,7 +3089,7 @@ body {
 .tooltip-title {
   font-weight: 600;
   font-size: 14px;
-  color: #333;
+  color: var(--color-neutral-800);
   flex: 1;
 }
 
@@ -3068,14 +3101,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
-  transition: color 0.2s;
-  border-radius: 4px;
+  color: var(--color-muted-foreground);
+  transition: color var(--duration-normal) var(--ease-default);
+  border-radius: var(--radius-sm);
 }
 
 .tooltip-popout:hover {
-  color: #007bff;
-  background: #e9ecef;
+  color: var(--color-primary);
+  background: var(--color-border);
 }
 
 .tooltip-close {
@@ -3084,20 +3117,20 @@ body {
   cursor: pointer;
   font-size: 24px;
   line-height: 1;
-  color: #666;
+  color: var(--color-muted-foreground);
   padding: 0;
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
-  border-radius: 4px;
+  transition: color var(--duration-normal) var(--ease-default);
+  border-radius: var(--radius-sm);
 }
 
 .tooltip-close:hover {
-  color: #333;
-  background: #e9ecef;
+  color: var(--color-neutral-800);
+  background: var(--color-border);
 }
 
 .tooltip-content {
@@ -3118,28 +3151,27 @@ body {
 .tooltip-loading .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #007bff;
+  border: 3px solid var(--color-border);
+  border-top: 3px solid var(--color-primary);
 }
 
 .tooltip-loading p {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: var(--color-muted-foreground);
 }
 
 .tooltip-verse {
   font-size: 18px;
   font-weight: 600;
   line-height: 1.6;
-  color: #333;
+  color: var(--color-neutral-800);
   text-align: left;
+  font-family: var(--font-family-body);
 }
 
 .tooltip-verse.telugu-verse {
-  font-family: 'Noto Sans Telugu', sans-serif;
-  /* border-top: 1px solid #eee; */
-  /* padding-top: 15px; */
+  font-family: var(--font-family-telugu);
   margin-top: 10px;
   text-align: left;
 }
@@ -3196,7 +3228,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(255 255 255 / 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3211,19 +3243,19 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(255 255 255 / 0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 100;
   backdrop-filter: blur(8px);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .loading-overlay p,
 .content-loading-overlay p {
-  color: #2c3e50;
+  color: var(--color-foreground);
   font-size: 18px;
   margin-top: 1.5rem;
   font-weight: 600;
@@ -3232,8 +3264,8 @@ body {
 .loading-spinner {
   width: 60px;
   height: 60px;
-  border: 4px solid #e0e0e0;
-  border-top-color: #42b983;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -3246,9 +3278,8 @@ body {
   display: block;
   margin-top: 0.75rem;
   padding: 2px;
-  background: linear-gradient(to left, #fffbeb, transparent);
-  /* border-right: 3px solid #f59e0b; */
-  border-radius: 4px;
+  background: linear-gradient(to left, var(--color-note-bg), transparent);
+  border-radius: var(--radius-sm);
 }
 
 .note-item {
@@ -3262,13 +3293,13 @@ body {
 
 .note-title {
   font-weight: 600;
-  color: #92400e;
+  color: var(--color-note-title);
   margin-bottom: 0.25rem;
   font-size: 0.9rem;
 }
 
 .note-content {
-  color: #78350f;
+  color: var(--color-note-text);
   font-size: 0.85rem;
   line-height: 1.5;
 }
@@ -3368,51 +3399,37 @@ body {
   }
 }
 
-/* Search Results Navigation Bar */
+/* Search Results Navigation Bar — enter/exit driven by motion-v (AnimatePresence + spring) */
 .search-navigation-bar {
   position: fixed;
   bottom: 2rem;
   left: 50%;
-  transform: translateX(-50%);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 0.75rem 1.5rem;
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 24px rgb(102 126 234 / 0.4);
   z-index: 999;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateX(-50%) translateY(100px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
 }
 
 .clear-search-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 0.2);
   border: none;
   color: white;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background var(--duration-normal) var(--ease-default);
 }
 
 .clear-search-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+  background: rgb(255 255 255 / 0.3);
 }
 
 .search-results-text {
@@ -3429,25 +3446,20 @@ body {
 }
 
 .search-nav-btn {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(255 255 255 / 0.2);
   border: none;
   color: white;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background var(--duration-normal) var(--ease-default);
 }
 
 .search-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.search-nav-btn:active {
-  transform: scale(0.95);
+  background: rgb(255 255 255 / 0.3);
 }
 
 @media (max-width: 768px) {

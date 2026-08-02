@@ -1,4 +1,5 @@
 import './style.css'
+import './assets/design-tokens.css'
 import './assets/fonts/fonts.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
