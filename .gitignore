@@ -36,3 +36,6 @@ mjs-scripts/
 *.njsproj
 *.sln
 *.sw?
+
+# Graphify knowledge-graph output (auto-regenerated on commit)
+graphify-out/
