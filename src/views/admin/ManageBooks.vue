@@ -54,11 +54,27 @@
     </div>
 
     <!-- Edit Modal -->
-    <div v-if="showEditModal" class="modal-overlay" @click="closeEditModal">
-      <div class="modal-content" @click.stop>
+    <AnimatePresence>
+      <motion.div
+        v-if="showEditModal"
+        class="modal-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click="closeEditModal"
+      >
+      <motion.div
+        class="modal-content"
+        :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+        :animate="{ opacity: 1, scale: 1, y: 0 }"
+        :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+        :transition="tooltipSpring"
+        @click.stop
+      >
         <div class="modal-header">
           <h2>Edit Book</h2>
-          <button class="close-button" @click="closeEditModal">&times;</button>
+          <motion.button class="close-button" :while-tap="tapScale" @click="closeEditModal">&times;</motion.button>
         </div>
         <form @submit.prevent="saveBook" class="modal-form">
           <div class="form-group">
@@ -194,21 +210,25 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Update Book</button>
-            <button type="button" @click="closeEditModal" class="btn btn-secondary">Cancel</button>
+            <motion.button type="submit" class="btn btn-primary" :while-tap="tapScale">Update Book</motion.button>
+            <motion.button type="button" :while-tap="tapScale" @click="closeEditModal" class="btn btn-secondary">Cancel</motion.button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
 import { getAllBooks, updateBook } from '@/api/books';
 import { getAllBookCategories } from '@/api/bookCategories';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import type { Book, BookInsert, BookCategory } from '@/utils/collectionReferences';
 
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 const booksData = ref<Book[]>([]);
 const categories = ref<BookCategory[]>([]);
 const loading = ref(true);

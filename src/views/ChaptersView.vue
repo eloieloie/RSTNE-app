@@ -133,7 +133,7 @@
             >
               <div class="book-header">
                 <h1>
-                  <span class="chapter-indicator">Chapter {{ chapterData.chapter.chapter_number }}</span>
+                  <span class="chapter-indicator">{{ chapterData.chapter.chapter_number }}</span>
                 </h1>
                 <p v-if="chapterData.chapter.chapter_description" class="book-description">
                   {{ chapterData.chapter.chapter_description }}
@@ -203,10 +203,56 @@
                       </motion.span>
                     </div>
                     
-                    <div v-if="showNotes && verse.notes && verse.notes.length > 0" class="verse-notes">
+                    <div v-if="showAdminNotes && ((verse.notes && verse.notes.length > 0) || addingAdminNoteVerseId === verse.verse_id)" class="verse-notes admin-notes">
                       <div v-for="note in verse.notes" :key="note.note_id" class="note-item">
-                        <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
-                        <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
+                        <template v-if="editingAdminNoteId === note.note_id">
+                          <textarea v-model="editAdminNoteContent" class="note-edit-textarea" rows="3"></textarea>
+                          <div class="note-edit-actions">
+                            <button class="note-save-btn" @click.stop="saveEditAdminNote(verse.verse_id, note.note_id)">Save</button>
+                            <button class="note-cancel-btn" @click.stop="cancelEditAdminNote">Cancel</button>
+                            <button class="note-delete-btn" @click.stop="deleteAdminNoteFromVerse(verse.verse_id, note.verse_note_id, note.note_id)">Delete</button>
+                          </div>
+                        </template>
+                        <template v-else>
+                          <div v-if="note.note_title" class="note-title" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_title)"></div>
+                          <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
+                        </template>
+                      </div>
+                      <div v-if="isAdmin && addingAdminNoteVerseId === verse.verse_id" class="note-add-row">
+                        <textarea v-model="newAdminNoteContent" class="note-edit-textarea" rows="3" placeholder="New admin note…"></textarea>
+                        <div class="note-edit-actions">
+                          <button class="note-save-btn" @click.stop="saveNewAdminNote(verse.verse_id)">Save</button>
+                          <button class="note-cancel-btn" @click.stop="cancelAddAdminNote">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-if="showMyNotes && !isAdmin && ((verse.my_notes && verse.my_notes.length > 0) || user)" class="verse-notes my-notes">
+                      <div v-for="note in verse.my_notes" :key="note.personal_note_id" class="note-item">
+                        <template v-if="editingPersonalNoteId === note.personal_note_id">
+                          <textarea v-model="editPersonalNoteContent" class="note-edit-textarea" rows="3"></textarea>
+                          <div class="note-edit-actions">
+                            <button class="note-save-btn" @click.stop="saveEditPersonalNote(verse.verse_id, note.personal_note_id)">Save</button>
+                            <button class="note-cancel-btn" @click.stop="cancelEditPersonalNote">Cancel</button>
+                          </div>
+                        </template>
+                        <template v-else>
+                          <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
+                          <div class="note-inline-actions">
+                            <button class="note-icon-btn" title="Edit note" @click.stop="startEditPersonalNote(note)">✎</button>
+                            <button class="note-icon-btn" title="Delete note" @click.stop="deletePersonalNoteFromVerse(verse.verse_id, note.personal_verse_note_id, note.personal_note_id)">🗑</button>
+                          </div>
+                        </template>
+                      </div>
+                      <div v-if="user" class="note-add-row">
+                        <template v-if="addingPersonalNoteVerseId === verse.verse_id">
+                          <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
+                          <div class="note-edit-actions">
+                            <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
+                            <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
+                          </div>
+                        </template>
+                        <button v-else class="note-add-btn" @click.stop="startAddPersonalNote(verse.verse_id)">+ Add my note</button>
                       </div>
                     </div>
 
@@ -228,6 +274,32 @@
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                           </svg>
                           Share
+                        </motion.button>
+                        <motion.button
+                          v-if="isAdmin && verse.notes && verse.notes.length > 0"
+                          class="verse-action-btn"
+                          :while-tap="tapScale"
+                          @click.stop="startEditAdminNote(verse.notes[0])"
+                          title="Edit admin note"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit Note
+                        </motion.button>
+                        <motion.button
+                          v-if="isAdmin && (!verse.notes || verse.notes.length === 0)"
+                          class="verse-action-btn"
+                          :while-tap="tapScale"
+                          @click.stop="startAddAdminNote(verse.verse_id)"
+                          title="Add admin note"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          Add Note
                         </motion.button>
                         <span v-if="copiedVerseId === verse.verse_id" class="copied-feedback">Link copied!</span>
                       </div>
@@ -444,6 +516,15 @@ import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+import { useAuth } from '@/composables/useAuth';
+import { updateNote, createNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
+import {
+  createPersonalNote,
+  updatePersonalNote,
+  deletePersonalNote,
+  linkPersonalNoteToVerse,
+  unlinkPersonalNoteFromVerse,
+} from '@/api/personalNotes';
 
 // ── Motion (motion-v) ──────────────────────────────────────────────────────
 // Respect the OS-level "reduce motion" preference across every animated element.
@@ -494,6 +575,13 @@ interface Verse {
   }>;
   notes?: Array<{
     note_id: number;
+    verse_note_id: number;
+    note_title?: string | null;
+    note_content: string;
+  }>;
+  my_notes?: Array<{
+    personal_note_id: number;
+    personal_verse_note_id: number;
     note_title?: string | null;
     note_content: string;
   }>;
@@ -549,7 +637,8 @@ let parashaFlashTimer: ReturnType<typeof setTimeout> | null = null;
 // Settings state (managed by Settings component)
 const showEnglish = ref(true);
 const showTelugu = ref(true);
-const showNotes = ref(true);
+const showAdminNotes = ref(true);
+const showMyNotes = ref(true);
 const showCrossReferences = ref(true);
 const showSuperscript = ref(true);
 const fontSize = ref(16);
@@ -561,6 +650,160 @@ const chapterContentRef = ref<HTMLElement | null>(null);
 const showSettingsModal = ref(false);
 const showVersePicker = ref(false);
 const showSearchModal = ref(false);
+
+// ── Admin Notes (in-place editing) & My Notes (personal, per-user) ──────────
+const { user, isAdmin } = useAuth();
+
+const editingAdminNoteId = ref<number | null>(null);
+const editAdminNoteContent = ref('');
+const addingAdminNoteVerseId = ref<number | null>(null);
+const newAdminNoteContent = ref('');
+
+const editingPersonalNoteId = ref<number | null>(null);
+const editPersonalNoteContent = ref('');
+const addingPersonalNoteVerseId = ref<number | null>(null);
+const newPersonalNoteContent = ref('');
+
+function findVerse(verseId: number) {
+  for (const chapterData of loadedChapters.value.values()) {
+    const verse = chapterData.verses.find(v => v.verse_id === verseId);
+    if (verse) return verse;
+  }
+  return null;
+}
+
+// -- Admin note edit-in-place --
+function startEditAdminNote(note: { note_id: number; note_content: string }) {
+  editingAdminNoteId.value = note.note_id;
+  editAdminNoteContent.value = note.note_content;
+}
+
+function cancelEditAdminNote() {
+  editingAdminNoteId.value = null;
+  editAdminNoteContent.value = '';
+}
+
+async function saveEditAdminNote(verseId: number, noteId: number) {
+  const content = editAdminNoteContent.value.trim();
+  if (!content) return;
+  try {
+    await updateNote(noteId, { note_content: content });
+    const verse = findVerse(verseId);
+    const note = verse?.notes?.find(n => n.note_id === noteId);
+    if (note) note.note_content = content;
+  } catch (err) {
+    console.error('Failed to update admin note:', err);
+  } finally {
+    cancelEditAdminNote();
+  }
+}
+
+async function deleteAdminNoteFromVerse(verseId: number, verseNoteId: number, noteId: number) {
+  if (!confirm('Remove this admin note from the verse?')) return;
+  try {
+    await unlinkNoteFromVerse(verseNoteId);
+    const verse = findVerse(verseId);
+    if (verse?.notes) {
+      verse.notes = verse.notes.filter(n => n.note_id !== noteId);
+    }
+  } catch (err) {
+    console.error('Failed to remove admin note:', err);
+  }
+}
+
+function startAddAdminNote(verseId: number) {
+  addingAdminNoteVerseId.value = verseId;
+  newAdminNoteContent.value = '';
+}
+
+function cancelAddAdminNote() {
+  addingAdminNoteVerseId.value = null;
+  newAdminNoteContent.value = '';
+}
+
+async function saveNewAdminNote(verseId: number) {
+  const content = newAdminNoteContent.value.trim();
+  if (!content) return;
+  try {
+    const { note_id } = await createNote({ note_content: content });
+    const { verse_note_id } = await linkNoteToVerse({ verse_id: verseId, note_id });
+    const verse = findVerse(verseId);
+    if (verse) {
+      verse.notes = [...(verse.notes || []), { note_id, verse_note_id, note_content: content }];
+    }
+  } catch (err) {
+    console.error('Failed to add admin note:', err);
+  } finally {
+    cancelAddAdminNote();
+  }
+}
+
+// -- My (personal) notes --
+function startAddPersonalNote(verseId: number) {
+  addingPersonalNoteVerseId.value = verseId;
+  newPersonalNoteContent.value = '';
+}
+
+function cancelAddPersonalNote() {
+  addingPersonalNoteVerseId.value = null;
+  newPersonalNoteContent.value = '';
+}
+
+async function saveNewPersonalNote(verseId: number) {
+  const content = newPersonalNoteContent.value.trim();
+  if (!content) return;
+  try {
+    const { personal_note_id } = await createPersonalNote({ note_content: content });
+    const { personal_verse_note_id } = await linkPersonalNoteToVerse(verseId, personal_note_id);
+    const verse = findVerse(verseId);
+    if (verse) {
+      verse.my_notes = [...(verse.my_notes || []), { personal_note_id, personal_verse_note_id, note_content: content }];
+    }
+  } catch (err) {
+    console.error('Failed to add personal note:', err);
+  } finally {
+    cancelAddPersonalNote();
+  }
+}
+
+function startEditPersonalNote(note: { personal_note_id: number; note_content: string }) {
+  editingPersonalNoteId.value = note.personal_note_id;
+  editPersonalNoteContent.value = note.note_content;
+}
+
+function cancelEditPersonalNote() {
+  editingPersonalNoteId.value = null;
+  editPersonalNoteContent.value = '';
+}
+
+async function saveEditPersonalNote(verseId: number, personalNoteId: number) {
+  const content = editPersonalNoteContent.value.trim();
+  if (!content) return;
+  try {
+    await updatePersonalNote(personalNoteId, { note_content: content });
+    const verse = findVerse(verseId);
+    const note = verse?.my_notes?.find(n => n.personal_note_id === personalNoteId);
+    if (note) note.note_content = content;
+  } catch (err) {
+    console.error('Failed to update personal note:', err);
+  } finally {
+    cancelEditPersonalNote();
+  }
+}
+
+async function deletePersonalNoteFromVerse(verseId: number, personalVerseNoteId: number, personalNoteId: number) {
+  if (!confirm('Delete this note?')) return;
+  try {
+    await unlinkPersonalNoteFromVerse(personalVerseNoteId);
+    await deletePersonalNote(personalNoteId);
+    const verse = findVerse(verseId);
+    if (verse?.my_notes) {
+      verse.my_notes = verse.my_notes.filter(n => n.personal_note_id !== personalNoteId);
+    }
+  } catch (err) {
+    console.error('Failed to delete personal note:', err);
+  }
+}
 
 function openSearchModal() {
   const selected = window.getSelection()?.toString().trim();
@@ -1394,7 +1637,8 @@ function onTooltipDragEnd() {
 interface SettingsData {
   showEnglish: boolean;
   showTelugu: boolean;
-  showNotes: boolean;
+  showAdminNotes: boolean;
+  showMyNotes: boolean;
   showCrossReferences: boolean;
   showSuperscript: boolean;
   fontSize: number;
@@ -1405,7 +1649,8 @@ interface SettingsData {
 function handleSettingsChange(settings: SettingsData) {
   showEnglish.value = settings.showEnglish;
   showTelugu.value = settings.showTelugu;
-  showNotes.value = settings.showNotes;
+  showAdminNotes.value = settings.showAdminNotes;
+  showMyNotes.value = settings.showMyNotes;
   showCrossReferences.value = settings.showCrossReferences;
   showSuperscript.value = settings.showSuperscript;
   fontSize.value = settings.fontSize;
@@ -2651,14 +2896,18 @@ defineExpose({ showCrossRefTooltip });
 
 .book-header h1 {
   margin: 0;
-  text-align: center;
+  text-align: right;
   color: var(--color-foreground);
 }
 
 .chapter-indicator {
-  font-size: 1.5rem;
+  display: block;
+  font-family: var(--font-family-chapter);
+  font-size: 3rem;
+  line-height: 1;
+  text-align: right;
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .book-description {
@@ -3302,6 +3551,122 @@ body {
   color: var(--color-note-text);
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+.admin-notes {
+  border-left: 3px solid #8B4513;
+  padding-left: 0.6rem;
+}
+
+.my-notes {
+  border-left: 3px solid #4D7C0F;
+  padding-left: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.note-inline-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.note-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 5px;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.note-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.note-add-row {
+  margin-top: 0.5rem;
+}
+
+.note-add-btn {
+  border: 1.5px dashed #b5aca0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  min-height: 36px;
+  transition: all 0.15s ease;
+}
+
+.note-add-btn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+.note-edit-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem 0.65rem;
+  border: 1.5px solid #d8d2c9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.note-edit-textarea:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.15);
+}
+
+.note-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.note-save-btn,
+.note-cancel-btn {
+  min-height: 34px;
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.note-save-btn {
+  background: #8B4513;
+  color: #fff;
+}
+
+.note-cancel-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+.note-delete-btn {
+  min-height: 34px;
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #fef2f2;
+  color: #b91c1c;
+  margin-left: auto;
 }
 
 .paleobora-text {

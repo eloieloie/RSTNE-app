@@ -86,7 +86,11 @@
             <div v-if="showNotesForVerse === verse.verse_id" class="notes-section">
               <div class="notes-header">
                 <h4>Notes</h4>
-                <button @click="startAddNote(verse.verse_id)" class="btn btn-sm btn-success btn-add-note">+ Add Note</button>
+                <button
+                  v-if="!verseNotes[verse.verse_id] || verseNotes[verse.verse_id].length === 0"
+                  @click="startAddNote(verse.verse_id)"
+                  class="btn btn-sm btn-success btn-add-note"
+                >+ Add Note</button>
               </div>
               
               <div v-if="loadingNotes" class="loading-notes">Loading notes...</div>

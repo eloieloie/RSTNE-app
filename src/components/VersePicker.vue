@@ -1,6 +1,23 @@
 <template>
-  <div v-if="isOpen" class="verse-picker-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click="close">
-    <div class="verse-picker-modal" @click.stop>
+  <AnimatePresence>
+    <motion.div
+      v-if="isOpen"
+      class="verse-picker-overlay"
+      :class="{ 'broadcast-mode': broadcastMode }"
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :exit="{ opacity: 0 }"
+      :transition="overlayFade"
+      @click="close"
+    >
+    <motion.div
+      class="verse-picker-modal"
+      :initial="prefersReducedMotion ? false : { opacity: 0, y: 16 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :exit="{ opacity: 0, y: 16 }"
+      :transition="tooltipSpring"
+      @click.stop
+    >
       <div class="verse-picker-header">
         <h3>
           {{ selectedBook && selectedChapter ? `Select Verse` : selectedBook ? 'Select Chapter' : 'Select Book' }}
@@ -9,7 +26,7 @@
           </span>
         </h3>
         <div class="header-controls">
-          <button class="close-btn" @click="close">&times;</button>
+          <motion.button class="close-btn" :while-tap="tapScale" @click="close">&times;</motion.button>
         </div>
       </div>
       
@@ -18,36 +35,43 @@
         <div v-if="!selectedBook" class="categories-view">
           <!-- Category Tabs -->
           <div class="category-tabs">
-            <button 
+            <motion.button
               class="category-tab"
               :class="{ active: activeCategory === 'first_covenant' }"
+              :while-tap="tapScale"
               @click="setActiveCategory('first_covenant')"
             >
               First Covenant
-            </button>
-            <button 
+            </motion.button>
+            <motion.button
               class="category-tab"
               :class="{ active: activeCategory === 'new_covenant' }"
+              :while-tap="tapScale"
               @click="setActiveCategory('new_covenant')"
             >
               New Covenant
-            </button>
-            <button 
+            </motion.button>
+            <motion.button
               class="category-tab"
               :class="{ active: activeCategory === 'apocrypha' }"
+              :while-tap="tapScale"
               @click="setActiveCategory('apocrypha')"
             >
               Restored Apocryphal Books
-            </button>
+            </motion.button>
           </div>
 
           <!-- Books List -->
           <div class="category-books">
-            <div
+            <motion.div
               v-if="activeCategory === 'first_covenant'"
-              v-for="book in oldTestamentBooks"
+              v-for="(book, index) in oldTestamentBooks"
               :key="book.book_id"
               class="book-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectBook(book)"
             >
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
@@ -55,13 +79,17 @@
               <span class="book-english">{{ book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
-            </div>
+            </motion.div>
 
-            <div
+            <motion.div
               v-if="activeCategory === 'new_covenant'"
-              v-for="book in newTestamentBooks"
+              v-for="(book, index) in newTestamentBooks"
               :key="book.book_id"
               class="book-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectBook(book)"
             >
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
@@ -69,13 +97,17 @@
               <span class="book-english">{{ book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
-            </div>
+            </motion.div>
 
-            <div
+            <motion.div
               v-if="activeCategory === 'apocrypha'"
-              v-for="book in apocryphaBooks"
+              v-for="(book, index) in apocryphaBooks"
               :key="book.book_id"
               class="book-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectBook(book)"
             >
               <span class="book-hebrew">{{ book.hebrew_book_name || book.book_name }}</span>
@@ -83,15 +115,15 @@
               <span class="book-english">{{ book.book_name }}</span>
               <span class="book-separator">|</span>
               <span class="book-telugu">{{ book.telugu_book_name || book.book_name }}</span>
-            </div>
+            </motion.div>
           </div>
         </div>
 
         <!-- Chapters View -->
         <div v-else-if="selectedBook && !selectedChapter" class="chapters-view">
-          <button class="back-btn" @click="selectedBook = null">
+          <motion.button class="back-btn" :while-tap="tapScale" @click="selectedBook = null">
             ← Back to Books
-          </button>
+          </motion.button>
           <h4 class="chapter-view-title">
             <span class="title-hebrew">{{ selectedBook.hebrew_book_name || selectedBook.book_name }}</span>
             <span class="title-separator">|</span>
@@ -100,52 +132,63 @@
             <span class="title-telugu">{{ selectedBook.telugu_book_name || selectedBook.book_name }}</span>
           </h4>
           <div class="chapters-grid">
-            <div
-              v-for="chapter in chapters"
+            <motion.div
+              v-for="(chapter, index) in chapters"
               :key="chapter.chapter_id"
               class="chapter-card"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectChapter(chapter)"
             >
               {{ chapter.chapter_number }}
-            </div>
+            </motion.div>
           </div>
         </div>
 
         <!-- Verses View -->
         <div v-else-if="selectedBook && selectedChapter" class="verses-view">
-          <button class="back-btn" @click="selectedChapter = null">
+          <motion.button class="back-btn" :while-tap="tapScale" @click="selectedChapter = null">
             ← Back to Chapters
-          </button>
+          </motion.button>
           <h4 class="chapter-view-title">
             <span class="title-hebrew">{{ selectedBook.hebrew_book_name || selectedBook.book_name }}</span>
             <span class="title-separator">|</span>
             <span class="title-english">{{ selectedBook.book_name }} {{ selectedChapter.chapter_number }}</span>
           </h4>
-          <div 
+          <div
             ref="versesScrollContainer"
             class="verses-grid"
             @scroll="handleVersesScroll"
           >
-            <div
-              v-for="verseRef in verses"
+            <motion.div
+              v-for="(verseRef, index) in verses"
               :key="verseRef.verse_id"
               :data-verse-index="verseRef.verse_index"
               class="verse-card"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectVerse(verseRef)"
             >
               {{ verseRef.verse_index }}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </motion.div>
+    </motion.div>
+  </AnimatePresence>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { TELUGU_BOOK_NAMES } from '@/utils/teluguBookNamesMap';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
 interface Book {
   book_id: number;
@@ -180,6 +223,8 @@ const emit = defineEmits<{
   close: [];
   select: [bookId: number, chapterId: number, verseId: number];
 }>();
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade, staggerTransition } = useMotionPresets();
 
 // Use hardcoded data for instant loading
 const books = ref<Book[]>(

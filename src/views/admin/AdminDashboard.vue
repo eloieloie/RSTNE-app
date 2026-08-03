@@ -6,81 +6,86 @@
     </header>
 
     <div class="dashboard-grid">
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(0)" :while-hover="hoverLift">
         <div class="card-icon">📖</div>
         <h2>Manage Books</h2>
         <p>Create, edit, and delete books in the library</p>
         <router-link to="/admin/books" class="action-btn">
           Manage Books
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(1)" :while-hover="hoverLift">
         <div class="card-icon">📝</div>
         <h2>Manage Chapters</h2>
         <p>Create, edit, and delete chapters for all books</p>
         <router-link to="/admin/chapters" class="action-btn">
           Manage Chapters
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(2)" :while-hover="hoverLift">
         <div class="card-icon">🔍</div>
         <h2>Find & Replace</h2>
         <p>Search and replace words in verses across all books</p>
         <router-link to="/admin/find-replace" class="action-btn">
           Find & Replace
         </router-link>
-      </div>
-      <div class="dashboard-card">
+      </motion.div>
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(3)" :while-hover="hoverLift">
         <div class="card-icon">📑</div>
         <h2>Compare with RSTNE</h2>
         <p>Side-by-side comparison of database verses vs the live RSTNE page with diff highlighting</p>
         <router-link to="/admin/compare-book" class="action-btn">
           Compare Book
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(4)" :while-hover="hoverLift">
         <div class="card-icon">🔔</div>
         <h2>Push Notifications</h2>
         <p>Send push notifications to all registered devices or specific devices with optional deep links</p>
         <router-link to="/admin/push-notifications" class="action-btn">
           Send Notification
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(5)" :while-hover="hoverLift">
         <div class="card-icon">📜</div>
         <h2>Timeline Events</h2>
         <p>Manage the 6,000-year Biblical history timeline — add, edit, or delete events with AM year, BC/AD year, Jubilee, and Shemittah markers</p>
         <router-link to="/admin/timeline-events" class="action-btn">
           Manage Timeline
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(6)" :while-hover="hoverLift">
         <div class="card-icon">📝</div>
         <h2>Modification Required</h2>
         <p>Review verses that have no Telugu text — flagged as citation required and awaiting translation</p>
         <router-link to="/admin/modification-required" class="action-btn">
           View Verses
         </router-link>
-      </div>
+      </motion.div>
 
-      <div class="dashboard-card">
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(7)" :while-hover="hoverLift">
         <div class="card-icon">💬</div>
         <h2>User Feedback</h2>
         <p>View, filter, and manage feedback submitted from the mobile app — bug reports, feature requests, and general comments</p>
         <router-link to="/admin/feedback" class="action-btn">
           View Feedback
         </router-link>
-      </div>
+      </motion.div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { motion } from 'motion-v';
+import { useMotionPresets } from '@/composables/useMotionPresets';
+
+const { prefersReducedMotion, hoverLift, staggerTransition } = useMotionPresets();
+const cardInitial = prefersReducedMotion.value ? false : { opacity: 0, y: 12 };
 </script>
 
 <style scoped>
@@ -130,11 +135,10 @@
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  transition: box-shadow 0.2s;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-8px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 

@@ -3,7 +3,8 @@ import { reactive, watch } from 'vue';
 export interface ReaderSettings {
   showEnglish: boolean;
   showTelugu: boolean;
-  showNotes: boolean;
+  showAdminNotes: boolean;
+  showMyNotes: boolean;
   showCrossReferences: boolean;
   showSuperscript: boolean;
   fontSize: number;
@@ -16,7 +17,8 @@ const STORAGE_KEY = 'rstne-settings';
 const defaultSettings: ReaderSettings = {
   showEnglish: true,
   showTelugu: true,
-  showNotes: true,
+  showAdminNotes: true,
+  showMyNotes: true,
   showCrossReferences: false,
   showSuperscript: true,
   fontSize: 16,

@@ -51,30 +51,45 @@
             <span class="am-badge-label">Jubilee Ref</span>
             <span class="am-badge-jubilee">{{ currentJubileeRef }}</span>
           </div>
-          <button class="info-icon-btn" @click="showAmModal = true" title="How to read these dates">
+          <motion.button class="info-icon-btn" :while-tap="tapScale" @click="showAmModal = true" title="How to read these dates">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="8"></line>
               <line x1="12" y1="12" x2="12" y2="16"></line>
             </svg>
-          </button>
-          <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+          </motion.button>
+          <motion.button class="settings-btn" :while-tap="tapScale" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
             <span class="settings-label">SE</span>
-          </button>
+          </motion.button>
         </div>
 
         <!-- AM & Jubilee Ref Info Modal -->
         <Teleport to="body">
-          <div v-if="showAmModal" class="am-modal-overlay" @click.self="showAmModal = false">
-            <div class="am-modal">
+          <AnimatePresence>
+          <motion.div
+            v-if="showAmModal"
+            class="am-modal-overlay"
+            :initial="{ opacity: 0 }"
+            :animate="{ opacity: 1 }"
+            :exit="{ opacity: 0 }"
+            :transition="overlayFade"
+            @click.self="showAmModal = false"
+          >
+            <motion.div
+              class="am-modal"
+              :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+              :animate="{ opacity: 1, scale: 1, y: 0 }"
+              :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+              :transition="tooltipSpring"
+            >
               <div class="am-modal-header">
                 <h2>Understanding AM &amp; Jubilee Ref</h2>
-                <button class="am-modal-close" @click="showAmModal = false">
+                <motion.button class="am-modal-close" :while-tap="tapScale" @click="showAmModal = false">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
-                </button>
+                </motion.button>
               </div>
 
               <div class="am-modal-body">
@@ -173,8 +188,9 @@
                 </section>
 
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
+          </AnimatePresence>
         </Teleport>
 
         <Settings :is-open="showSettingsModal" @close="showSettingsModal = false" />
@@ -212,12 +228,15 @@
 
     <!-- Weekly Grid -->
     <div v-if="activeTab === 'weekly'" class="parashot-grid">
-      <div
-        v-for="parasha in WEEKLY_PARASHOT"
+      <motion.div
+        v-for="(parasha, index) in WEEKLY_PARASHOT"
         :key="parasha.week"
         :ref="el => { if (parasha.week === currentWeek) currentCardRef = el as HTMLElement }"
         class="parasha-card"
         :class="{ 'current-week': isCurrentYear && parasha.week === currentWeek }"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="staggerTransition(index)"
       >
         <div class="card-header">
           <div class="week-row">
@@ -255,9 +274,9 @@
         </div>
 
         <div class="card-actions">
-          <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
-          <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
-          <button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+          <motion.button class="read-btn torah-btn" :while-tap="tapScale" @click="navigate(parasha, 'torah')">Read Turah</motion.button>
+          <motion.button class="read-btn nc-btn" :while-tap="tapScale" @click="navigate(parasha, 'nc')">Read BC</motion.button>
+          <motion.button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :while-tap="tapScale" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
@@ -265,9 +284,9 @@
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     </div>
 
     <!-- By Month View -->
@@ -293,12 +312,15 @@
         </div>
 
         <div class="month-parshas-grid">
-          <div
-            v-for="parasha in parshasByMonth.get(month) || []"
+          <motion.div
+            v-for="(parasha, index) in (parshasByMonth.get(month) || [])"
             :key="parasha.week"
             :ref="el => { if (parasha.week === currentWeek && activeTab === 'byMonth') currentCardRef = el as HTMLElement }"
             class="parasha-card"
             :class="{ 'current-week': isCurrentYear && parasha.week === currentWeek }"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
           >
             <div class="card-header">
               <div class="week-row">
@@ -336,9 +358,9 @@
             </div>
 
             <div class="card-actions">
-              <button class="read-btn torah-btn" @click="navigate(parasha, 'torah')">Read Turah</button>
-              <button class="read-btn nc-btn" @click="navigate(parasha, 'nc')">Read BC</button>
-              <button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
+              <motion.button class="read-btn torah-btn" :while-tap="tapScale" @click="navigate(parasha, 'torah')">Read Turah</motion.button>
+              <motion.button class="read-btn nc-btn" :while-tap="tapScale" @click="navigate(parasha, 'nc')">Read BC</motion.button>
+              <motion.button v-if="isCurrentYear && parasha.week === currentWeek" class="read-btn share-btn" :while-tap="tapScale" :disabled="shareLoading" @click="shareParasha(parasha)" title="Share this week's reading">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="18" cy="5" r="3"></circle>
                   <circle cx="6" cy="12" r="3"></circle>
@@ -346,9 +368,9 @@
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                 </svg>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -400,13 +422,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
 import { WEEKLY_PARASHOT, DSS_MONTH_NAMES, type Parasha, type ParashaReading } from '@/data/weeklyParashot';
 import { getAllBooks } from '@/api/books';
 import { useBookLanguage } from '@/composables/useBookLanguage';
 import { useReaderSettings } from '@/composables/useReaderSettings';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import Settings from '@/components/Settings.vue';
 import type { Book } from '@/utils/collectionReferences';
 import { generateReadingPlanCardImage } from '@/utils/paleoBora';
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade, staggerTransition } = useMotionPresets();
 
 const router = useRouter();
 const currentCardRef = ref<HTMLElement | null>(null);

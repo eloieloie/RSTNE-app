@@ -1,5 +1,5 @@
 import type { Verse, VerseInsert, VerseUpdate } from '@/utils/collectionReferences';
-import { API_URL, API_HEADERS } from './client';
+import { API_URL, API_HEADERS, getAuthHeaders } from './client';
 
 export interface VerseLinkData {
   link_id: number;
@@ -21,13 +21,24 @@ export interface VerseNoteData {
   dt_modified: Date;
 }
 
+export interface PersonalVerseNoteData {
+  personal_verse_note_id: number;
+  verse_id: number;
+  personal_note_id: number;
+  firebase_uid: string;
+  note_title: string | null;
+  note_content: string;
+  dt_modified: Date;
+}
+
 export interface VerseWithLinks extends Verse {
   links?: VerseLinkData[];
   notes?: VerseNoteData[];
+  my_notes?: PersonalVerseNoteData[];
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: API_HEADERS });
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: await getAuthHeaders() });
   if (!response.ok) {
     throw new Error('Failed to fetch verses');
   }

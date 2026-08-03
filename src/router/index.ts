@@ -1,5 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { watch } from 'vue';
+import { useAuth } from '@/composables/useAuth';
 import BooksView from '@/views/BooksView.vue';
+import LoginView from '@/views/LoginView.vue';
+import RegisterView from '@/views/RegisterView.vue';
 import ChaptersView from '@/views/ChaptersView.vue';
 import BroadcastView from '@/views/BroadcastView.vue';
 import WeeklyReadingView from '@/views/WeeklyReadingView.vue';
@@ -27,39 +31,56 @@ const router = createRouter({
       component: BooksView
     },
     {
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView
+    },
+    {
       path: '/admin',
       name: 'admin',
-      component: AdminDashboard
+      component: AdminDashboard,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/books',
       name: 'admin-books',
-      component: ManageBooks
+      component: ManageBooks,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/chapters',
       name: 'admin-chapters',
-      component: ManageChapters
+      component: ManageChapters,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/chapters/:id',
       name: 'chapter-editor',
-      component: ChapterEditor
+      component: ChapterEditor,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/find-replace',
       name: 'find-replace',
-      component: FindReplace
+      component: FindReplace,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/compare-book',
       name: 'compare-book',
-      component: CompareBook
+      component: CompareBook,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/push-notifications',
       name: 'push-notifications',
-      component: PushNotificationsAdmin
+      component: PushNotificationsAdmin,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/weekly-reading',
@@ -79,17 +100,20 @@ const router = createRouter({
     {
       path: '/admin/timeline-events',
       name: 'admin-timeline-events',
-      component: ManageTimelineEvents
+      component: ManageTimelineEvents,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/feedback',
       name: 'admin-feedback',
-      component: FeedbackAdmin
+      component: FeedbackAdmin,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/admin/modification-required',
       name: 'admin-modification-required',
-      component: ModificationRequired
+      component: ModificationRequired,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/reading-pane',
@@ -128,6 +152,31 @@ const router = createRouter({
       component: ChaptersView
     }
   ]
+});
+
+// Waits for the initial Firebase auth-state check to complete, so a page reload
+// on an admin route doesn't redirect before we know the user is actually signed in.
+function waitForAuthReady(): Promise<void> {
+  const { authReady } = useAuth();
+  if (authReady.value) return Promise.resolve();
+  return new Promise((resolve) => {
+    const stop = watch(authReady, (ready) => {
+      if (ready) {
+        stop();
+        resolve();
+      }
+    });
+  });
+}
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAdmin) return true;
+  await waitForAuthReady();
+  const { isAdmin } = useAuth();
+  if (!isAdmin.value) {
+    return { name: 'login', query: { redirect: to.fullPath } };
+  }
+  return true;
 });
 
 export default router;

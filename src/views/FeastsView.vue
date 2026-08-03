@@ -13,9 +13,9 @@
         </h1>
         <p class="header-sub">YaHUaH's Appointed Times — Leviticus 23</p>
       </div>
-      <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+      <motion.button class="settings-btn" :while-tap="tapScale" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
         <span class="settings-label">SE</span>
-      </button>
+      </motion.button>
     </header>
 
     <!-- Season groups -->
@@ -28,11 +28,15 @@
         </div>
 
         <div class="feast-cards">
-          <div
-            v-for="feast in feast_by_season(season.id)"
+          <motion.div
+            v-for="(feast, index) in feast_by_season(season.id)"
             :key="feast.id"
             class="feast-card"
             :style="{ '--feast-color': feast.color }"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-hover="hoverLift"
           >
             <!-- Card header -->
             <div class="card-head">
@@ -54,15 +58,16 @@
               <div class="refs-label">Readings</div>
               <div class="refs-list">
                 <template v-for="ref in feast.refs" :key="ref.label">
-                  <button
+                  <motion.button
                     v-if="ref.book"
                     class="ref-pill linked"
+                    :while-tap="tapScale"
                     @click="navigateRef(ref)"
                     :title="`Open ${ref.label}`"
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     {{ ref.label }}
-                  </button>
+                  </motion.button>
                   <span v-else class="ref-pill unlinked" :title="ref.label + ' — not yet in RSTNE database'">
                     {{ ref.label }}
                   </span>
@@ -75,7 +80,7 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
               {{ feast.note }}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -89,12 +94,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion } from 'motion-v';
 import Settings from '@/components/Settings.vue';
 import { useReaderSettings } from '@/composables/useReaderSettings';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
 const router = useRouter();
 const showSettingsModal = ref(false);
 const { settings } = useReaderSettings();
+const { prefersReducedMotion, tapScale, hoverLift, staggerTransition } = useMotionPresets();
 
 interface VerseRef {
   label: string;
@@ -506,12 +514,11 @@ function navigateRef(ref: VerseRef) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  transition: box-shadow 0.2s, transform 0.15s;
+  transition: box-shadow 0.2s;
 }
 
 .feast-card:hover {
   box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
 }
 
 /* ── Card head ──────────────────────────────────────────────────────── */

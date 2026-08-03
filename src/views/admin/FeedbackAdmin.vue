@@ -83,13 +83,27 @@
     </div>
 
     <!-- Detail modal -->
-    <Transition name="modal">
-      <div v-if="detail" class="modal-backdrop" @click.self="detail = null">
-        <div class="modal-card">
+    <AnimatePresence>
+      <motion.div
+        v-if="detail"
+        class="modal-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click.self="detail = null"
+      >
+        <motion.div
+          class="modal-card"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="tooltipSpring"
+        >
           <div class="modal-header">
             <span :class="['category-badge', detail.category]">{{ detail.category }}</span>
             <span class="modal-date">{{ formatDate(detail.dt_added) }}</span>
-            <button class="modal-close" @click="detail = null">✕</button>
+            <motion.button class="modal-close" :while-tap="tapScale" @click="detail = null">✕</motion.button>
           </div>
           <p class="modal-message">{{ detail.message }}</p>
           <div class="modal-meta">
@@ -98,20 +112,24 @@
             <span v-if="detail.app_version">v{{ detail.app_version }}</span>
           </div>
           <div class="modal-actions">
-            <button class="btn-secondary" @click="toggleRead(detail); detail = null">
+            <motion.button class="btn-secondary" :while-tap="tapScale" @click="toggleRead(detail); detail = null">
               {{ detail.is_read ? 'Mark as Unread' : 'Mark as Read' }}
-            </button>
-            <button class="btn-danger" @click="deleteItem(detail); detail = null">Delete</button>
+            </motion.button>
+            <motion.button class="btn-danger" :while-tap="tapScale" @click="deleteItem(detail); detail = null">Delete</motion.button>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
 import { API_URL as API_BASE, API_HEADERS } from '@/api/client';
+import { useMotionPresets } from '@/composables/useMotionPresets';
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 
 interface FeedbackItem {
   feedback_id: number;
@@ -456,6 +474,4 @@ onMounted(load);
 .btn-danger:hover { background: #b91c1c; }
 
 /* Modal transition */
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
 </style>

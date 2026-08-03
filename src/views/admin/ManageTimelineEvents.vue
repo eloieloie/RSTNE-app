@@ -12,11 +12,18 @@
     </header>
 
     <!-- Notification -->
-    <transition name="notif-fade">
-      <div v-if="notification" :class="['notification', notification.type]">
+    <AnimatePresence>
+      <motion.div
+        v-if="notification"
+        :class="['notification', notification.type]"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: -8 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :exit="{ opacity: 0, y: -8 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.25 }"
+      >
         {{ notification.message }}
-      </div>
-    </transition>
+      </motion.div>
+    </AnimatePresence>
 
     <div class="mte-body">
       <!-- Left: event list -->
@@ -179,23 +186,41 @@
     </div>
 
     <!-- Delete confirmation modal -->
-    <div v-if="deletingEvent" class="modal-backdrop" @click.self="deletingEvent = null">
-      <div class="modal">
-        <h3>Delete Event</h3>
-        <p>Delete <strong>{{ deletingEvent.title }}</strong>? This cannot be undone.</p>
-        <div class="modal-actions">
-          <button class="modal-cancel" @click="deletingEvent = null">Cancel</button>
-          <button class="modal-confirm" @click="doDelete" :disabled="saving">
-            {{ saving ? 'Deleting…' : 'Delete' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AnimatePresence>
+      <motion.div
+        v-if="deletingEvent"
+        class="modal-backdrop"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click.self="deletingEvent = null"
+      >
+        <motion.div
+          class="modal"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="tooltipSpring"
+        >
+          <h3>Delete Event</h3>
+          <p>Delete <strong>{{ deletingEvent.title }}</strong>? This cannot be undone.</p>
+          <div class="modal-actions">
+            <motion.button class="modal-cancel" :while-tap="tapScale" @click="deletingEvent = null">Cancel</motion.button>
+            <motion.button class="modal-confirm" :while-tap="tapScale" @click="doDelete" :disabled="saving">
+              {{ saving ? 'Deleting…' : 'Delete' }}
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import {
   getAllTimelineEvents,
   createTimelineEvent,
@@ -203,6 +228,8 @@ import {
   deleteTimelineEvent,
 } from '@/api/timelineEvents';
 import type { TimelineEvent, TimelineEventInsert } from '@/utils/collectionReferences';
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 
 const HEBREW_MONTHS = ['Nisan', 'Iyar', 'Sivan', 'Tammuz', 'Av', 'Elul', 'Tishrei', 'Cheshvan', 'Kislev', 'Tevet', 'Shevat', 'Adar', 'Adar II'];
 
@@ -403,8 +430,6 @@ onMounted(async () => {
 }
 .notification.success { background: #d1fae5; color: #065f46; }
 .notification.error   { background: #fee2e2; color: #991b1b; }
-.notif-fade-enter-active, .notif-fade-leave-active { transition: all 0.25s ease; }
-.notif-fade-enter-from, .notif-fade-leave-to { opacity: 0; transform: translateY(-8px); }
 
 /* ── Body layout ─────────────────────────────────────────────────── */
 .mte-body {

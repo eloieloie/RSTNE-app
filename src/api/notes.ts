@@ -1,5 +1,5 @@
 import type { Note, NoteInsert, NoteUpdate, VerseNoteInsert } from '@/utils/collectionReferences';
-import { API_URL, API_HEADERS } from './client';
+import { API_URL, API_HEADERS, getAuthHeaders } from './client';
 
 export interface NoteWithVerseNoteId extends Note {
   verse_note_id: number;
@@ -21,10 +21,11 @@ export async function getNoteById(noteId: number): Promise<Note> {
   return response.json();
 }
 
+// Note: create/update/delete/link/unlink require an admin-authenticated bearer token.
 export async function createNote(note: NoteInsert): Promise<{ note_id: number }> {
   const response = await fetch(`${API_URL}/notes`, {
     method: 'POST',
-    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json' },
     body: JSON.stringify(note),
   });
   if (!response.ok) {
@@ -36,7 +37,7 @@ export async function createNote(note: NoteInsert): Promise<{ note_id: number }>
 export async function updateNote(noteId: number, note: NoteUpdate): Promise<void> {
   const response = await fetch(`${API_URL}/notes/${noteId}`, {
     method: 'POST',
-    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
     body: JSON.stringify(note),
   });
   if (!response.ok) {
@@ -47,7 +48,7 @@ export async function updateNote(noteId: number, note: NoteUpdate): Promise<void
 export async function deleteNote(noteId: number): Promise<void> {
   const response = await fetch(`${API_URL}/notes/${noteId}`, {
     method: 'POST',
-    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {
@@ -66,7 +67,7 @@ export async function getNotesByVerseId(verseId: number): Promise<NoteWithVerseN
 export async function linkNoteToVerse(verseNoteData: VerseNoteInsert): Promise<{ verse_note_id: number }> {
   const response = await fetch(`${API_URL}/verse-notes`, {
     method: 'POST',
-    headers: { ...API_HEADERS, 'Content-Type': 'application/json' },
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json' },
     body: JSON.stringify(verseNoteData),
   });
   if (!response.ok) {
@@ -78,7 +79,7 @@ export async function linkNoteToVerse(verseNoteData: VerseNoteInsert): Promise<{
 export async function unlinkNoteFromVerse(verseNoteId: number): Promise<void> {
   const response = await fetch(`${API_URL}/verse-notes/${verseNoteId}`, {
     method: 'POST',
-    headers: { ...API_HEADERS, 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
+    headers: { ...(await getAuthHeaders()), 'Content-Type': 'application/json', 'X-HTTP-Method-Override': 'DELETE' },
     body: '{}',
   });
   if (!response.ok) {

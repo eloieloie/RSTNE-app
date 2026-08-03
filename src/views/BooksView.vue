@@ -8,23 +8,37 @@
       <h1>Restoration Scriptures True Name Edition</h1>
       <p class="subtitle">Choose a book to start reading - HalleluYAHUA!</p>
       <div class="lang-selector">
-        <button
+        <motion.button
           v-for="opt in langOptions"
           :key="opt.value"
           :class="['lang-btn', { active: bookNameLanguage === opt.value }]"
+          :while-tap="tapScale"
           @click="bookNameLanguage = opt.value"
-        >{{ opt.label }}</button>
+        >{{ opt.label }}</motion.button>
         <span class="lang-separator"></span>
-        <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+        <motion.button class="settings-btn" :while-tap="tapScale" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-        </button>
+        </motion.button>
+        <motion.button
+          class="account-header-btn"
+          :title="user ? user.email || 'Account' : 'Sign In'"
+          :aria-label="user ? 'Account' : 'Sign In'"
+          :while-tap="tapScale"
+          @click="user ? (showSettingsModal = true) : router.push({ name: 'login' })"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span v-if="isAdmin" class="account-admin-dot" aria-hidden="true"></span>
+        </motion.button>
       </div>
 
       <div class="header-btns">
-        <button class="weekly-reading-btn" @click="router.push({ name: 'weekly-reading' })">
+        <motion.button class="weekly-reading-btn" :while-hover="hoverLift" :while-tap="tapScale" @click="router.push({ name: 'weekly-reading' })">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -32,8 +46,8 @@
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
           52-Week &amp; 12-Month Reading Plan
-        </button>
-        <button class="timeline-btn" @click="router.push({ name: 'timeline' })">
+        </motion.button>
+        <motion.button class="timeline-btn" :while-hover="hoverLift" :while-tap="tapScale" @click="router.push({ name: 'timeline' })">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <circle cx="7" cy="12" r="2"></circle>
@@ -44,13 +58,13 @@
             <line x1="17" y1="8" x2="17" y2="10"></line>
           </svg>
           Biblical Timeline
-        </button>
-        <button class="feasts-btn" @click="router.push({ name: 'feasts' })">
+        </motion.button>
+        <motion.button class="feasts-btn" :while-hover="hoverLift" :while-tap="tapScale" @click="router.push({ name: 'feasts' })">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
           Annual Feasts
-        </button>
+        </motion.button>
       </div>
     </div>
     
@@ -67,15 +81,20 @@
       <div v-if="firstCovenantBooks.length > 0" class="category-section">
         <h2 class="category-title first-covenant">First Covenant</h2>
         <div class="books-grid">
-          <button 
-            v-for="book in firstCovenantBooks" 
+          <motion.button
+            v-for="(book, index) in firstCovenantBooks"
             :key="book.book_id"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-hover="hoverLift"
+            :while-tap="tapScale"
             @click="openBook(book.book_id)"
             class="book-button first-covenant-book"
           >
             <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -83,15 +102,20 @@
       <div v-if="newCovenantBooks.length > 0" class="category-section">
         <h2 class="category-title new-covenant">New Covenant</h2>
         <div class="books-grid">
-          <button 
-            v-for="book in newCovenantBooks" 
+          <motion.button
+            v-for="(book, index) in newCovenantBooks"
             :key="book.book_id"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-hover="hoverLift"
+            :while-tap="tapScale"
             @click="openBook(book.book_id)"
             class="book-button new-covenant-book"
           >
             <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -99,15 +123,20 @@
       <div v-if="apocryphalBooks.length > 0" class="category-section">
         <h2 class="category-title apocryphal">Restored Apocryphal Books</h2>
         <div class="books-grid">
-          <button 
-            v-for="book in apocryphalBooks" 
+          <motion.button
+            v-for="(book, index) in apocryphalBooks"
             :key="book.book_id"
+            :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="staggerTransition(index)"
+            :while-hover="hoverLift"
+            :while-tap="tapScale"
             @click="openBook(book.book_id)"
             class="book-button apocryphal-book"
           >
             <div class="book-name">{{ getBookName(book) }}</div>
             <div class="book-chapters">{{ book.chapter_count || 0 }} ch.</div>
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>
@@ -139,11 +168,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { motion } from 'motion-v';
 import { getAllBooks } from '@/api/books';
 import type { Book } from '@/utils/collectionReferences';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 import Settings from '@/components/Settings.vue';
 import { useReaderSettings } from '@/composables/useReaderSettings';
+import { useAuth } from '@/composables/useAuth';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
 const router = useRouter();
 const books = ref<Book[]>([]);
@@ -153,6 +185,8 @@ const showSettingsModal = ref(false);
 
 const { bookNameLanguage, getBookName } = useBookLanguage();
 const readerSettings = useReaderSettings();
+const { user, isAdmin } = useAuth();
+const { prefersReducedMotion, tapScale, hoverLift, staggerTransition } = useMotionPresets();
 const isBroadcastMode = computed(() => Boolean(readerSettings?.settings?.broadcastMode));
 const fontScale = computed(() => (readerSettings?.settings?.fontSize ?? 16) / 16);
 
@@ -291,6 +325,39 @@ onMounted(async () => {
   border-color: #9fa7b0;
   background: #f6f8fa;
   color: #1f2d3a;
+}
+
+.account-header-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0 0.45rem;
+  height: 30px;
+  border-radius: 6px;
+  border: 1.5px solid #c9c9c9;
+  background: #ffffff;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.account-header-btn:hover {
+  border-color: #9fa7b0;
+  background: #f6f8fa;
+  color: #1f2d3a;
+}
+
+.account-admin-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8B4513;
+  border: 1.5px solid #fff;
 }
 
 .lang-btn:hover {
@@ -474,11 +541,18 @@ onMounted(async () => {
   }
 
   .book-name {
-    font-size: 0.8rem;
+    font-size: calc(0.8rem * var(--books-font-scale));
   }
 
   .book-chapters {
-    font-size: 0.7rem;
+    font-size: calc(0.7rem * var(--books-font-scale));
+  }
+
+  .lang-selector {
+    position: static;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0.35rem auto 0;
   }
 }
 
@@ -509,11 +583,11 @@ onMounted(async () => {
   }
 
   .book-name {
-    font-size: 0.75rem;
+    font-size: calc(0.75rem * var(--books-font-scale));
   }
 
   .book-chapters {
-    font-size: 0.65rem;
+    font-size: calc(0.65rem * var(--books-font-scale));
   }
 }
 
@@ -546,7 +620,6 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(139,69,19,0.3);
 }
 .weekly-reading-btn:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(139,69,19,0.4);
   background: linear-gradient(135deg, #7a3a0f, #a8632e);
 }
@@ -556,7 +629,6 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(26,10,0,0.35);
 }
 .timeline-btn:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(26,10,0,0.45);
   background: linear-gradient(135deg, #0d0500, #2a1200);
 }
@@ -566,7 +638,6 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(5,150,105,0.35);
 }
 .feasts-btn:hover {
-  transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(5,150,105,0.45);
   background: linear-gradient(135deg, #047857, #065f46);
 }

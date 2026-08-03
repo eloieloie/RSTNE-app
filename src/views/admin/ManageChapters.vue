@@ -91,8 +91,15 @@
               <span class="expand-icon">{{ expandedBookId === book.book_id ? '▾' : '▸' }}</span>
             </div>
 
-            <transition name="slide">
-              <div v-if="expandedBookId === book.book_id" class="chapters-grid">
+            <AnimatePresence>
+              <motion.div
+                v-if="expandedBookId === book.book_id"
+                class="chapters-grid"
+                :initial="prefersReducedMotion ? false : { opacity: 0, y: -8 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :exit="{ opacity: 0, y: -8 }"
+                :transition="{ duration: prefersReducedMotion ? 0 : 0.2 }"
+              >
                 <router-link
                   v-for="chapter in groupedChapters[book.book_id]"
                   :key="chapter.chapter_id"
@@ -101,8 +108,8 @@
                 >
                   <span class="chapter-number">{{ chapter.chapter_number }}</span>
                 </router-link>
-              </div>
-            </transition>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -112,6 +119,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
+import { useMotionPresets } from '@/composables/useMotionPresets';
+
+const { prefersReducedMotion } = useMotionPresets();
 import { getAllBooks } from '@/api/books';
 import { getAllChapters } from '@/api/chapters';
 import type { Book, Chapter } from '@/utils/collectionReferences';
@@ -600,19 +611,6 @@ onMounted(async () => {
 
 .chapter-link:hover .chapter-number { color: white; }
 
-/* Slide transition */
-.slide-enter-active,
-.slide-leave-active {
-  transition: max-height 0.25s ease, opacity 0.2s ease;
-  overflow: hidden;
-  max-height: 600px;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

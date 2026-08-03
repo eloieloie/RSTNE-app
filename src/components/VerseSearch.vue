@@ -1,11 +1,28 @@
 <template>
-  <div v-if="isOpen" class="search-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click="close">
-    <div class="search-modal" @click.stop>
+  <AnimatePresence>
+    <motion.div
+      v-if="isOpen"
+      class="search-overlay"
+      :class="{ 'broadcast-mode': broadcastMode }"
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :exit="{ opacity: 0 }"
+      :transition="overlayFade"
+      @click="close"
+    >
+    <motion.div
+      class="search-modal"
+      :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+      :animate="{ opacity: 1, scale: 1, y: 0 }"
+      :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+      :transition="tooltipSpring"
+      @click.stop
+    >
       <div class="search-header">
         <h3>Search Verses</h3>
-        <button class="close-btn" @click="close">&times;</button>
+        <motion.button class="close-btn" :while-tap="tapScale" @click="close">&times;</motion.button>
       </div>
-      
+
       <div class="search-body">
         <div class="search-input-container">
           <input
@@ -16,21 +33,37 @@
             class="search-input"
             @keyup.enter="performSearch"
           />
-          <button class="search-btn" @click="performSearch" :disabled="isSearching || !searchQuery.trim()">
+          <motion.button class="search-btn" :while-tap="tapScale" @click="performSearch" :disabled="isSearching || !searchQuery.trim()">
             {{ isSearching ? 'Searching...' : 'Search' }}
-          </button>
+          </motion.button>
         </div>
-        
+
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        
+
         <!-- Verse Navigator Modal -->
-        <div v-if="showVerseNav" class="verse-nav-overlay" :class="{ 'broadcast-mode': broadcastMode }" @click.self="showVerseNav = false">
-          <div class="verse-nav-modal">
+        <AnimatePresence>
+        <motion.div
+          v-if="showVerseNav"
+          class="verse-nav-overlay"
+          :class="{ 'broadcast-mode': broadcastMode }"
+          :initial="{ opacity: 0 }"
+          :animate="{ opacity: 1 }"
+          :exit="{ opacity: 0 }"
+          :transition="overlayFade"
+          @click.self="showVerseNav = false"
+        >
+          <motion.div
+            class="verse-nav-modal"
+            :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94 }"
+            :animate="{ opacity: 1, scale: 1 }"
+            :exit="{ opacity: 0, scale: 0.94 }"
+            :transition="tooltipSpring"
+          >
             <div class="verse-nav-header">
               <span class="verse-nav-counter">{{ navIndex + 1 }} / {{ searchResults.length }}</span>
-              <button class="close-btn" @click="showVerseNav = false">&times;</button>
+              <motion.button class="close-btn" :while-tap="tapScale" @click="showVerseNav = false">&times;</motion.button>
             </div>
             <div class="verse-nav-body">
               <div class="result-reference">
@@ -44,23 +77,28 @@
               </div>
             </div>
             <div class="verse-nav-footer">
-              <button class="nav-btn" :disabled="navIndex === 0" @click="navIndex--">&#8592; Prev</button>
-              <button class="nav-go-btn" @click="selectVerse(searchResults[navIndex])">Go to verse</button>
-              <button class="nav-btn" :disabled="navIndex === searchResults.length - 1" @click="navIndex++">Next &#8594;</button>
+              <motion.button class="nav-btn" :while-tap="tapScale" :disabled="navIndex === 0" @click="navIndex--">&#8592; Prev</motion.button>
+              <motion.button class="nav-go-btn" :while-tap="tapScale" @click="selectVerse(searchResults[navIndex])">Go to verse</motion.button>
+              <motion.button class="nav-btn" :while-tap="tapScale" :disabled="navIndex === searchResults.length - 1" @click="navIndex++">Next &#8594;</motion.button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
+        </AnimatePresence>
 
         <div v-if="searchResults.length > 0" class="search-results">
           <div class="results-header">
             Found {{ searchResults.length }} verse{{ searchResults.length !== 1 ? 's' : '' }}
-            <button class="browse-btn" @click="openVerseNav">Browse</button>
+            <motion.button class="browse-btn" :while-tap="tapScale" @click="openVerseNav">Browse</motion.button>
           </div>
           <div class="results-list">
-            <div
-              v-for="result in searchResults"
+            <motion.div
+              v-for="(result, index) in searchResults"
               :key="result.verse_id"
               class="result-item"
+              :initial="prefersReducedMotion ? false : { opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="staggerTransition(index)"
+              :while-tap="tapScale"
               @click="selectVerse(result)"
             >
               <div class="result-reference">
@@ -72,21 +110,24 @@
                 <span class="note-label">Note:</span>
                 <span v-html="highlightSearchTerms(result.note_content)"></span>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
-        
+
         <div v-else-if="hasSearched && !isSearching" class="no-results">
           No verses found matching "{{ searchQuery }}"
         </div>
       </div>
-    </div>
-  </div>
+    </motion.div>
+    </motion.div>
+  </AnimatePresence>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
 import { API_HEADERS } from '../api/client';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 
 interface SearchResult {
   verse_id: number;
@@ -109,6 +150,8 @@ const emit = defineEmits<{
   close: [];
   select: [bookId: number, chapterId: number, verseId: number, searchResults?: SearchResult[]];
 }>();
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade, staggerTransition } = useMotionPresets();
 
 const searchInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref('');

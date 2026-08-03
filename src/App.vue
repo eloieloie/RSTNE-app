@@ -1,11 +1,27 @@
 <template>
   <div id="app">
-    <RouterView />
+    <RouterView v-slot="{ Component, route }">
+      <AnimatePresence mode="wait">
+        <motion.div
+          :key="route.name?.toString()"
+          :initial="prefersReducedMotion ? false : { opacity: 0 }"
+          :animate="{ opacity: 1 }"
+          :exit="{ opacity: 0 }"
+          :transition="{ duration: prefersReducedMotion ? 0 : 0.15 }"
+        >
+          <component :is="Component" />
+        </motion.div>
+      </AnimatePresence>
+    </RouterView>
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { motion, AnimatePresence } from 'motion-v'
+import { useMotionPresets } from '@/composables/useMotionPresets'
+
+const { prefersReducedMotion } = useMotionPresets()
 </script>
 
 <style>

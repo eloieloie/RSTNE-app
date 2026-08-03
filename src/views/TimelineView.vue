@@ -16,24 +16,31 @@
         </div>
       </div>
       <div class="tl-header-right">
-        <button class="settings-btn" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
+        <motion.button class="settings-btn" :while-tap="tapScale" @click="showSettingsModal = true" title="Settings" aria-label="Open settings">
           <span class="settings-label">SE</span>
-        </button>
-        <div class="legend-toggle" @click="showLegend = !showLegend">
+        </motion.button>
+        <motion.div class="legend-toggle" :while-tap="tapScale" @click="showLegend = !showLegend">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
           <span class="legend-toggle-label">Legend</span>
-        </div>
-        <button class="filter-icon-btn" @click="showFilters = !showFilters" :class="{ active: activeFiltersCount > 0 }" title="Filters &amp; Era Navigation">
+        </motion.div>
+        <motion.button class="filter-icon-btn" :while-tap="tapScale" @click="showFilters = !showFilters" :class="{ active: activeFiltersCount > 0 }" title="Filters &amp; Era Navigation">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
           <span class="filter-icon-label">Filters</span>
           <span v-if="activeFiltersCount > 0" class="filter-count-badge">{{ activeFiltersCount }}</span>
-        </button>
+        </motion.button>
       </div>
     </header>
 
     <!-- Legend panel -->
-    <transition name="legend-fade">
-      <div v-if="showLegend" class="legend-panel">
+    <AnimatePresence>
+      <motion.div
+        v-if="showLegend"
+        class="legend-panel"
+        :initial="prefersReducedMotion ? false : { opacity: 0, y: -6 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :exit="{ opacity: 0, y: -6 }"
+        :transition="{ duration: prefersReducedMotion ? 0 : 0.2 }"
+      >
         <div class="legend-grid">
           <div v-for="cat in CATEGORIES" :key="cat.key" class="legend-item">
             <span class="legend-dot" :style="{ background: cat.color }"></span>
@@ -48,8 +55,8 @@
             <span>Shemittah Year</span>
           </div>
         </div>
-      </div>
-    </transition>
+      </motion.div>
+    </AnimatePresence>
 
     <!-- Loading / Error -->
     <div v-if="loading" class="tl-loading">
@@ -123,8 +130,15 @@
                   </div>
 
                   <!-- Expanded details -->
-                  <transition name="expand-fade">
-                    <div v-if="expandedEventId === ev.event_id" class="card-details">
+                  <AnimatePresence>
+                  <motion.div
+                    v-if="expandedEventId === ev.event_id"
+                    class="card-details"
+                    :initial="prefersReducedMotion ? false : { opacity: 0, y: -6 }"
+                    :animate="{ opacity: 1, y: 0 }"
+                    :exit="{ opacity: 0, y: -6 }"
+                    :transition="{ duration: prefersReducedMotion ? 0 : 0.2 }"
+                  >
                       <div class="detail-years-row">
                         <div class="detail-year-block">
                           <div class="dy-value am">AM {{ ev.am_year }}</div>
@@ -156,8 +170,8 @@
                           <span class="meta-chip-val bible-val">{{ ev.bible_ref }}</span>
                         </div>
                       </div>
-                    </div>
-                  </transition>
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -176,16 +190,30 @@
     <div v-if="!loading && !error && filteredEvents.length === 0" class="empty-state">
       <div class="empty-icon">🔍</div>
       <p>No events match the current filter.</p>
-      <button @click="resetFilters" class="reset-btn">Reset Filters</button>
+      <motion.button :while-tap="tapScale" @click="resetFilters" class="reset-btn">Reset Filters</motion.button>
     </div>
 
     <!-- Filter Modal -->
-    <transition name="modal-fade">
-      <div v-if="showFilters" class="filter-modal-overlay" @click.self="showFilters = false">
-        <div class="filter-modal">
+    <AnimatePresence>
+      <motion.div
+        v-if="showFilters"
+        class="filter-modal-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click.self="showFilters = false"
+      >
+        <motion.div
+          class="filter-modal"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.95, y: -8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.95, y: -8 }"
+          :transition="tooltipSpring"
+        >
           <div class="filter-modal-header">
             <h3 class="filter-modal-title">Filters &amp; Navigation</h3>
-            <button class="filter-modal-close" @click="showFilters = false">✕</button>
+            <motion.button class="filter-modal-close" :while-tap="tapScale" @click="showFilters = false">✕</motion.button>
           </div>
           <div class="filter-modal-body">
             <div class="filter-section">
@@ -205,27 +233,31 @@
             <div class="filter-section">
               <label class="filter-label">Special Events</label>
               <div class="filter-toggles">
-                <button class="filter-toggle-chip" :class="{ active: showOnlyJubilee }" @click="showOnlyJubilee = !showOnlyJubilee">Jubilee Years</button>
-                <button class="filter-toggle-chip" :class="{ active: showOnlyShemittah }" @click="showOnlyShemittah = !showOnlyShemittah">Shemittah Years</button>
+                <motion.button class="filter-toggle-chip" :class="{ active: showOnlyJubilee }" :while-tap="tapScale" @click="showOnlyJubilee = !showOnlyJubilee">Jubilee Years</motion.button>
+                <motion.button class="filter-toggle-chip" :class="{ active: showOnlyShemittah }" :while-tap="tapScale" @click="showOnlyShemittah = !showOnlyShemittah">Shemittah Years</motion.button>
               </div>
             </div>
           </div>
           <div class="filter-modal-footer">
-            <button class="reset-filters-btn" @click="resetFilters">Reset All</button>
-            <button class="apply-filters-btn" @click="showFilters = false">Apply</button>
+            <motion.button class="reset-filters-btn" :while-tap="tapScale" @click="resetFilters">Reset All</motion.button>
+            <motion.button class="apply-filters-btn" :while-tap="tapScale" @click="showFilters = false">Apply</motion.button>
           </div>
-        </div>
-      </div>
-    </transition>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import { motion, AnimatePresence } from 'motion-v';
 import { getAllTimelineEvents } from '@/api/timelineEvents';
 import Settings from '@/components/Settings.vue';
 import { useReaderSettings } from '@/composables/useReaderSettings';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import type { TimelineEvent } from '@/utils/collectionReferences';
+
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 
 const ERAS = [
   { label: 'Creation',   startAM: 1,    endAM: 1656, color: '#059669', bgColor: 'rgba(5,150,105,0.07)' },
@@ -831,13 +863,6 @@ onMounted(async () => {
 .jubilee-val { font-family: monospace; color: #7c3aed; }
 .bible-val   { color: #8B4513; }
 
-/* ── Expand transition ──────────────────────────────────────────── */
-.expand-fade-enter-active { transition: opacity 0.22s ease, transform 0.22s ease; }
-.expand-fade-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
-.expand-fade-enter-from, .expand-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
 
 /* ── Empty state ─────────────────────────────────────────────────── */
 .empty-state {
@@ -864,8 +889,6 @@ onMounted(async () => {
 .reset-btn:hover { background: #723a10; }
 
 /* ── Legend transition ───────────────────────────────────────────── */
-.legend-fade-enter-active, .legend-fade-leave-active { transition: all 0.2s ease; }
-.legend-fade-enter-from, .legend-fade-leave-to { opacity: 0; max-height: 0; }
 
 /* ── Filter Modal ────────────────────────────────────────────────── */
 .filter-modal-overlay {
@@ -987,10 +1010,6 @@ onMounted(async () => {
 .apply-filters-btn:hover { background: #723a10; }
 
 /* ── Modal transitions ───────────────────────────────────────────── */
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s ease; }
-.modal-fade-enter-active .filter-modal, .modal-fade-leave-active .filter-modal { transition: transform 0.25s ease; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-.modal-fade-enter-from .filter-modal, .modal-fade-leave-to .filter-modal { transform: scale(0.95) translateY(-8px); }
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
