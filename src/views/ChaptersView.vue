@@ -227,32 +227,26 @@
                       </div>
                     </div>
 
-                    <div v-if="showMyNotes && !isAdmin && ((verse.my_notes && verse.my_notes.length > 0) || user)" class="verse-notes my-notes">
+                    <div v-if="showMyNotes && !isAdmin && ((verse.my_notes && verse.my_notes.length > 0) || addingPersonalNoteVerseId === verse.verse_id)" class="verse-notes my-notes">
                       <div v-for="note in verse.my_notes" :key="note.personal_note_id" class="note-item">
                         <template v-if="editingPersonalNoteId === note.personal_note_id">
                           <textarea v-model="editPersonalNoteContent" class="note-edit-textarea" rows="3"></textarea>
                           <div class="note-edit-actions">
                             <button class="note-save-btn" @click.stop="saveEditPersonalNote(verse.verse_id, note.personal_note_id)">Save</button>
                             <button class="note-cancel-btn" @click.stop="cancelEditPersonalNote">Cancel</button>
+                            <button class="note-delete-btn" @click.stop="deletePersonalNoteFromVerse(verse.verse_id, note.personal_verse_note_id, note.personal_note_id)">Delete</button>
                           </div>
                         </template>
                         <template v-else>
                           <div class="note-content" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: (fontSize - 2) + 'px' }" v-html="formatVerseWithPaleoBora(note.note_content)"></div>
-                          <div class="note-inline-actions">
-                            <button class="note-icon-btn" title="Edit note" @click.stop="startEditPersonalNote(note)">✎</button>
-                            <button class="note-icon-btn" title="Delete note" @click.stop="deletePersonalNoteFromVerse(verse.verse_id, note.personal_verse_note_id, note.personal_note_id)">🗑</button>
-                          </div>
                         </template>
                       </div>
-                      <div v-if="user" class="note-add-row">
-                        <template v-if="addingPersonalNoteVerseId === verse.verse_id">
-                          <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
-                          <div class="note-edit-actions">
-                            <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
-                            <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
-                          </div>
-                        </template>
-                        <button v-else class="note-add-btn" @click.stop="startAddPersonalNote(verse.verse_id)">+ Add my note</button>
+                      <div v-if="addingPersonalNoteVerseId === verse.verse_id" class="note-add-row">
+                        <textarea v-model="newPersonalNoteContent" class="note-edit-textarea" rows="3" placeholder="New personal note…"></textarea>
+                        <div class="note-edit-actions">
+                          <button class="note-save-btn" @click.stop="saveNewPersonalNote(verse.verse_id)">Save</button>
+                          <button class="note-cancel-btn" @click.stop="cancelAddPersonalNote">Cancel</button>
+                        </div>
                       </div>
                     </div>
 
@@ -274,6 +268,32 @@
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                           </svg>
                           Share
+                        </motion.button>
+                        <motion.button
+                          v-if="user && !isAdmin && (!verse.my_notes || verse.my_notes.length === 0)"
+                          class="verse-action-btn"
+                          :while-tap="tapScale"
+                          @click.stop="startAddPersonalNote(verse.verse_id)"
+                          title="Add my note"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
+                          Add My Note
+                        </motion.button>
+                        <motion.button
+                          v-if="user && !isAdmin && verse.my_notes && verse.my_notes.length > 0"
+                          class="verse-action-btn"
+                          :while-tap="tapScale"
+                          @click.stop="startEditPersonalNote(verse.my_notes[0])"
+                          title="Edit my note"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit My Note
                         </motion.button>
                         <motion.button
                           v-if="isAdmin && verse.notes && verse.notes.length > 0"
@@ -2747,8 +2767,8 @@ defineExpose({ showCrossRefTooltip });
   width: 100%;
 }
 
-.book-name {
-  font-size: 0.8rem;
+.verse-picker-button .book-name {
+  font-size: 1.2rem !important;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -3564,32 +3584,6 @@ body {
   margin-top: 0.5rem;
 }
 
-.note-inline-actions {
-  display: flex;
-  gap: 0.4rem;
-  margin-top: 0.3rem;
-}
-
-.note-icon-btn {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 5px;
-  font-size: 0.7rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.note-icon-btn:hover {
-  background: rgba(0, 0, 0, 0.12);
-}
-
 .note-add-row {
   margin-top: 0.5rem;
 }
@@ -3717,8 +3711,8 @@ body {
     font-size: 0.9rem;
   }
 
-  .book-name {
-    font-size: 0.95rem;
+  .verse-picker-button .book-name {
+    font-size: 1.2rem !important;
   }
 
   .chapter-verse {

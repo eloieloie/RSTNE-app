@@ -40,7 +40,7 @@
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          DSS Today: {{ dssToday.month }}M / {{ dssToday.day }}th · Day {{ dssToday.dayOfYear }} of 364 · Week {{ currentWeek }}
+          DSS Today: {{ dssToday.month }}M / {{ dssToday.day }}th · Day {{ dssToday.dayOfYear }} of 364 · Week {{ currentWeek }}/52
         </div>
 
         <div class="am-jubilee-row">
@@ -231,7 +231,7 @@
       <motion.div
         v-for="(parasha, index) in WEEKLY_PARASHOT"
         :key="parasha.week"
-        :ref="el => { if (parasha.week === currentWeek) currentCardRef = el as HTMLElement }"
+        :data-current-card="isCurrentYear && parasha.week === currentWeek ? '' : undefined"
         class="parasha-card"
         :class="{ 'current-week': isCurrentYear && parasha.week === currentWeek }"
         :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
@@ -315,7 +315,7 @@
           <motion.div
             v-for="(parasha, index) in (parshasByMonth.get(month) || [])"
             :key="parasha.week"
-            :ref="el => { if (parasha.week === currentWeek && activeTab === 'byMonth') currentCardRef = el as HTMLElement }"
+            :data-current-card="isCurrentYear && parasha.week === currentWeek && activeTab === 'byMonth' ? '' : undefined"
             class="parasha-card"
             :class="{ 'current-week': isCurrentYear && parasha.week === currentWeek }"
             :initial="prefersReducedMotion ? false : { opacity: 0, y: 10 }"
@@ -435,7 +435,6 @@ import { generateReadingPlanCardImage } from '@/utils/paleoBora';
 const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade, staggerTransition } = useMotionPresets();
 
 const router = useRouter();
-const currentCardRef = ref<HTMLElement | null>(null);
 const activeTab = ref<'weekly' | 'byMonth' | 'roshChodesh'>('weekly');
 const showAmModal = ref(false);
 const showSettingsModal = ref(false);
@@ -728,8 +727,9 @@ async function shareParasha(parasha: Parasha) {
 }
 
 onMounted(() => {
-  if (currentCardRef.value) {
-    currentCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const currentCard = document.querySelector('[data-current-card]');
+  if (currentCard) {
+    currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   getAllBooks().then(b => { booksCache.value = b; });
 });

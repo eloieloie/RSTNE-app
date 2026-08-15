@@ -486,7 +486,7 @@ onMounted(async () => {
 }
 
 .book-name {
-  font-size: calc(0.9rem * var(--books-font-scale));
+  font-size: calc(1.2rem * var(--books-font-scale));
   line-height: 1.2;
   font-weight: 700;
 }
