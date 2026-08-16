@@ -2649,6 +2649,11 @@ defineExpose({ showCrossRefTooltip });
   max-width: 100%;
   margin-right: 30%;
   box-sizing: border-box;
+  /* Broadcast/projector output always renders on a fixed light surface,
+     regardless of the reader's chosen theme — pin the tokens it uses. */
+  --color-foreground: #18160F;
+  --color-muted-foreground: #7C7970;
+  --color-border: #E8E6E0;
 }
 
 .content-wrapper {
@@ -2733,7 +2738,7 @@ defineExpose({ showCrossRefTooltip });
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  background: rgb(255 255 255 / 0.95);
+  background: var(--color-card);
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
@@ -2745,7 +2750,7 @@ defineExpose({ showCrossRefTooltip });
 }
 
 .verse-picker-button:hover {
-  background: white;
+  background: var(--color-background-alt);
   box-shadow: var(--shadow-nav);
 }
 
@@ -2969,7 +2974,7 @@ defineExpose({ showCrossRefTooltip });
 .book-header-content,
 .book-footer-content {
   line-height: var(--leading-reading);
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   text-align: left;
 }
 
@@ -3051,7 +3056,7 @@ defineExpose({ showCrossRefTooltip });
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--color-neutral-600);
+  color: var(--color-muted-foreground);
   background: rgb(0 0 0 / 0.05);
   border: 1px solid rgb(0 0 0 / 0.1);
   border-radius: var(--radius-full);
@@ -3101,7 +3106,7 @@ defineExpose({ showCrossRefTooltip });
   width: 100%;
   padding: 0.55rem 0.85rem;
   font-size: 0.82rem;
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   background: none;
   border: none;
   cursor: pointer;
@@ -3144,7 +3149,7 @@ defineExpose({ showCrossRefTooltip });
 
 .verse-text {
   display: inline;
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   font-family: var(--font-family-body);
 }
 
@@ -3358,7 +3363,7 @@ body {
 .tooltip-title {
   font-weight: 600;
   font-size: 14px;
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   flex: 1;
 }
 
@@ -3398,7 +3403,7 @@ body {
 }
 
 .tooltip-close:hover {
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   background: var(--color-border);
 }
 
@@ -3434,7 +3439,7 @@ body {
   font-size: 18px;
   font-weight: 600;
   line-height: 1.6;
-  color: var(--color-neutral-800);
+  color: var(--color-foreground);
   text-align: left;
   font-family: var(--font-family-body);
 }
@@ -3647,7 +3652,7 @@ body {
 
 .note-cancel-btn {
   background: rgba(0, 0, 0, 0.08);
-  color: #333;
+  color: var(--color-foreground);
 }
 
 .note-delete-btn {

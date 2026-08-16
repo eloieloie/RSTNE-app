@@ -813,7 +813,7 @@ onMounted(() => {
 }
 
 .page-header h1 {
-  color: #1a1a1a;
+  color: var(--color-foreground);
   font-size: calc(clamp(1.6rem, 4vw, 2.4rem) * var(--weekly-font-scale));
   font-weight: 800;
   margin: 0;
@@ -821,7 +821,7 @@ onMounted(() => {
 }
 
 .subtitle {
-  color: #6b7280;
+  color: var(--color-muted-foreground);
   font-size: calc(1rem * var(--weekly-font-scale));
   margin: 0;
 }
@@ -838,13 +838,13 @@ onMounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
 }
 
 .year-number {
   font-size: calc(1.7rem * var(--weekly-font-scale));
   font-weight: 900;
-  color: #1a1a1a;
+  color: var(--color-foreground);
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -858,6 +858,10 @@ onMounted(() => {
 
 .year-pill {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   padding: 0.3rem 0.85rem;
   border-radius: 20px;
   border: 2px solid #e5e7eb;

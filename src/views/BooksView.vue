@@ -372,13 +372,13 @@ onMounted(async () => {
 }
 
 .page-header h1 {
-  color: #2c3e50;
+  color: var(--color-foreground);
   margin: 0;
   font-size: calc(clamp(1.5rem, 4vw, 2.5rem) * var(--books-font-scale));
 }
 
 .subtitle {
-  color: #666;
+  color: var(--color-muted-foreground);
   font-size: calc(clamp(1rem, 2.5vw, 1.2rem) * var(--books-font-scale));
   margin: 0;
   font-weight: 500;

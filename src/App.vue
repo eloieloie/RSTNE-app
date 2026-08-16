@@ -20,8 +20,10 @@
 import { RouterView } from 'vue-router'
 import { motion, AnimatePresence } from 'motion-v'
 import { useMotionPresets } from '@/composables/useMotionPresets'
+import { useTheme } from '@/composables/useTheme'
 
 const { prefersReducedMotion } = useMotionPresets()
+useTheme()
 </script>
 
 <style>
@@ -36,13 +38,15 @@ html, body {
   padding: 0;
   width: 100%;
   overflow-x: hidden;
+  background: var(--color-background);
+  transition: background-color 0.2s ease;
 }
 
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
+  color: var(--color-foreground);
   min-height: 100vh;
   width: 100%;
 }

@@ -358,7 +358,7 @@ function navigateRef(ref: VerseRef) {
 /* ── Page ───────────────────────────────────────────────────────────── */
 .feasts-page {
   min-height: 100vh;
-  background: #f8f4ec;
+  background: var(--color-background);
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 

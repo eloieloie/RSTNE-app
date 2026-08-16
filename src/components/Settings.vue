@@ -43,6 +43,30 @@
         </div>
 
         <div class="settings-section">
+          <h4>Appearance</h4>
+          <div class="settings-group">
+            <div class="theme-options">
+              <motion.button
+                v-for="opt in themeOptions"
+                :key="opt.value"
+                :class="['theme-option-btn', { active: theme === opt.value }]"
+                :while-tap="tapScale"
+                :aria-pressed="theme === opt.value"
+                :title="opt.label"
+                @click="theme = opt.value"
+              >
+                <span
+                  class="theme-swatch"
+                  :style="{ background: `linear-gradient(135deg, ${opt.swatch[0]} 50%, ${opt.swatch[1]} 50%)` }"
+                  aria-hidden="true"
+                ></span>
+                <span class="theme-option-label">{{ opt.label }}</span>
+              </motion.button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h4>Book Names Language</h4>
           <div class="settings-group">
             <div class="lang-options">
@@ -172,6 +196,7 @@ import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLan
 import { useReaderSettings, type ReaderSettings } from '@/composables/useReaderSettings';
 import { useAuth } from '@/composables/useAuth';
 import { useMotionPresets } from '@/composables/useMotionPresets';
+import { useTheme } from '@/composables/useTheme';
 
 interface Props {
   isOpen: boolean;
@@ -193,6 +218,7 @@ const langOptions: { value: BookNameLanguage; label: string }[] = [
 ];
 
 const { settings } = useReaderSettings();
+const { theme, themeOptions } = useTheme();
 const { user, isAdmin, canClaimAdmin, signOutUser, claimAdmin } = useAuth();
 const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 const claimError = ref('');
@@ -258,7 +284,7 @@ function close() {
 }
 
 .modal-content {
-  background: white;
+  background: var(--color-card);
   border-radius: 12px;
   max-width: 500px;
   width: 100%;
@@ -272,14 +298,14 @@ function close() {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-foreground);
 }
 
 .close-button {
@@ -287,7 +313,7 @@ function close() {
   border: none;
   font-size: 2rem;
   cursor: pointer;
-  color: #666;
+  color: var(--color-muted-foreground);
   padding: 0;
   width: 32px;
   height: 32px;
@@ -299,7 +325,7 @@ function close() {
 }
 
 .close-button:hover {
-  background: #f0f0f0;
+  background: var(--color-muted);
 }
 
 .modal-body {
@@ -318,7 +344,7 @@ function close() {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #444;
+  color: var(--color-foreground);
 }
 
 .settings-group {
@@ -337,7 +363,7 @@ function close() {
 
 .setting-item span {
   font-size: 1rem;
-  color: #333;
+  color: var(--color-foreground);
 }
 
 /* Account section */
@@ -358,7 +384,7 @@ function close() {
 
 .account-email {
   font-size: 0.95rem;
-  color: #333;
+  color: var(--color-foreground);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -383,9 +409,9 @@ function close() {
   min-height: 40px;
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  border: 1.5px solid #ddd;
-  background: #f5f5f5;
-  color: #333;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
+  color: var(--color-foreground);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -394,7 +420,7 @@ function close() {
 }
 
 .account-btn:hover {
-  border-color: #888;
+  border-color: var(--color-muted-foreground);
 }
 
 .account-btn-primary {
@@ -413,7 +439,7 @@ function close() {
   width: 100%;
   border-color: #8B4513;
   color: #8B4513;
-  background: #fff;
+  background: var(--color-card);
 }
 
 .claim-error {
@@ -427,7 +453,7 @@ function close() {
   position: relative;
   width: 50px;
   height: 26px;
-  background: #ccc;
+  background: var(--color-border);
   border-radius: 13px;
   border: none;
   cursor: pointer;
@@ -445,7 +471,7 @@ function close() {
   left: 3px;
   width: 20px;
   height: 20px;
-  background: white;
+  background: var(--color-card);
   border-radius: 50%;
   transition: left 0.3s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -491,7 +517,7 @@ function close() {
 .font-size-display {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-foreground);
   min-width: 60px;
   text-align: center;
 }
@@ -506,18 +532,18 @@ function close() {
   flex: 1;
   padding: 0.45rem 0.5rem;
   border-radius: 8px;
-  border: 1.5px solid #ddd;
-  background: #f5f5f5;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  color: #555;
+  color: var(--color-muted-foreground);
   transition: all 0.15s ease;
 }
 
 .lang-option-btn:hover {
-  border-color: #888;
-  color: #222;
+  border-color: var(--color-muted-foreground);
+  color: var(--color-foreground);
 }
 
 .lang-option-btn.active {
@@ -526,52 +552,50 @@ function close() {
   color: #fff;
 }
 
-/* Dark mode support (if needed) */
-@media (prefers-color-scheme: dark) {
-  .modal-content {
-    background: #2a2a2a;
-  }
+/* Theme picker */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
 
-  .modal-header {
-    border-bottom-color: #444;
-  }
+.theme-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
 
-  .modal-header h3 {
-    color: #fff;
-  }
+.theme-option-btn:hover {
+  border-color: var(--color-muted-foreground);
+}
 
-  .close-button {
-    color: #aaa;
-  }
+.theme-option-btn.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
 
-  .close-button:hover {
-    background: #3a3a3a;
-  }
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+}
 
-  .settings-section h4 {
-    color: #ddd;
-  }
+.theme-option-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
 
-  .setting-item span {
-    color: #ddd;
-  }
-
-  .font-size-display {
-    color: #ddd;
-  }
-
-  .account-email {
-    color: #ddd;
-  }
-
-  .account-btn {
-    background: #3a3a3a;
-    border-color: #555;
-    color: #ddd;
-  }
-
-  .claim-admin-btn {
-    background: #2a2a2a;
-  }
+.theme-option-btn.active .theme-option-label {
+  color: var(--color-foreground);
 }
 </style>

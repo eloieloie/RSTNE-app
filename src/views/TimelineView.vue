@@ -380,7 +380,7 @@ onMounted(async () => {
 /* ── Page layout ─────────────────────────────────────────────────── */
 .timeline-page {
   min-height: 100vh;
-  background: #f8f6f0;
+  background: var(--color-background);
   display: flex;
   flex-direction: column;
   font-family: Avenir, Helvetica, Arial, sans-serif;
