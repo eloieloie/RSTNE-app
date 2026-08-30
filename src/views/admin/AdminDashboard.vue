@@ -76,6 +76,15 @@
           View Feedback
         </router-link>
       </motion.div>
+
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(8)" :while-hover="hoverLift">
+        <div class="card-icon">🔊</div>
+        <h2>Verse Audio Generator</h2>
+        <p>Generate and listen to text-to-speech audio per verse or chapter before shipping playback in the app</p>
+        <router-link to="/admin/audio-generator" class="action-btn">
+          Generate Audio
+        </router-link>
+      </motion.div>
     </div>
   </div>
 </template>

@@ -18,6 +18,7 @@ import PushNotificationsAdmin from '@/views/admin/PushNotificationsAdmin.vue';
 import ManageTimelineEvents from '@/views/admin/ManageTimelineEvents.vue';
 import FeedbackAdmin from '@/views/admin/FeedbackAdmin.vue';
 import ModificationRequired from '@/views/admin/ModificationRequired.vue';
+import AudioGenerator from '@/views/admin/AudioGenerator.vue';
 import FeastsView from '@/views/FeastsView.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
@@ -113,6 +114,12 @@ const router = createRouter({
       path: '/admin/modification-required',
       name: 'admin-modification-required',
       component: ModificationRequired,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/audio-generator',
+      name: 'admin-audio-generator',
+      component: AudioGenerator,
       meta: { requiresAdmin: true }
     },
     {

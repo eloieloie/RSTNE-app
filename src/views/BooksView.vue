@@ -5,8 +5,6 @@
     :style="{ '--books-font-scale': String(fontScale) }"
   >
     <div class="page-header">
-      <h1>Restoration Scriptures True Name Edition</h1>
-      <p class="subtitle">Choose a book to start reading - HalleluYAHUA!</p>
       <div class="lang-selector">
         <motion.button
           v-for="opt in langOptions"
@@ -36,6 +34,9 @@
           <span v-if="isAdmin" class="account-admin-dot" aria-hidden="true"></span>
         </motion.button>
       </div>
+
+      <h1>Restoration Scriptures True Name Edition</h1>
+      <p class="subtitle">Choose a book to start reading - HalleluYAHUA!</p>
 
       <div class="header-btns">
         <motion.button class="weekly-reading-btn" :while-hover="hoverLift" :while-tap="tapScale" @click="router.push({ name: 'weekly-reading' })">
@@ -278,10 +279,9 @@ onMounted(async () => {
 }
 
 .lang-selector {
-  position: absolute;
-  top: 0;
-  right: 0;
+  align-self: stretch;
   display: flex;
+  justify-content: flex-end;
   gap: 0.25rem;
 }
 

@@ -14,7 +14,43 @@ export const TABLES = {
   VERSE_TAGS: 'verse_tags_tbl',
   CROSS_REFERENCES: 'cross_references_tbl',
   APP_VERSION: 'app_version_tbl',
+  VERSE_AUDIO: 'verse_audio_tbl',
 } as const;
+
+export const VERSE_AUDIO_COLUMNS = {
+  ID: 'audio_id',
+  VERSE_ID: 'verse_id',
+  LANGUAGE: 'language',
+  STORAGE_PATH: 'storage_path',
+  AUDIO_URL: 'audio_url',
+  CONTENT_HASH: 'content_hash',
+  DURATION_MS: 'duration_ms',
+  VOICE_NAME: 'voice_name',
+  STATUS: 'status',
+  ERROR_MESSAGE: 'error_message',
+  DATE_GENERATED: 'dt_generated',
+  DATE_ADDED: 'dt_added',
+  DATE_MODIFIED: 'dt_modified',
+} as const;
+
+export type VerseAudioLanguage = 'en' | 'te';
+export type VerseAudioStatus = 'pending' | 'ready' | 'stale' | 'failed';
+
+export interface VerseAudio {
+  audio_id: number;
+  verse_id: number;
+  language: VerseAudioLanguage;
+  storage_path: string | null;
+  audio_url: string | null;
+  content_hash: string;
+  duration_ms: number | null;
+  voice_name: string | null;
+  status: VerseAudioStatus;
+  error_message: string | null;
+  dt_generated: string | null;
+  dt_added: string;
+  dt_modified: string;
+}
 
 // Type Definitions
 export interface Book {
