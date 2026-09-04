@@ -288,6 +288,18 @@ function formatVerseWithPaleoBora(verseText: string | null): string {
   return verseText.replace(/(Myhla|myhla)/gi, '<span class="paleobora-text">$1</span>');
 }
 
+// Quill always wraps a single-line editor's content in <p>...</p>, but each verse
+// already renders inside its own container (.verse-text / .verse-telugu), so the
+// wrapper is redundant — and any trailing content Quill leaves after it (rare, but
+// seen from pasted text) would otherwise persist outside the tag on save. Unwrap it
+// here so newly saved verses stop reintroducing the empty-<p> rendering artifact.
+function unwrapRedundantParagraph(html: string): string {
+  const match = html.match(/^\s*<p[^>]*>([\s\S]*)<\/p>\s*([\s\S]*)$/i);
+  if (!match) return html;
+  if ((match[1].match(/<p[^>]*>/gi) || []).length > 0) return html; // multi-paragraph — leave as-is
+  return (match[1] + match[2]).trim();
+}
+
 onMounted(async () => {
   const chapterId = Number(route.params.id);
   if (!chapterId || isNaN(chapterId)) {
@@ -404,10 +416,10 @@ async function saveVerse(verseId: number) {
   
   // Get HTML content from editors
   if (englishEditor.value) {
-    editFormData.value.verse = englishEditor.value.root.innerHTML;
+    editFormData.value.verse = unwrapRedundantParagraph(englishEditor.value.root.innerHTML);
   }
   if (teluguEditor.value) {
-    editFormData.value.telugu_verse = teluguEditor.value.root.innerHTML;
+    editFormData.value.telugu_verse = unwrapRedundantParagraph(teluguEditor.value.root.innerHTML);
   }
   
   if (!editFormData.value.verse || !editFormData.value.verse.trim()) {

@@ -33,7 +33,7 @@ export const VERSE_AUDIO_COLUMNS = {
   DATE_MODIFIED: 'dt_modified',
 } as const;
 
-export type VerseAudioLanguage = 'en' | 'te';
+export type VerseAudioLanguage = 'en' | 'te' | 'he';
 export type VerseAudioStatus = 'pending' | 'ready' | 'stale' | 'failed';
 
 export interface VerseAudio {

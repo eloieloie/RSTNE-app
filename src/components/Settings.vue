@@ -82,6 +82,22 @@
         </div>
 
         <div class="settings-section">
+          <h4>Audio Language</h4>
+          <div class="settings-group">
+            <div class="lang-options">
+              <motion.button
+                v-for="opt in audioLangOptions"
+                :key="opt.value"
+                :class="['lang-option-btn', { active: audioLang === opt.value }]"
+                :while-tap="tapScale"
+                @click="audioLang = opt.value"
+              >{{ opt.label }}</motion.button>
+            </div>
+            <p class="setting-hint">Used when playing chapter audio. Tap the play button in the top bar to start.</p>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h4>Display Mode</h4>
           <div class="settings-group">
             <label class="setting-item">
@@ -193,6 +209,8 @@
 import { ref, watch } from 'vue';
 import { motion, AnimatePresence } from 'motion-v';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
+import { useAudioLanguage } from '@/composables/useAudioLanguage';
+import type { VerseAudioLanguage } from '@/utils/collectionReferences';
 import { useReaderSettings, type ReaderSettings } from '@/composables/useReaderSettings';
 import { useAuth } from '@/composables/useAuth';
 import { useMotionPresets } from '@/composables/useMotionPresets';
@@ -210,11 +228,18 @@ const emit = defineEmits<{
 }>();
 
 const { bookNameLanguage } = useBookLanguage();
+const { audioLang } = useAudioLanguage();
 
 const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'english', label: 'English' },
   { value: 'hebrew', label: 'Hebrew' },
   { value: 'telugu', label: 'Telugu' },
+];
+
+const audioLangOptions: { value: VerseAudioLanguage; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'te', label: 'Telugu' },
+  { value: 'he', label: 'Hebrew' },
 ];
 
 const { settings } = useReaderSettings();
@@ -520,6 +545,13 @@ function close() {
   color: var(--color-foreground);
   min-width: 60px;
   text-align: center;
+}
+
+.setting-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.4;
 }
 
 .lang-options {

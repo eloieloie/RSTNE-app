@@ -19,6 +19,8 @@ import ManageTimelineEvents from '@/views/admin/ManageTimelineEvents.vue';
 import FeedbackAdmin from '@/views/admin/FeedbackAdmin.vue';
 import ModificationRequired from '@/views/admin/ModificationRequired.vue';
 import AudioGenerator from '@/views/admin/AudioGenerator.vue';
+import ManageChapterAnnouncements from '@/views/admin/ManageChapterAnnouncements.vue';
+import PunctuationSuggestions from '@/views/admin/PunctuationSuggestions.vue';
 import FeastsView from '@/views/FeastsView.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
@@ -120,6 +122,18 @@ const router = createRouter({
       path: '/admin/audio-generator',
       name: 'admin-audio-generator',
       component: AudioGenerator,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/chapter-announcements',
+      name: 'admin-chapter-announcements',
+      component: ManageChapterAnnouncements,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/punctuation-suggestions',
+      name: 'admin-punctuation-suggestions',
+      component: PunctuationSuggestions,
       meta: { requiresAdmin: true }
     },
     {

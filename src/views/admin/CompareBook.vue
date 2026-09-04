@@ -5,7 +5,45 @@
         <router-link to="/admin" class="back-link">← Admin Dashboard</router-link>
         <h1>📑 Compare Book with RSTNE Page</h1>
       </div>
+      <div class="header-right">
+        <button class="ignore-btn" @click="showIgnorePanel = !showIgnorePanel">
+          🚫 Ignore List ({{ ignorePairs.length }})
+        </button>
+      </div>
     </header>
+
+    <!-- Ignore list panel -->
+    <div v-if="showIgnorePanel" class="ignore-panel">
+      <div class="ignore-panel-header">
+        <strong>Ignored word pairs</strong>
+        <span class="ignore-hint">
+          These substitutions are treated as identical and won't be highlighted as differences.
+          Click a red word on the left, then its green counterpart on the right, to add a pair.
+        </span>
+      </div>
+      <ul class="ignore-list">
+        <li v-for="(pair, idx) in ignorePairs" :key="pair.pair_id">
+          <span class="ignore-word">{{ pair.left }}</span>
+          <span class="ignore-arrow">↔</span>
+          <span class="ignore-word">{{ pair.right }}</span>
+          <button class="ignore-remove" @click="removeIgnorePair(idx)" title="Remove">✕</button>
+        </li>
+        <li v-if="ignorePairsLoading" class="ignore-empty">Loading…</li>
+        <li v-else-if="ignorePairs.length === 0" class="ignore-empty">No ignored pairs yet.</li>
+      </ul>
+      <div class="ignore-add-form">
+        <input v-model="newIgnoreLeft" placeholder="DB word (e.g. HWHY)" @keyup.enter="addManualIgnorePair" />
+        <span>↔</span>
+        <input v-model="newIgnoreRight" placeholder="RSTNE word (e.g. YHUH)" @keyup.enter="addManualIgnorePair" />
+        <button @click="addManualIgnorePair">Add</button>
+      </div>
+    </div>
+
+    <!-- Picking-a-pair banner -->
+    <div v-if="pendingIgnoreLeft" class="pending-ignore-banner">
+      Picking pair for “{{ pendingIgnoreLeft }}” — click the matching word on the RSTNE side to ignore this difference.
+      <button @click="pendingIgnoreLeft = null">Cancel</button>
+    </div>
 
     <!-- Book Selector -->
     <div class="selector-bar">
@@ -18,12 +56,16 @@
             :key="book.book_id"
             :value="book.book_id"
           >
-            {{ book.book_name }}
+            #{{ book.book_index }} — {{ book.book_name }}
           </option>
         </select>
         <span v-if="loadingBooks" class="inline-spinner">Loading books…</span>
         <span v-if="booksWithLink.length === 0 && !loadingBooks" class="warning-text">
           No books have a <code>book_link</code> set yet.
+        </span>
+        <span v-else-if="!loadingBooks" class="link-coverage-text">
+          {{ booksWithLink.length }} of {{ allBooks.length }} books have a <code>book_link</code> —
+          missing #s: {{ missingBookIndexes }}
         </span>
       </div>
 
@@ -34,6 +76,11 @@
         <span class="stat total-diff" :class="{ 'has-diff': totalDiffCount > 0 }">
           Differences: {{ totalDiffCount }}
         </span>
+        <span class="stat matched-stat">✅ Matched: {{ totalMatchedCount }}</span>
+        <label class="hide-matched-toggle">
+          <input type="checkbox" v-model="hideMatched" />
+          Hide matched verses
+        </label>
         <a v-if="selectedBook.book_link" :href="selectedBook.book_link" target="_blank" class="rstne-link">
           Open RSTNE Page ↗
         </a>
@@ -53,7 +100,7 @@
     </div>
 
     <!-- Comparison View -->
-    <div v-if="!loading && !error && dbChapters.length > 0" class="compare-container">
+    <div v-if="!loading && !error && displayedChapters.length > 0" class="compare-container">
       <!-- Column headers -->
       <div class="compare-columns-header">
         <div class="col-header db-header">🗄️ Database</div>
@@ -61,7 +108,7 @@
       </div>
 
       <!-- Chapter groups -->
-      <div v-for="chapter in mergedChapters" :key="chapter.chapterNumber" class="chapter-block">
+      <div v-for="chapter in displayedChapters" :key="chapter.chapterNumber" class="chapter-block">
         <div class="chapter-title-row">
           <div class="chapter-title db-chapter-title">
             Chapter {{ chapter.chapterNumber }}
@@ -99,6 +146,7 @@
                   'diff-removed': part.type === 'removed',
                   'diff-same': part.type === 'same'
                 }"
+                @click="part.type === 'removed' && onClickRemoved(part.text)"
               >{{ part.text }}</span>
             </span>
           </div>
@@ -115,6 +163,7 @@
                   'diff-added': part.type === 'added',
                   'diff-same': part.type === 'same'
                 }"
+                @click="part.type === 'added' && onClickAdded(part.text)"
               >{{ part.text }}</span>
             </span>
           </div>
@@ -126,6 +175,9 @@
     <div v-if="!loading && !error && selectedBookId && dbChapters.length === 0" class="empty-state">
       No chapters found in database for this book.
     </div>
+    <div v-if="!loading && !error && dbChapters.length > 0 && displayedChapters.length === 0" class="empty-state">
+      All verses match — nothing to show with "Hide matched verses" enabled.
+    </div>
   </div>
 </template>
 
@@ -135,6 +187,7 @@ import { API_HEADERS } from '@/api/client';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId } from '@/api/verses';
+import { getIgnorePairs, createIgnorePair, deleteIgnorePair } from '@/api/compareIgnorePairs';
 import type { Book, Chapter, Verse } from '@/utils/collectionReferences';
 
 const API_URL = 'https://rstne.eloi.in/api';
@@ -162,6 +215,76 @@ interface MergedChapter {
   verseRows:   VerseRow[];
 }
 
+interface IgnorePair { pair_id: number; left: string; right: string }
+
+// ─── Ignore list (word substitutions treated as identical) ───────────────────
+// Stored in compare_ignore_pairs_tbl via the PHP API — shared across admins/devices.
+
+const ignorePairs        = ref<IgnorePair[]>([]);
+const ignorePairsLoading = ref(false);
+const showIgnorePanel    = ref(false);
+const newIgnoreLeft      = ref('');
+const newIgnoreRight     = ref('');
+const pendingIgnoreLeft  = ref<string | null>(null);
+
+async function loadIgnorePairs() {
+  ignorePairsLoading.value = true;
+  try {
+    const rows = await getIgnorePairs();
+    ignorePairs.value = rows.map(r => ({ pair_id: r.pair_id, left: r.left_word, right: r.right_word }));
+  } catch {
+    // leave list empty if the API is unreachable
+  } finally {
+    ignorePairsLoading.value = false;
+  }
+}
+
+function isIgnoredPair(a: string, b: string): boolean {
+  const al = a.toLowerCase();
+  const bl = b.toLowerCase();
+  return ignorePairs.value.some(p => (p.left === al && p.right === bl) || (p.left === bl && p.right === al));
+}
+
+async function addIgnorePair(left: string, right: string) {
+  const l = left.trim().toLowerCase();
+  const r = right.trim().toLowerCase();
+  if (!l || !r || l === r || isIgnoredPair(l, r)) return;
+  try {
+    const created = await createIgnorePair(l, r);
+    ignorePairs.value.push({ pair_id: created.pair_id, left: l, right: r });
+  } catch {
+    // ignore write failure; list stays as-is
+  }
+}
+
+async function removeIgnorePair(index: number) {
+  const pair = ignorePairs.value[index];
+  if (!pair) return;
+  ignorePairs.value.splice(index, 1);
+  try {
+    await deleteIgnorePair(pair.pair_id);
+  } catch {
+    // re-insert on failure so the UI stays truthful
+    ignorePairs.value.splice(index, 0, pair);
+  }
+}
+
+function addManualIgnorePair() {
+  addIgnorePair(newIgnoreLeft.value, newIgnoreRight.value);
+  newIgnoreLeft.value  = '';
+  newIgnoreRight.value = '';
+}
+
+function onClickRemoved(text: string) {
+  pendingIgnoreLeft.value = text.trim();
+}
+
+function onClickAdded(text: string) {
+  if (!pendingIgnoreLeft.value) return;
+  addIgnorePair(pendingIgnoreLeft.value, text.trim());
+  pendingIgnoreLeft.value = null;
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 const allBooks       = ref<Book[]>([]);
@@ -180,6 +303,34 @@ const dbVerseMap     = ref<Map<number, Verse[]>>(new Map());
 const booksWithLink = computed(() =>
   allBooks.value.filter(b => b.book_link && b.book_link.trim() !== '')
 );
+
+// Compact list of book_index numbers that have no book_link yet, e.g. "19-77, 79-83"
+const missingBookIndexes = computed(() => {
+  const present = new Set(booksWithLink.value.map(b => b.book_index));
+  const missing = allBooks.value
+    .map(b => b.book_index)
+    .filter((n): n is number => n != null && !present.has(n))
+    .sort((a, b) => a - b);
+
+  if (missing.length === 0) return 'none';
+
+  const ranges: string[] = [];
+  let start = missing[0];
+  let prev = missing[0];
+
+  for (let i = 1; i < missing.length; i++) {
+    if (missing[i] === prev + 1) {
+      prev = missing[i];
+      continue;
+    }
+    ranges.push(start === prev ? `${start}` : `${start}-${prev}`);
+    start = missing[i];
+    prev = missing[i];
+  }
+  ranges.push(start === prev ? `${start}` : `${start}-${prev}`);
+
+  return ranges.join(', ');
+});
 
 const selectedBook = computed<Book | null>(() =>
   allBooks.value.find(b => b.book_id === selectedBookId.value) ?? null
@@ -251,7 +402,35 @@ const totalDiffCount = computed(() =>
   )
 );
 
+const totalMatchedCount = computed(() =>
+  mergedChapters.value.reduce(
+    (acc, ch) => acc + ch.verseRows.filter(r => !r.hasDiff).length,
+    0
+  )
+);
+
+// ─── Hide/show matched verses ─────────────────────────────────────────────────
+
+const hideMatched = ref(false);
+
+const displayedChapters = computed<MergedChapter[]>(() => {
+  if (!hideMatched.value) return mergedChapters.value;
+
+  return mergedChapters.value
+    .map(ch => ({ ...ch, verseRows: ch.verseRows.filter(r => r.hasDiff) }))
+    .filter(ch => ch.verseRows.length > 0);
+});
+
 // ─── Word diff (LCS) ─────────────────────────────────────────────────────────
+
+function isWhitespace(word: string): boolean {
+  return /^\s+$/.test(word);
+}
+
+function wordsMatch(a: string, b: string): boolean {
+  if (isWhitespace(a) && isWhitespace(b)) return true;
+  return a.toLowerCase() === b.toLowerCase() || isIgnoredPair(a, b);
+}
 
 function wordDiff(left: string, right: string): { left: DiffPart[]; right: DiffPart[]; hasDiff: boolean } {
   const lWords = tokenize(left);
@@ -272,7 +451,7 @@ function wordDiff(left: string, right: string): { left: DiffPart[]; right: DiffP
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      if (lWords[i - 1].toLowerCase() === rWords[j - 1].toLowerCase()) {
+      if (wordsMatch(lWords[i - 1], rWords[j - 1])) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
       } else {
         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
@@ -287,15 +466,19 @@ function wordDiff(left: string, right: string): { left: DiffPart[]; right: DiffP
   const tempRight: { type: 'same' | 'removed' | 'added'; word: string }[] = [];
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && lWords[i - 1].toLowerCase() === rWords[j - 1].toLowerCase()) {
+    if (i > 0 && j > 0 && wordsMatch(lWords[i - 1], rWords[j - 1])) {
       tempLeft.unshift({ type: 'same', word: lWords[i - 1] });
       tempRight.unshift({ type: 'same', word: rWords[j - 1] });
       i--; j--;
     } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      tempRight.unshift({ type: 'added', word: rWords[j - 1] });
+      // A stray whitespace-only insertion (e.g. an extra/missing space around
+      // punctuation) is a formatting quirk, not a real content difference.
+      const word = rWords[j - 1];
+      tempRight.unshift({ type: isWhitespace(word) ? 'same' : 'added', word });
       j--;
     } else {
-      tempLeft.unshift({ type: 'removed', word: lWords[i - 1] });
+      const word = lWords[i - 1];
+      tempLeft.unshift({ type: isWhitespace(word) ? 'same' : 'removed', word });
       i--;
     }
   }
@@ -313,10 +496,12 @@ function wordDiff(left: string, right: string): { left: DiffPart[]; right: DiffP
     return out;
   };
 
+  const hasDiff = tempLeft.some(t => t.type !== 'same') || tempRight.some(t => t.type !== 'same');
+
   return {
     left:    merge(tempLeft),
     right:   merge(tempRight),
-    hasDiff: true
+    hasDiff
   };
 }
 
@@ -348,6 +533,7 @@ onMounted(async () => {
   } finally {
     loadingBooks.value = false;
   }
+  loadIgnorePairs();
 });
 
 function onBookChange() {
@@ -430,6 +616,7 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   padding: 1.2rem 2rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
 }
 
@@ -437,6 +624,120 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.ignore-btn {
+  padding: 0.45rem 0.9rem;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.ignore-btn:hover { background: rgba(255,255,255,0.35); }
+
+/* ── Ignore list panel ──────────────────────────────────────────────────── */
+.ignore-panel {
+  background: #2c2c3a;
+  color: #eee;
+  padding: 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ignore-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.ignore-hint {
+  font-size: 0.82rem;
+  color: #bbb;
+}
+
+.ignore-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ignore-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #3d3d4d;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+.ignore-word { font-weight: 600; }
+.ignore-arrow { color: #999; }
+.ignore-empty { color: #999; font-style: italic; background: transparent; }
+.ignore-remove {
+  background: none;
+  border: none;
+  color: #f18a8a;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+}
+.ignore-remove:hover { color: #ff5252; }
+
+.ignore-add-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ignore-add-form input {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #1f1f2b;
+  color: #eee;
+  font-size: 0.85rem;
+}
+.ignore-add-form button {
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  background: #667eea;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.ignore-add-form button:hover { background: #5a6fd8; }
+
+/* ── Pending-pick banner ─────────────────────────────────────────────────── */
+.pending-ignore-banner {
+  background: #fff3cd;
+  color: #856404;
+  padding: 0.6rem 2rem;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.pending-ignore-banner button {
+  padding: 0.25rem 0.7rem;
+  border: none;
+  border-radius: 5px;
+  background: #856404;
+  color: white;
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 
 .compare-header h1 {
@@ -501,6 +802,15 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   color: #c0392b;
   font-size: 0.9rem;
 }
+.link-coverage-text {
+  color: #666;
+  font-size: 0.85rem;
+}
+.link-coverage-text code {
+  background: #f0f2f5;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
 
 .stats-bar {
   display: flex;
@@ -519,6 +829,22 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   background: #fff3cd;
   color: #856404;
   font-weight: 600;
+}
+.stat.matched-stat {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.hide-matched-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+.hide-matched-toggle input {
+  cursor: pointer;
 }
 .rstne-link {
   font-size: 0.85rem;
@@ -693,6 +1019,7 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 
 /* ── Diff highlights ─────────────────────────────────────────────────────── */
 .diff-same    { color: #2c2c2c; }
-.diff-removed { background: #ffcdd2; color: #b71c1c; border-radius: 3px; padding: 0 1px; }
-.diff-added   { background: #c8e6c9; color: #1b5e20; border-radius: 3px; padding: 0 1px; }
+.diff-removed { background: #ffcdd2; color: #b71c1c; border-radius: 3px; padding: 0 1px; cursor: pointer; }
+.diff-added   { background: #c8e6c9; color: #1b5e20; border-radius: 3px; padding: 0 1px; cursor: pointer; }
+.diff-removed:hover, .diff-added:hover { outline: 2px solid #667eea; outline-offset: 1px; }
 </style>

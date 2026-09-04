@@ -14,58 +14,6 @@
       ></motion.div>
     </AnimatePresence>
 
-    <!-- Fixed audio control for current chapter (position:fixed — avoids flex sticky failure) -->
-    <div v-if="selectedChapterId && !loading" class="audio-float">
-      <div
-        class="audio-group"
-        :class="{
-          'has-lang': getChapterLang(selectedChapterId || 0) !== null
-            || chapterAudioPlaying === selectedChapterId
-            || chapterAudioPaused === selectedChapterId
-        }"
-      >
-        <div class="lang-chips-wrapper">
-          <button
-            class="lang-chip"
-            :class="{ active: getChapterLang(selectedChapterId || 0) === 'en' }"
-            title="English audio"
-            @click.stop="toggleChapterLang(selectedChapterId || 0, 'en')"
-          >EN</button>
-          <button
-            class="lang-chip"
-            :class="{ active: getChapterLang(selectedChapterId || 0) === 'te' }"
-            title="Telugu audio"
-            @click.stop="toggleChapterLang(selectedChapterId || 0, 'te')"
-          >TE</button>
-          <span class="audio-sep"></span>
-        </div>
-        <button
-          class="audio-play-btn"
-          :class="{
-            playing: chapterAudioPlaying === selectedChapterId,
-            paused: chapterAudioPaused === selectedChapterId
-          }"
-          :disabled="
-            !getChapterLang(selectedChapterId || 0)
-            && chapterAudioPlaying !== selectedChapterId
-            && chapterAudioPaused !== selectedChapterId
-          "
-          :title="
-            chapterAudioLoading === selectedChapterId ? 'Loading…'
-            : chapterAudioPlaying === selectedChapterId ? 'Pause'
-            : chapterAudioPaused === selectedChapterId ? 'Resume from verse start'
-            : 'Read chapter aloud'
-          "
-          @click.stop="handleAudioBtn(selectedChapterId || 0)"
-        >
-          <svg v-if="chapterAudioLoading === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="audio-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          <svg v-else-if="chapterAudioPlaying === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-          <svg v-else-if="chapterAudioPaused === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-        </button>
-      </div>
-    </div>
-
     <!-- Parasha flash notification -->
     <Transition name="parasha-flash">
       <div v-if="parashaFlash.visible" class="parasha-flash" @click="parashaFlash.visible = false">
@@ -101,6 +49,32 @@
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </motion.button>
+
+            <!-- Audio control — in-nav pill, beside back button -->
+            <div v-if="selectedChapterId" class="nav-audio-wrap">
+              <div class="nav-audio-group">
+                <button
+                  class="audio-play-btn"
+                  :class="{
+                    playing: chapterAudioPlaying === selectedChapterId,
+                    paused: chapterAudioPaused === selectedChapterId
+                  }"
+                  :disabled="chapterAudioLoading === selectedChapterId"
+                  :title="
+                    chapterAudioLoading === selectedChapterId ? 'Loading…'
+                    : chapterAudioPlaying === selectedChapterId ? 'Pause'
+                    : chapterAudioPaused === selectedChapterId ? 'Resume from verse start'
+                    : 'Read chapter aloud'
+                  "
+                  @click.stop="handleAudioBtn(selectedChapterId || 0)"
+                >
+                  <svg v-if="chapterAudioLoading === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="audio-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  <svg v-else-if="chapterAudioPlaying === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                  <svg v-else-if="chapterAudioPaused === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+              </div>
+            </div>
 
             <motion.button class="verse-picker-button" :while-hover="hoverLift" :while-tap="tapScale" @click="showVersePicker = true">
               <div class="book-names">
@@ -588,6 +562,7 @@ import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
 import { useBookLanguage } from '@/composables/useBookLanguage';
+import { useAudioLanguage } from '@/composables/useAudioLanguage';
 import { useAuth } from '@/composables/useAuth';
 import { updateNote, createNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
 import {
@@ -598,6 +573,7 @@ import {
   unlinkPersonalNoteFromVerse,
 } from '@/api/personalNotes';
 import { getChapterAudio } from '@/api/verseAudio';
+import { getChapterAnnouncement } from '@/api/chapterAnnouncements';
 import type { VerseAudioLanguage } from '@/utils/collectionReferences';
 
 // ── Motion (motion-v) ──────────────────────────────────────────────────────
@@ -694,6 +670,7 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const { getBookName, getBookAbbr } = useBookLanguage();
+const { audioLang } = useAudioLanguage();
 const allBooks = ref<any[]>([]);
 const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
@@ -726,7 +703,6 @@ const showVersePicker = ref(false);
 const showSearchModal = ref(false);
 
 // ── Chapter Audio ─────────────────────────────────────────────────────────
-const chapterAudioLang = ref<Record<number, VerseAudioLanguage | null>>({});
 const chapterAudioPlaying = ref<number | null>(null);
 const chapterAudioPaused = ref<number | null>(null);
 const chapterAudioLoading = ref<number | null>(null);
@@ -735,15 +711,6 @@ let _audioEl: HTMLAudioElement | null = null;
 let _audioQueue: string[] = [];
 let _audioVerseIds: number[] = [];
 let _audioQueueIdx = 0;
-
-function getChapterLang(chapterId: number): VerseAudioLanguage | null {
-  return chapterAudioLang.value[chapterId] ?? null;
-}
-
-function toggleChapterLang(chapterId: number, lang: VerseAudioLanguage) {
-  const current = chapterAudioLang.value[chapterId] ?? null;
-  chapterAudioLang.value = { ...chapterAudioLang.value, [chapterId]: current === lang ? null : lang };
-}
 
 function stopChapterAudio() {
   if (_audioEl) {
@@ -760,8 +727,7 @@ function stopChapterAudio() {
 
 function _playNextInQueue() {
   if (_audioQueueIdx >= _audioQueue.length) {
-    chapterAudioPlaying.value = null;
-    currentPlayingVerseId.value = null;
+    void _continueToNextChapter();
     return;
   }
   currentPlayingVerseId.value = _audioVerseIds[_audioQueueIdx] ?? null;
@@ -772,6 +738,73 @@ function _playNextInQueue() {
   }
   _audioEl.src = _audioQueue[_audioQueueIdx];
   _audioEl.play().catch(() => { _audioQueueIdx++; _playNextInQueue(); });
+}
+
+async function _continueToNextChapter() {
+  const currentId = chapterAudioPlaying.value;
+  if (!currentId) { stopChapterAudio(); return; }
+  const lang = audioLang.value;
+  if (!lang) { stopChapterAudio(); return; }
+
+  const currentIdx = chapters.value.findIndex(c => c.chapter_id === currentId);
+  if (currentIdx < 0 || currentIdx >= chapters.value.length - 1) {
+    stopChapterAudio();
+    return;
+  }
+
+  const nextChapter = chapters.value[currentIdx + 1];
+
+  // Transition state: clear old chapter, mark next as loading
+  chapterAudioPlaying.value = null;
+  chapterAudioPaused.value = null;
+  currentPlayingVerseId.value = null;
+  _audioQueue = [];
+  _audioVerseIds = [];
+  _audioQueueIdx = 0;
+  chapterAudioLoading.value = nextChapter.chapter_id;
+  selectedChapterId.value = nextChapter.chapter_id;
+
+  // Load + scroll to next chapter in continuous-scroll view
+  await selectChapter(nextChapter, false, false);
+
+  // Announce chapter number: prefer pre-generated audio file, fall back to Web Speech API
+  await (async () => {
+    try {
+      const ann = await getChapterAnnouncement(nextChapter.chapter_id, lang);
+      if (ann?.status === 'ready' && ann.audio_url) {
+        await new Promise<void>((resolve) => {
+          const a = new Audio(ann.audio_url!);
+          a.addEventListener('ended', () => resolve());
+          a.addEventListener('error', () => resolve());
+          a.play().catch(() => resolve());
+        });
+        return;
+      }
+    } catch { /* fall through to TTS */ }
+
+    // Fallback: Web Speech API with the correct language
+    const bookLabel = lang === 'te'
+      ? (book.value?.telugu_book_name || book.value?.book_name || '')
+      : lang === 'he'
+        ? (book.value?.hebrew_book_name || book.value?.book_name || '')
+        : (book.value?.book_name || '');
+    const annoText = lang === 'te'
+      ? `${bookLabel} అధ్యాయం ${nextChapter.chapter_number}`
+      : lang === 'he'
+        ? `${bookLabel} פרק ${nextChapter.chapter_number}`
+        : `${bookLabel} Chapter ${nextChapter.chapter_number}`;
+    await new Promise<void>((resolve) => {
+      const ut = new SpeechSynthesisUtterance(annoText);
+      ut.lang = lang === 'te' ? 'te-IN' : lang === 'he' ? 'he-IL' : 'en-US';
+      ut.rate = 0.88;
+      ut.onend = () => resolve();
+      ut.onerror = () => resolve();
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(ut);
+    });
+  })();
+
+  await playChapterAudio(nextChapter.chapter_id);
 }
 
 function pauseChapterAudio() {
@@ -807,7 +840,7 @@ function handleAudioBtn(chapterId: number) {
 
 async function playChapterAudio(chapterId: number) {
   stopChapterAudio();
-  const lang = getChapterLang(chapterId);
+  const lang = audioLang.value;
   if (!lang) return;
   chapterAudioLoading.value = chapterId;
   try {
@@ -817,7 +850,12 @@ async function playChapterAudio(chapterId: number) {
     chapterAudioPlaying.value = chapterId;
     _audioQueue = readyRows.map(r => r.audio_url!);
     _audioVerseIds = readyRows.map(r => r.verse_id);
-    _audioQueueIdx = 0;
+    // Start from: clicked verse → first visible (scrolled-to) verse → beginning
+    const anchorVerseId = clickSelectedVerseId.value ?? firstVisibleVerseId.value;
+    const startIdx = anchorVerseId
+      ? Math.max(0, _audioVerseIds.indexOf(anchorVerseId))
+      : 0;
+    _audioQueueIdx = startIdx;
     _playNextInQueue();
   } catch (e) {
     console.error('Failed to load chapter audio:', e);
@@ -830,9 +868,10 @@ watch(currentPlayingVerseId, (verseId) => {
   if (!verseId) return;
   nextTick(() => {
     const el = document.getElementById(`verse-${verseId}`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
+
 
 // ── Admin Notes (in-place editing) & My Notes (personal, per-user) ──────────
 const { user, isAdmin } = useAuth();
@@ -1008,6 +1047,7 @@ const previewVerseId = ref<number | null>(null);
 
 // Track the first visible verse at the top of the viewport
 const firstVisibleVerseIndex = ref<number | null>(null);
+const firstVisibleVerseId = ref<number | null>(null);
 const firstVisibleChapterNumber = ref<string | null>(null);
 
 // Track which verses have expanded cross-references
@@ -1021,6 +1061,11 @@ const pendingScrollVerseId = ref<number | null>(null);
 
 // Track user-clicked (selected) verse for highlight and broadcast panel
 const clickSelectedVerseId = ref<number | null>(null);
+
+// Tapping a verse is an explicit new anchor — reset pause so play starts fresh from there
+watch(clickSelectedVerseId, (id) => {
+  if (id !== null) chapterAudioPaused.value = null;
+});
 
 // Share menu state
 const shareMenuVerseId = ref<number | null>(null);
@@ -1392,6 +1437,8 @@ function scrollToVerse(verseId: number) {
 function handleVerseSelection(bookId: number, chapterId: number, verseId: number, results?: SearchResult[]) {
   showVersePicker.value = false;
   showSearchModal.value = false;
+  // User explicitly navigated — reset paused state so play starts from new position
+  chapterAudioPaused.value = null;
   
   if (results && results.length > 0) {
     searchResults.value = results;
@@ -2219,6 +2266,7 @@ function trackFirstVisibleVerse() {
           const verse = chapterData.verses.find(v => v.verse_id === Number(verseId));
           if (verse && verse.verse_index !== null) {
             firstVisibleVerseIndex.value = verse.verse_index;
+            firstVisibleVerseId.value = verse.verse_id;
             firstVisibleChapterNumber.value = chapterData.chapter.chapter_number;
             return;
           }
@@ -4113,12 +4161,82 @@ body {
 }
 
 /* ── Chapter audio controls ───────────────────────────────────────────────── */
-.audio-float {
-  position: fixed;
-  /* Align left edge with .chapter-content (max-width 900px centered) */
-  left: max(1.5rem, calc((100vw - 900px) / 2 + 1.5rem));
-  top: 90px; /* just below the fixed top-nav */
-  z-index: 1001;
+.nav-audio-wrap {
+  flex-shrink: 0;
+}
+
+/* Nav audio pill — standalone (no .audio-group base, no specificity conflict) */
+.nav-audio-group {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.18rem;
+  background: rgb(255 255 255 / 0.18);
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: 999px;
+  padding: 0.25rem;
+}
+
+/* Chips always visible in nav on desktop — auto-hide on mobile */
+.nav-audio-group .lang-chips-wrapper {
+  width: 116px; /* EN(34) + gap(2) + TE(34) + gap(2) + HE(34) + gap(2) + sep(8) */
+  overflow: hidden;
+  transition: width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 600px) {
+  .nav-audio-group .lang-chips-wrapper {
+    width: 0;
+  }
+  .nav-audio-group.has-lang .lang-chips-wrapper,
+  .nav-audio-group.mobile-open .lang-chips-wrapper {
+    width: 116px;
+  }
+}
+
+.nav-audio-group .audio-play-btn {
+  background: rgb(255 255 255 / 0.28);
+  color: white;
+}
+
+.nav-audio-group .audio-play-btn:not(:disabled):hover {
+  background: rgb(255 255 255 / 0.45);
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.nav-audio-group .audio-play-btn.playing,
+.nav-audio-group .audio-play-btn.paused {
+  background: white;
+  color: var(--color-primary);
+}
+
+.nav-audio-group .audio-play-btn:disabled {
+  background: rgb(255 255 255 / 0.14);
+  color: rgb(255 255 255 / 0.5);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.nav-audio-group .lang-chip {
+  border-color: rgb(255 255 255 / 0.4);
+  color: rgb(255 255 255 / 0.9);
+  background: transparent;
+}
+
+.nav-audio-group .lang-chip:hover {
+  border-color: white;
+  color: white;
+}
+
+.nav-audio-group .lang-chip.active {
+  background: white;
+  border-color: white;
+  color: var(--color-primary);
+}
+
+.nav-audio-group .audio-sep {
+  background: rgb(255 255 255 / 0.28);
 }
 
 /* Horizontal pill: [🔊] expands right to [🔊][EN][TE] on hover */
@@ -4184,7 +4302,7 @@ body {
 
 .audio-group:hover .lang-chips-wrapper,
 .audio-group.has-lang .lang-chips-wrapper {
-  width: 86px; /* EN(36) + gap(2) + TE(36) + gap(2) + sep(10) */
+  width: 116px; /* EN(34) + gap(2) + TE(34) + gap(2) + HE(34) + gap(2) + sep(8) */
 }
 
 .lang-chip {

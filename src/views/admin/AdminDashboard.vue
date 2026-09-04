@@ -81,8 +81,22 @@
         <div class="card-icon">🔊</div>
         <h2>Verse Audio Generator</h2>
         <p>Generate and listen to text-to-speech audio per verse or chapter before shipping playback in the app</p>
-        <router-link to="/admin/audio-generator" class="action-btn">
-          Generate Audio
+        <div class="card-actions">
+          <router-link to="/admin/audio-generator" class="action-btn">
+            Generate Audio
+          </router-link>
+          <router-link to="/admin/chapter-announcements" class="action-btn secondary">
+            Manage Announcements
+          </router-link>
+        </div>
+      </motion.div>
+
+      <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(9)" :while-hover="hoverLift">
+        <div class="card-icon">🎯</div>
+        <h2>Punctuation Suggestions</h2>
+        <p>Review Telugu punctuation fixes suggested by the local punctuation_corrector tool — so generated audio pauses where it should — and approve or reject each one</p>
+        <router-link to="/admin/punctuation-suggestions" class="action-btn">
+          Review Suggestions
         </router-link>
       </motion.div>
     </div>
@@ -168,6 +182,12 @@ const cardInitial = prefersReducedMotion.value ? false : { opacity: 0, y: 12 };
   line-height: 1.5;
 }
 
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .action-btn {
   display: inline-block;
   background: #667eea;
@@ -177,10 +197,20 @@ const cardInitial = prefersReducedMotion.value ? false : { opacity: 0, y: 12 };
   text-decoration: none;
   font-weight: 600;
   transition: background 0.2s;
+  text-align: center;
 }
 
 .action-btn:hover {
   background: #5568d3;
+}
+
+.action-btn.secondary {
+  background: #e8eaff;
+  color: #4a5bd4;
+}
+
+.action-btn.secondary:hover {
+  background: #d4d8ff;
 }
 
 @media (max-width: 768px) {
