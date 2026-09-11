@@ -1,29 +1,51 @@
 <template>
   <div class="chapter-editor">
     <header class="page-header">
-      <div>
+      <div class="page-header-titles">
+        <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
         <h1>{{ chapterTitle }}</h1>
-        <p v-if="chapter" class="chapter-subtitle">{{ getBookName(chapter.book_id) }} - Chapter {{ chapter.chapter_number }}</p>
+        <p v-if="chapter" class="chapter-subtitle">{{ getBookName(chapter.book_id) }} · Chapter {{ chapter.chapter_number }}</p>
       </div>
       <div class="header-actions">
-        <button 
-          v-if="!selectingVerseRange" 
-          @click="startRangeSelection" 
-          class="btn btn-sm btn-success"
+        <button
+          v-if="!selectingVerseRange"
+          @click="startRangeSelection"
+          class="action-pill action-pill-outline"
           title="Add note to multiple verses"
         >
-          📝 Add Note to Range
+          <span aria-hidden="true">📝</span> Add Note to Range
         </button>
-        <button 
-          v-if="selectingVerseRange" 
-          @click="cancelRangeSelection" 
-          class="btn btn-sm btn-secondary"
+        <button
+          v-if="selectingVerseRange"
+          @click="cancelRangeSelection"
+          class="action-pill action-pill-cancel"
         >
-          ❌ Cancel Range Selection
+          <span aria-hidden="true">✕</span> Cancel Range Selection
         </button>
-        <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
       </div>
     </header>
+
+    <div v-if="chapter" class="chapter-nav">
+      <button
+        class="action-pill action-pill-nav"
+        :disabled="!previousChapter"
+        :title="previousChapter ? `Go to chapter ${previousChapter.chapter_number}` : 'This is the first chapter'"
+        @click="previousChapter && goToChapter(previousChapter.chapter_id)"
+      >
+        ← Previous Chapter
+      </button>
+      <span class="chapter-nav-position">
+        Chapter {{ chapter.chapter_number }} ({{ currentChapterIndex + 1 }} of {{ sortedBookChapters.length }})
+      </span>
+      <button
+        class="action-pill action-pill-nav"
+        :disabled="!nextChapter"
+        :title="nextChapter ? `Go to chapter ${nextChapter.chapter_number}` : 'This is the last chapter'"
+        @click="nextChapter && goToChapter(nextChapter.chapter_id)"
+      >
+        Next Chapter →
+      </button>
+    </div>
 
     <div class="editor-container">
       <div v-if="loading" class="loading">Loading verses...</div>
@@ -34,46 +56,64 @@
           No verses found for this chapter.
         </div>
         
-        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item" :class="{ 'selected-for-range': selectedVerseIds && selectedVerseIds.includes(verse.verse_id) }">
+        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item" :class="{ 'selected-for-range': selectedVerseIds && selectedVerseIds.includes(verse.verse_id), 'is-editing': editingVerseId === verse.verse_id }">
           <div class="verse-header">
             <div class="verse-number-section">
-              <input 
-                v-if="selectingVerseRange" 
-                type="checkbox" 
+              <input
+                v-if="selectingVerseRange"
+                type="checkbox"
                 :checked="selectedVerseIds && selectedVerseIds.includes(verse.verse_id)"
                 @change="toggleVerseSelection(verse.verse_id)"
                 class="verse-checkbox"
+                :aria-label="`Select verse ${verse.verse_index}`"
               />
-              <span class="verse-number">{{ verse.verse_index }}</span>
+              <span class="verse-number-badge">{{ verse.verse_index }}</span>
             </div>
-            <div class="verse-actions">
-              <button 
-                v-if="editingVerseId !== verse.verse_id"
-                @click="startEditVerse(verse)" 
-                class="btn btn-sm btn-primary btn-edit"
+            <div class="verse-actions" v-if="editingVerseId !== verse.verse_id">
+              <button
+                @click="startEditVerse(verse)"
+                class="action-pill action-pill-primary"
                 title="Edit verse"
               >
-                ✏️ Edit
+                <span aria-hidden="true">✏️</span> Edit
               </button>
-              <button 
-                v-if="editingVerseId !== verse.verse_id"
-                @click="toggleNotes(verse.verse_id)" 
-                class="btn btn-sm btn-info btn-notes"
+              <button
+                @click="toggleNotes(verse.verse_id)"
+                class="action-pill action-pill-notes"
                 title="Manage notes"
               >
-                📝 Notes
+                <span aria-hidden="true">📝</span> Notes
               </button>
-              <div v-if="editingVerseId === verse.verse_id" class="edit-actions">
-                <button @click="saveVerse(verse.verse_id)" class="btn btn-sm btn-success btn-save">💾 Save</button>
-                <button @click="cancelEdit" class="btn btn-sm btn-secondary btn-cancel">❌ Cancel</button>
-              </div>
+              <button
+                @click="openHistory(verse.verse_id)"
+                class="action-pill action-pill-history"
+                :disabled="!verse.history_count"
+                :title="verse.history_count ? 'View edit history' : 'No edit history yet for this verse'"
+              >
+                <span aria-hidden="true">🕘</span> History
+              </button>
+            </div>
+            <div v-else class="verse-actions edit-actions">
+              <button @click="saveVerse(verse.verse_id)" class="action-pill action-pill-save">
+                <span aria-hidden="true">💾</span> Save
+              </button>
+              <button @click="cancelEdit" class="action-pill action-pill-cancel">
+                <span aria-hidden="true">✕</span> Cancel
+              </button>
             </div>
           </div>
-          
+
           <div v-if="editingVerseId !== verse.verse_id" class="verse-content">
-            <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
-            <div v-if="verse.telugu_verse" class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
-            
+            <div class="verse-text-block">
+              <div class="verse-text" v-html="formatVerseWithPaleoBora(verse.verse)"></div>
+            </div>
+            <div v-if="verse.telugu_verse" class="verse-text-block verse-text-block-telugu">
+              <div class="verse-telugu" v-html="formatVerseWithPaleoBora(verse.telugu_verse)"></div>
+            </div>
+            <div class="verse-meta-bar">
+              <span aria-hidden="true">🕘</span> Last modified {{ formatDateTime(verse.dt_modified) }}
+            </div>
+
             <!-- Always visible notes -->
             <div v-if="verseNotes[verse.verse_id]?.length > 0" class="verse-notes-display">
               <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-display-item">
@@ -217,24 +257,95 @@
         </div>
       </div>
     </div>
+
+    <AnimatePresence>
+      <motion.div
+        v-if="historyModalVerseId !== null"
+        class="history-modal-overlay"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :exit="{ opacity: 0 }"
+        :transition="overlayFade"
+        @click="closeHistory"
+      >
+        <motion.div
+          class="history-modal-content"
+          :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
+          :animate="{ opacity: 1, scale: 1, y: 0 }"
+          :exit="{ opacity: 0, scale: 0.94, y: 8 }"
+          :transition="tooltipSpring"
+          @click.stop
+        >
+          <div class="history-modal-header">
+            <h3>Verse Edit History</h3>
+            <motion.button class="history-close-button" :while-tap="tapScale" @click="closeHistory" aria-label="Close history">&times;</motion.button>
+          </div>
+
+          <div class="history-modal-body">
+            <div v-if="loadingHistory" class="loading-notes">Loading history...</div>
+
+            <div v-else-if="historyEntries.length === 0" class="no-notes">
+              No prior edits recorded for this verse yet.
+            </div>
+
+            <div v-else class="history-list">
+              <div v-for="entry in historyEntries" :key="entry.history_id" class="history-entry">
+                <div class="history-entry-meta">
+                  <span class="history-entry-type" :class="`history-type-${entry.change_type.toLowerCase()}`">
+                    {{ entry.change_type === 'DELETE' ? 'Deleted' : 'Edited' }}
+                  </span>
+                  <span class="history-entry-date">{{ formatDateTime(entry.changed_at) }}</span>
+                  <span v-if="entry.changed_by" class="history-entry-by">by {{ entry.changed_by }}</span>
+                </div>
+                <div class="history-entry-text">{{ stripHtml(entry.verse) }}</div>
+                <div v-if="entry.telugu_verse" class="history-entry-telugu">{{ stripHtml(entry.telugu_verse) }}</div>
+                <div class="history-entry-actions">
+                  <button
+                    @click="restoreHistoryEntry(entry)"
+                    class="btn btn-sm btn-restore"
+                    :disabled="rollingBackId === entry.history_id"
+                  >
+                    {{ rollingBackId === entry.history_id ? '⏳ Restoring...' : '⏪ Restore this version' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { motion, AnimatePresence } from 'motion-v';
+import { useMotionPresets } from '@/composables/useMotionPresets';
 import { getAllBooks } from '@/api/books';
-import { getChapterById } from '@/api/chapters';
-import { getVersesByChapterId, updateVerse, type VerseWithLinks, type VerseNoteData } from '@/api/verses';
+import { getChapterById, getChaptersByBookId } from '@/api/chapters';
+import {
+  getVersesByChapterId,
+  updateVerse,
+  getVerseHistory,
+  rollbackVerse,
+  type VerseWithLinks,
+  type VerseNoteData,
+  type VerseHistoryEntry,
+} from '@/api/verses';
 import { getNotesByVerseId, createNote, linkNoteToVerse, unlinkNoteFromVerse, updateNote } from '@/api/notes';
 import type { Book, Chapter, Verse, VerseUpdate } from '@/utils/collectionReferences';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import '@/assets/fonts/fonts.css';
 
+const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
+
 const route = useRoute();
+const router = useRouter();
 const books = ref<Book[]>([]);
 const chapter = ref<Chapter | null>(null);
+const bookChapters = ref<Chapter[]>([]);
 const verses = ref<VerseWithLinks[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -267,6 +378,12 @@ const selectingVerseRange = ref<boolean>(false);
 const selectedVerseIds = ref<number[]>([]);
 const rangeNote = ref<{ title: string; content: string }>({ title: '', content: '' });
 
+// Verse history / rollback
+const historyModalVerseId = ref<number | null>(null);
+const historyEntries = ref<VerseHistoryEntry[]>([]);
+const loadingHistory = ref(false);
+const rollingBackId = ref<number | null>(null);
+
 
 
 const chapterTitle = computed(() => {
@@ -281,6 +398,30 @@ const sortedVerses = computed(() => {
     return indexA - indexB;
   });
 });
+
+const sortedBookChapters = computed(() => {
+  return [...bookChapters.value].sort((a, b) => Number(a.chapter_number) - Number(b.chapter_number));
+});
+
+const currentChapterIndex = computed(() => {
+  if (!chapter.value) return -1;
+  return sortedBookChapters.value.findIndex(c => c.chapter_id === chapter.value!.chapter_id);
+});
+
+const previousChapter = computed(() => {
+  const idx = currentChapterIndex.value;
+  return idx > 0 ? sortedBookChapters.value[idx - 1] : null;
+});
+
+const nextChapter = computed(() => {
+  const idx = currentChapterIndex.value;
+  if (idx === -1 || idx >= sortedBookChapters.value.length - 1) return null;
+  return sortedBookChapters.value[idx + 1];
+});
+
+function goToChapter(chapterId: number) {
+  router.push(`/admin/chapters/${chapterId}`);
+}
 
 function formatVerseWithPaleoBora(verseText: string | null): string {
   if (!verseText) return '';
@@ -311,6 +452,24 @@ onMounted(async () => {
   await loadData(chapterId);
 });
 
+// Vue Router reuses this component instance when navigating between
+// /admin/chapters/:id routes (e.g. via the Next/Previous Chapter buttons),
+// so onMounted won't refire — reload here instead.
+watch(() => route.params.id, (newId) => {
+  const chapterId = Number(newId);
+  if (!chapterId || isNaN(chapterId)) return;
+  resetEditorState();
+  loadData(chapterId);
+});
+
+function resetEditorState() {
+  cancelEdit();
+  showNotesForVerse.value = null;
+  selectingVerseRange.value = false;
+  selectedVerseIds.value = [];
+  closeHistory();
+}
+
 async function loadData(chapterId: number) {
   try {
     loading.value = true;
@@ -319,11 +478,12 @@ async function loadData(chapterId: number) {
       getChapterById(chapterId),
       getVersesByChapterId(chapterId)
     ]);
-    
+
     books.value = booksData;
     chapter.value = chapterData;
     verses.value = versesData;
-    
+    bookChapters.value = chapterData ? await getChaptersByBookId(chapterData.book_id) : [];
+
     // Load notes for all verses
     await loadAllNotesForVerses();
   } catch (e) {
@@ -336,6 +496,62 @@ async function loadData(chapterId: number) {
 function getBookName(bookId: number): string {
   const book = books.value.find(b => b.book_id === bookId);
   return book?.book_name || 'Unknown Book';
+}
+
+function formatDateTime(value: string | Date | null | undefined): string {
+  if (!value) return 'Never';
+  return new Date(value).toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function stripHtml(html: string | null): string {
+  if (!html) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || '';
+}
+
+async function openHistory(verseId: number) {
+  historyModalVerseId.value = verseId;
+  historyEntries.value = [];
+  loadingHistory.value = true;
+  try {
+    historyEntries.value = await getVerseHistory(verseId);
+  } catch (e) {
+    alert('Failed to load verse history: ' + (e instanceof Error ? e.message : 'Unknown error'));
+  } finally {
+    loadingHistory.value = false;
+  }
+}
+
+function closeHistory() {
+  historyModalVerseId.value = null;
+  historyEntries.value = [];
+}
+
+async function restoreHistoryEntry(entry: VerseHistoryEntry) {
+  if (!historyModalVerseId.value) return;
+  const confirmed = confirm(
+    `Restore this verse to its state from ${formatDateTime(entry.changed_at)}? The current version will be saved to history first, so this can be undone.`
+  );
+  if (!confirmed) return;
+
+  rollingBackId.value = entry.history_id;
+  try {
+    await rollbackVerse(historyModalVerseId.value, entry.history_id);
+
+    if (chapter.value) {
+      const versesData = await getVersesByChapterId(chapter.value.chapter_id);
+      verses.value = versesData;
+    }
+
+    await openHistory(historyModalVerseId.value);
+  } catch (e) {
+    alert('Failed to roll back verse: ' + (e instanceof Error ? e.message : 'Unknown error'));
+  } finally {
+    rollingBackId.value = null;
+  }
 }
 
 async function startEditVerse(verse: Verse) {
@@ -437,7 +653,9 @@ async function saveVerse(verseId: number) {
       verses.value[index] = {
         ...verses.value[index],
         verse: editFormData.value.verse || verses.value[index].verse,
-        telugu_verse: editFormData.value.telugu_verse || null
+        telugu_verse: editFormData.value.telugu_verse || null,
+        dt_modified: new Date(),
+        history_count: (verses.value[index].history_count ?? 0) + 1
         // verse_index is preserved from the spread operator
       };
     }
@@ -766,35 +984,46 @@ async function saveNote(verseId: number) {
   max-width: 900px;
   margin: 0 auto;
   padding: 1.5rem;
+  background: #f4f5f7;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
   margin-bottom: 1.5rem;
   gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.page-header-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
 .page-header h1 {
-  color: #333;
+  color: #1f2430;
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .chapter-subtitle {
   color: #666;
-  margin: 0.25rem 0 0 0;
+  margin: 0;
   font-size: 0.875rem;
 }
 
 .back-link {
   color: #667eea;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .back-link:hover {
@@ -802,7 +1031,7 @@ async function saveNote(verseId: number) {
 }
 
 .editor-container {
-  background: white;
+  background: transparent;
 }
 
 .loading, .error, .empty {
@@ -810,6 +1039,9 @@ async function saveNote(verseId: number) {
   text-align: center;
   color: #666;
   font-size: 0.875rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
 }
 
 .error {
@@ -819,31 +1051,44 @@ async function saveNote(verseId: number) {
 .verses-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .verse-item {
-  border: 1px solid #e0e0e0;
-  padding: 1rem;
-  background: #fafafa;
-  transition: all 0.2s;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.verse-item:hover {
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
+  border-color: #d8dce6;
 }
 
 .verse-item.selected-for-range {
-  background: #e7f3ff;
-  border-color: #0366d6;
+  background: #eef5ff;
+  border-color: #667eea;
+}
+
+.verse-item.is-editing {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
 }
 
 .verse-number-section {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .verse-checkbox {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
+  accent-color: #667eea;
 }
 
 .range-note-form {
@@ -851,20 +1096,21 @@ async function saveNote(verseId: number) {
   bottom: 0;
   background: white;
   padding: 1.5rem;
-  border-top: 2px solid #0366d6;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 2rem;
+  border-top: 2px solid #667eea;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.1);
+  margin-top: 0.5rem;
 }
 
 .range-note-header h3 {
   margin: 0 0 0.5rem 0;
   color: #2c3e50;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .selected-verses-info {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-bottom: 1rem;
 }
 
@@ -876,48 +1122,135 @@ async function saveNote(verseId: number) {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chapter-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.chapter-nav-position {
+  font-size: 0.8rem;
+  color: #666;
+  white-space: nowrap;
 }
 
 .verse-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
 }
 
-.verse-number {
-  font-size: 1rem;
+.verse-number-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.35rem;
+  border-radius: 50%;
+  background: #eef0ff;
+  color: #4c56c9;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: #667eea;
-  min-width: 40px;
 }
 
 .verse-actions {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.btn-edit, .btn-notes {
-  padding: 0.375rem 0.75rem;
-  background: #667eea;
-  color: white;
+/* Unified pill-style action buttons */
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  min-height: 36px;
   border: none;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: white;
+  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
 }
 
-.btn-edit:hover, .btn-notes:hover {
+.action-pill:active {
+  transform: scale(0.97);
+}
+
+.action-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.action-pill:disabled:active {
+  transform: none;
+}
+
+.action-pill-primary {
+  background: #667eea;
+}
+.action-pill-primary:hover {
   background: #5568d3;
 }
 
-.btn-notes {
+.action-pill-notes {
   background: #28a745;
 }
-
-.btn-notes:hover {
+.action-pill-notes:hover {
   background: #218838;
+}
+
+.action-pill-history {
+  background: #6c757d;
+}
+.action-pill-history:hover {
+  background: #5a6268;
+}
+
+.action-pill-save {
+  background: #28a745;
+}
+.action-pill-save:hover {
+  background: #218838;
+}
+
+.action-pill-cancel {
+  background: #6c757d;
+}
+.action-pill-cancel:hover {
+  background: #5a6268;
+}
+
+.action-pill-outline {
+  background: white;
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+.action-pill-outline:hover {
+  background: #f0fdf4;
+}
+
+.action-pill-nav {
+  background: white;
+  color: #667eea;
+  border: 1px solid #667eea;
+}
+.action-pill-nav:hover:not(:disabled) {
+  background: #eef0ff;
 }
 
 .edit-actions {
@@ -925,37 +1258,23 @@ async function saveNote(verseId: number) {
   gap: 0.5rem;
 }
 
-.btn-save {
-  padding: 0.375rem 0.75rem;
-  background: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-save:hover {
-  background: #218838;
-}
-
-.btn-cancel {
-  padding: 0.375rem 0.75rem;
-  background: #6c757d;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-cancel:hover {
-  background: #5a6268;
-}
-
 .verse-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
   text-align: left;
+}
+
+.verse-text-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid #667eea;
+}
+
+.verse-text-block-telugu {
+  border-left-color: #28a745;
 }
 
 .verse-text {
@@ -964,13 +1283,24 @@ async function saveNote(verseId: number) {
   color: #333;
   margin: 0;
   text-align: left;
+  flex: 1;
 }
 
 .verse-telugu {
   font-size: 1rem;
   line-height: 1.6;
-  color: #666;
+  color: #444;
   margin: 0;
+  flex: 1;
+}
+
+.verse-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: #999;
+  margin-top: 0.15rem;
 }
 
 .paleobora-text {
@@ -1056,6 +1386,8 @@ async function saveNote(verseId: number) {
 .quill-editor {
   background: white;
   min-height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .quill-editor :deep(.ql-editor) {
@@ -1076,9 +1408,10 @@ async function saveNote(verseId: number) {
 
 /* Notes Section */
 .notes-section {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   padding: 1rem;
   background: #f8f9fa;
+  border-radius: 8px;
   border-left: 3px solid #28a745;
 }
 
@@ -1125,7 +1458,7 @@ async function saveNote(verseId: number) {
 .note-item {
   background: white;
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
@@ -1240,6 +1573,146 @@ async function saveNote(verseId: number) {
   background: #5a6268;
 }
 
+/* Verse History Modal */
+.history-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.history-modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  text-align: left;
+}
+
+.history-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.history-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.history-close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+}
+
+.history-close-button:hover {
+  color: #333;
+}
+
+.history-modal-body {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-entry {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.history-entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+}
+
+.history-entry-type {
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  color: white;
+}
+
+.history-type-update {
+  background: #667eea;
+}
+
+.history-type-delete {
+  background: #e74c3c;
+}
+
+.history-entry-date {
+  color: #666;
+}
+
+.history-entry-by {
+  color: #999;
+  font-style: italic;
+}
+
+.history-entry-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 0.35rem;
+}
+
+.history-entry-telugu {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.history-entry-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-restore {
+  padding: 0.375rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.btn-restore:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-restore:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 </style>
 

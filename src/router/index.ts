@@ -14,6 +14,7 @@ import ManageChapters from '@/views/admin/ManageChapters.vue';
 import ChapterEditor from '@/views/admin/ChapterEditor.vue';
 import FindReplace from '@/views/admin/FindReplace.vue';
 import CompareBook from '@/views/admin/CompareBook.vue';
+import RstneJsRules from '@/views/admin/RstneJsRules.vue';
 import PushNotificationsAdmin from '@/views/admin/PushNotificationsAdmin.vue';
 import ManageTimelineEvents from '@/views/admin/ManageTimelineEvents.vue';
 import FeedbackAdmin from '@/views/admin/FeedbackAdmin.vue';
@@ -77,6 +78,12 @@ const router = createRouter({
       path: '/admin/compare-book',
       name: 'compare-book',
       component: CompareBook,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/rstne-js-rules',
+      name: 'rstne-js-rules',
+      component: RstneJsRules,
       meta: { requiresAdmin: true }
     },
     {

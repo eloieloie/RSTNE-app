@@ -45,6 +45,10 @@
             <input type="checkbox" v-model="caseSensitive" />
             Case sensitive
           </label>
+          <label>
+            <input type="checkbox" v-model="wholeWord" />
+            Whole word only
+          </label>
         </div>
 
         <button 
@@ -119,8 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { API_HEADERS } from '@/api/client';
+
+const route = useRoute();
 
 const API_BASE_URL = 'https://rstne.eloi.in';
 
@@ -139,6 +146,7 @@ const replaceWord = ref('');
 const searchInEnglish = ref(true);
 const searchInTelugu = ref(true);
 const caseSensitive = ref(false);
+const wholeWord = ref(true);
 const searching = ref(false);
 const replacing = ref(false);
 const searched = ref(false);
@@ -162,7 +170,8 @@ async function searchVerses() {
       searchWord: searchWord.value,
       searchInEnglish: String(searchInEnglish.value),
       searchInTelugu: String(searchInTelugu.value),
-      caseSensitive: String(caseSensitive.value)
+      caseSensitive: String(caseSensitive.value),
+      wholeWord: String(wholeWord.value)
     });
 
     const response = await fetch(`${API_BASE_URL}/api/verses/search-text?${params}`, { headers: API_HEADERS });
@@ -208,7 +217,8 @@ async function replaceAll() {
         searchWord: searchWord.value,
         replaceWord: replaceWord.value,
         verseIds: selectedResults.map(r => ({ verse_id: r.verse_id, field: r.field })),
-        caseSensitive: caseSensitive.value
+        caseSensitive: caseSensitive.value,
+        wholeWord: wholeWord.value
       })
     });
 
@@ -240,9 +250,13 @@ async function replaceAll() {
 
 function highlightMatch(text: string, search: string): string {
   if (!search) return text;
-  
-  const flags = caseSensitive.value ? 'g' : 'gi';
-  const regex = new RegExp(`(${escapeRegex(search)})`, flags);
+
+  const flags = caseSensitive.value ? 'gu' : 'giu';
+  const escaped = escapeRegex(search);
+  const pattern = wholeWord.value
+    ? `(?<![\\p{L}\\p{N}_])(${escaped})(?![\\p{L}\\p{N}_])`
+    : `(${escaped})`;
+  const regex = new RegExp(pattern, flags);
   return text.replace(regex, '<mark>$1</mark>');
 }
 
@@ -259,6 +273,18 @@ function updateSelectAll() {
 }
 
 const selectedCount = computed(() => searchResults.value.filter(r => r.selected).length);
+
+// Arriving from another admin page (e.g. RSTNE Live Word Rules "Find & Replace" action)
+// with ?find=...&replace=... prefills the form and runs the search immediately.
+onMounted(() => {
+  const find = route.query.find;
+  const replace = route.query.replace;
+  if (typeof find === 'string' && find) {
+    searchWord.value = find;
+    if (typeof replace === 'string') replaceWord.value = replace;
+    searchVerses();
+  }
+});
 </script>
 
 <style scoped>

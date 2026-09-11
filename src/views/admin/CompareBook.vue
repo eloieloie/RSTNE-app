@@ -352,8 +352,8 @@ const mergedChapters = computed<MergedChapter[]>(() => {
     const dbRaw   = dbVerseMap.value.get(ch.chapter_id) ?? [];
     const rstneRaw = rstneMap.get(chNum) ?? [];
 
-    const dbVerses   = dbRaw.map(v => ({ verseNumber: v.verse_index ?? 0, text: stripHtml(v.verse) }));
-    const rstneVerses = rstneRaw;
+    const dbVerses   = dbRaw.map(v => ({ verseNumber: v.verse_index ?? 0, text: stripParens(stripHtml(v.verse)) }));
+    const rstneVerses = rstneRaw.map(v => ({ ...v, text: stripParens(v.text) }));
 
     // Build verse row map
     const allNums = new Set([
@@ -519,7 +519,12 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-/** Tokenize preserving whitespace as tokens so we can reconstruct the text */
+/** Remove parenthetical annotations like "(12 years)" or "(Evil Chanoch)" */
+function stripParens(text: string): string {
+  return text.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/** Tokenize preserving whitespace as tokens so we can reconstruct the text. */
 function tokenize(text: string): string[] {
   return text.split(/(\s+)/).filter(t => t.length > 0);
 }
@@ -593,7 +598,7 @@ async function loadComparison() {
 
 async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }> {
   const encoded = encodeURIComponent(url);
-  const response = await fetch(`${API_URL}/proxy-rstne?url=${encoded}`, { headers: API_HEADERS });
+  const response = await fetch(`${API_URL}/proxy-rstne?url=${encoded}`, { headers: API_HEADERS, cache: 'no-store' });
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: 'Network error' }));
     throw new Error(err.error ?? `HTTP ${response.status}`);

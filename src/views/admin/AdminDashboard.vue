@@ -36,9 +36,14 @@
         <div class="card-icon">📑</div>
         <h2>Compare with RSTNE</h2>
         <p>Side-by-side comparison of database verses vs the live RSTNE page with diff highlighting</p>
-        <router-link to="/admin/compare-book" class="action-btn">
-          Compare Book
-        </router-link>
+        <div class="card-actions">
+          <router-link to="/admin/compare-book" class="action-btn">
+            Compare Book
+          </router-link>
+          <router-link to="/admin/rstne-js-rules" class="action-btn secondary">
+            View JS Word Rules
+          </router-link>
+        </div>
       </motion.div>
 
       <motion.div class="dashboard-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(4)" :while-hover="hoverLift">

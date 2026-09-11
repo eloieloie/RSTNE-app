@@ -26,6 +26,9 @@ mcp-config.json
 # Database scripts
 mjs-scripts/
 
+# Test/admin credentials (never commit)
+TEST-ADMIN-CREDENTIALS.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
