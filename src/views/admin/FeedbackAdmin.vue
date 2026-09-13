@@ -1,15 +1,15 @@
 <template>
-  <div class="feedback-admin">
-    <header class="page-header">
-      <h1>💬 User Feedback</h1>
-      <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
+  <div class="feedback-admin admin-page">
+    <header class="page-header admin-page-header">
+      <h1 class="admin-title">💬 User Feedback</h1>
+      <router-link to="/admin" class="admin-back-link">← Back to Dashboard</router-link>
     </header>
 
     <!-- Filters -->
-    <div class="filters-bar">
+    <div class="filters-bar admin-toolbar admin-card">
       <div class="filter-group">
         <label>Category</label>
-        <select v-model="filterCategory" @change="load">
+        <select v-model="filterCategory" class="admin-select" @change="load">
           <option value="">All</option>
           <option value="bug">Bug Reports</option>
           <option value="feature">Feature Requests</option>
@@ -18,26 +18,26 @@
       </div>
       <div class="filter-group">
         <label>Status</label>
-        <select v-model="filterRead" @change="load">
+        <select v-model="filterRead" class="admin-select" @change="load">
           <option value="">All</option>
           <option value="0">Unread</option>
           <option value="1">Read</option>
         </select>
       </div>
       <div class="filter-stats">
-        <span class="stat-badge unread">{{ unreadCount }} unread</span>
-        <span class="stat-badge total">{{ items.length }} total</span>
+        <span class="stat-badge unread admin-badge admin-badge--warning">{{ unreadCount }} unread</span>
+        <span class="stat-badge total admin-badge admin-badge--info">{{ items.length }} total</span>
       </div>
     </div>
 
     <!-- Loading / empty -->
-    <div v-if="loading" class="state-msg">Loading…</div>
-    <div v-else-if="error" class="state-msg error">{{ error }}</div>
-    <div v-else-if="items.length === 0" class="state-msg">No feedback found.</div>
+    <div v-if="loading" class="state-msg admin-state">Loading…</div>
+    <div v-else-if="error" class="state-msg admin-state admin-state--error">{{ error }}</div>
+    <div v-else-if="items.length === 0" class="state-msg admin-state">No feedback found.</div>
 
     <!-- Table -->
-    <div v-else class="table-wrap">
-      <table class="feedback-table">
+    <div v-else class="table-wrap admin-table-wrap">
+      <table class="feedback-table admin-table">
         <thead>
           <tr>
             <th>Date</th>
@@ -59,23 +59,23 @@
             class="feedback-row"
           >
             <td class="date-cell">{{ formatDate(item.dt_added) }}</td>
-            <td><span :class="['category-badge', item.category]">{{ item.category }}</span></td>
+            <td><span :class="['category-badge', item.category, 'admin-badge', item.category === 'bug' ? 'admin-badge--error' : item.category === 'feature' ? 'admin-badge--success' : 'admin-badge--neutral']">{{ item.category }}</span></td>
             <td class="message-cell">{{ truncate(item.message, 80) }}</td>
             <td class="email-cell">{{ item.email || '—' }}</td>
             <td class="platform-cell">{{ item.platform || '—' }}</td>
             <td class="version-cell">{{ item.app_version || '—' }}</td>
             <td>
-              <span :class="['read-badge', item.is_read ? 'read' : 'unread-badge']">
+              <span :class="['read-badge', 'admin-badge', item.is_read ? 'read admin-badge--neutral' : 'unread-badge admin-badge--warning']">
                 {{ item.is_read ? 'Read' : 'Unread' }}
               </span>
             </td>
             <td class="actions-cell" @click.stop>
               <button
-                class="action-btn"
+                class="action-btn admin-btn admin-btn--ghost admin-btn--sm"
                 :title="item.is_read ? 'Mark unread' : 'Mark read'"
                 @click="toggleRead(item)"
               >{{ item.is_read ? '✉️' : '✅' }}</button>
-              <button class="action-btn danger" title="Delete" @click="deleteItem(item)">🗑️</button>
+              <button class="action-btn danger admin-btn admin-btn--danger admin-btn--sm" title="Delete" @click="deleteItem(item)">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -86,7 +86,7 @@
     <AnimatePresence>
       <motion.div
         v-if="detail"
-        class="modal-backdrop"
+        class="modal-backdrop admin-modal-overlay"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
         :exit="{ opacity: 0 }"
@@ -94,16 +94,16 @@
         @click.self="detail = null"
       >
         <motion.div
-          class="modal-card"
+          class="modal-card admin-modal"
           :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
           :animate="{ opacity: 1, scale: 1, y: 0 }"
           :exit="{ opacity: 0, scale: 0.94, y: 8 }"
           :transition="tooltipSpring"
         >
           <div class="modal-header">
-            <span :class="['category-badge', detail.category]">{{ detail.category }}</span>
+            <span :class="['category-badge', detail.category, 'admin-badge', detail.category === 'bug' ? 'admin-badge--error' : detail.category === 'feature' ? 'admin-badge--success' : 'admin-badge--neutral']">{{ detail.category }}</span>
             <span class="modal-date">{{ formatDate(detail.dt_added) }}</span>
-            <motion.button class="modal-close" :while-tap="tapScale" @click="detail = null">✕</motion.button>
+            <motion.button class="modal-close admin-btn admin-btn--ghost admin-btn--sm" :while-tap="tapScale" @click="detail = null">✕</motion.button>
           </div>
           <p class="modal-message">{{ detail.message }}</p>
           <div class="modal-meta">
@@ -111,11 +111,11 @@
             <span v-if="detail.platform">📱 {{ detail.platform }}</span>
             <span v-if="detail.app_version">v{{ detail.app_version }}</span>
           </div>
-          <div class="modal-actions">
-            <motion.button class="btn-secondary" :while-tap="tapScale" @click="toggleRead(detail); detail = null">
+          <div class="modal-actions admin-modal-actions">
+            <motion.button class="btn-secondary admin-btn admin-btn--secondary" :while-tap="tapScale" @click="toggleRead(detail); detail = null">
               {{ detail.is_read ? 'Mark as Unread' : 'Mark as Read' }}
             </motion.button>
-            <motion.button class="btn-danger" :while-tap="tapScale" @click="deleteItem(detail); detail = null">Delete</motion.button>
+            <motion.button class="btn-danger admin-btn admin-btn--danger" :while-tap="tapScale" @click="deleteItem(detail); detail = null">Delete</motion.button>
           </div>
         </motion.div>
       </motion.div>
@@ -217,261 +217,99 @@ onMounted(load);
 </script>
 
 <style scoped>
+/* Layout, colors, fonts, table, badges, buttons, and modal come from the shared
+   .admin-page / .admin-table / .admin-badge / .admin-btn / .admin-modal classes
+   (src/assets/admin-ui.css). Only this page's column-specific typography and
+   filter-toolbar caption labels live here. */
+
 .feedback-admin {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  font-family: inherit;
 }
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.page-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0; }
-
-.back-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
-.back-link:hover { color: #1E40AF; }
 
 /* Filters */
 .filters-bar {
-  display: flex;
   align-items: flex-end;
-  gap: 1.25rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .filter-group label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
-}
-
-.filter-group select {
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  min-width: 140px;
+  color: var(--color-muted-foreground);
 }
 
 .filter-stats {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   margin-left: auto;
 }
 
-.stat-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.stat-badge.unread { background: #fef3c7; color: #92400e; }
-.stat-badge.total { background: #e0e7ff; color: #3730a3; }
-
 /* Table */
-.table-wrap {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: auto;
-}
-
-.feedback-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
 .feedback-table thead th {
-  text-align: left;
-  padding: 10px 14px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b7280;
   white-space: nowrap;
 }
 
-.feedback-row {
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.feedback-row:hover { background: #f9fafb; }
-.feedback-row.unread { background: #fffbeb; }
-.feedback-row.unread:hover { background: #fef3c7; }
+.feedback-row.unread { background: color-mix(in srgb, var(--color-warning) 10%, transparent); }
+.feedback-row.unread:hover { background: color-mix(in srgb, var(--color-warning) 18%, transparent); }
 
-.feedback-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
-}
+.feedback-table td { vertical-align: top; }
 
-.date-cell { white-space: nowrap; color: #6b7280; font-size: 12px; }
-.message-cell { max-width: 320px; line-height: 1.4; color: #111827; }
-.email-cell { color: #6b7280; font-size: 13px; white-space: nowrap; }
-.platform-cell, .version-cell { color: #6b7280; font-size: 12px; white-space: nowrap; }
+.date-cell { white-space: nowrap; color: var(--color-muted-foreground); font-size: var(--font-size-xs); }
+.message-cell { max-width: 320px; line-height: 1.4; }
+.email-cell { color: var(--color-muted-foreground); font-size: var(--font-size-sm); white-space: nowrap; }
+.platform-cell, .version-cell { color: var(--color-muted-foreground); font-size: var(--font-size-xs); white-space: nowrap; }
 
-.category-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
+.category-badge, .read-badge {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.category-badge.bug { background: #fee2e2; color: #991b1b; }
-.category-badge.feature { background: #d1fae5; color: #065f46; }
-.category-badge.general { background: #e0e7ff; color: #3730a3; }
-
-.read-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 10px;
-}
-.read-badge.read { background: #f3f4f6; color: #9ca3af; }
-.read-badge.unread-badge { background: #fef9c3; color: #713f12; }
 
 .actions-cell {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1);
   align-items: center;
 }
-
-.action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  border-radius: 6px;
-  transition: background 0.1s;
-}
-.action-btn:hover { background: #f3f4f6; }
-.action-btn.danger:hover { background: #fee2e2; }
-
-/* State messages */
-.state-msg {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-}
-.state-msg.error { color: #dc2626; }
 
 /* Detail modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
 .modal-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
   max-width: 560px;
-  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-3);
 }
 
 .modal-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
-.modal-date { font-size: 13px; color: #6b7280; flex: 1; }
-
-.modal-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: #6b7280;
-  padding: 4px 6px;
-  border-radius: 6px;
-}
-.modal-close:hover { background: #f3f4f6; }
+.modal-date { font-size: var(--font-size-sm); color: var(--color-muted-foreground); flex: 1; }
 
 .modal-message {
-  font-size: 15px;
+  font-size: var(--font-size-md);
   line-height: 1.6;
-  color: #111827;
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 14px;
+  background: var(--color-background-alt);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   white-space: pre-wrap;
   margin: 0;
 }
 
 .modal-meta {
   display: flex;
-  gap: 12px;
-  font-size: 13px;
-  color: #6b7280;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
   flex-wrap: wrap;
 }
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.btn-secondary {
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
-  cursor: pointer;
-}
-.btn-secondary:hover { background: #f9fafb; }
-
-.btn-danger {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-}
-.btn-danger:hover { background: #b91c1c; }
-
-/* Modal transition */
 </style>

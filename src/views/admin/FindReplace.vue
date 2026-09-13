@@ -1,34 +1,38 @@
 <template>
-  <div class="find-replace-page">
-    <div class="page-header">
-      <router-link to="/admin" class="back-link">
+  <div class="find-replace-page admin-page">
+    <div class="page-header admin-page-header">
+      <div>
+        <h1 class="admin-title">Find & Replace</h1>
+        <p class="page-description admin-subtitle">Search and replace words in verses</p>
+      </div>
+      <router-link to="/admin" class="back-link admin-back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Back to Dashboard
       </router-link>
-      <h1>Find & Replace</h1>
-      <p class="page-description">Search and replace words in verses</p>
     </div>
 
-    <div class="search-section">
+    <div class="search-section admin-card">
       <div class="search-controls">
-        <div class="input-group">
-          <label>Search Word</label>
-          <input 
-            v-model="searchWord" 
-            type="text" 
+        <div class="input-group admin-form-group">
+          <label class="admin-label">Search Word</label>
+          <input
+            v-model="searchWord"
+            type="text"
             placeholder="Enter word to search"
+            class="admin-input"
             @keyup.enter="searchVerses"
           />
         </div>
 
-        <div class="input-group">
-          <label>Replace With</label>
-          <input 
-            v-model="replaceWord" 
-            type="text" 
+        <div class="input-group admin-form-group">
+          <label class="admin-label">Replace With</label>
+          <input
+            v-model="replaceWord"
+            type="text"
             placeholder="Enter replacement word"
+            class="admin-input"
           />
         </div>
 
@@ -51,9 +55,9 @@
           </label>
         </div>
 
-        <button 
-          @click="searchVerses" 
-          class="btn btn-primary"
+        <button
+          @click="searchVerses"
+          class="btn btn-primary admin-btn admin-btn--primary"
           :disabled="!searchWord || searching"
         >
           {{ searching ? 'Searching...' : 'Search' }}
@@ -62,9 +66,9 @@
 
       <div v-if="searchResults.length > 0" class="results-summary">
         <p>Found {{ searchResults.length }} verse(s) containing "{{ lastSearchWord }}"</p>
-        <button 
-          @click="replaceAll" 
-          class="btn btn-danger"
+        <button
+          @click="replaceAll"
+          class="btn btn-danger admin-btn admin-btn--danger"
           :disabled="!replaceWord || replacing || selectedCount === 0"
         >
           {{ replacing ? 'Replacing...' : `Replace Selected (${selectedCount})` }}
@@ -72,31 +76,31 @@
       </div>
     </div>
 
-    <div v-if="searching" class="loading">
+    <div v-if="searching" class="loading admin-state">
       Searching verses...
     </div>
 
-    <div v-else-if="searchResults.length > 0" class="results-section">
-      <div class="select-all-container">
+    <div v-else-if="searchResults.length > 0" class="results-section admin-list">
+      <div class="select-all-container admin-list-item">
         <label class="select-all-label">
-          <input 
-            type="checkbox" 
-            v-model="selectAll" 
+          <input
+            type="checkbox"
+            v-model="selectAll"
             @change="toggleSelectAll"
           />
           <span>Select All</span>
         </label>
       </div>
 
-      <div 
-        v-for="result in searchResults" 
+      <div
+        v-for="result in searchResults"
         :key="`${result.verse_id}-${result.field}`"
-        class="result-item"
+        class="result-item admin-list-item"
       >
         <div class="result-checkbox">
-          <input 
-            type="checkbox" 
-            v-model="result.selected" 
+          <input
+            type="checkbox"
+            v-model="result.selected"
             @change="updateSelectAll"
           />
         </div>
@@ -105,14 +109,14 @@
             <span class="book-chapter">
               {{ result.book_name }} {{ result.chapter_number }}:{{ result.verse_index }}
             </span>
-            <span class="field-type">{{ result.field === 'verse' ? 'English' : 'Telugu' }}</span>
+            <span class="field-type admin-badge admin-badge--info">{{ result.field === 'verse' ? 'English' : 'Telugu' }}</span>
           </div>
           <div class="result-content" v-html="highlightMatch(result.content, searchWord)"></div>
         </div>
       </div>
     </div>
 
-    <div v-else-if="searched && searchResults.length === 0" class="no-results">
+    <div v-else-if="searched && searchResults.length === 0" class="no-results admin-state">
       No verses found containing "{{ lastSearchWord }}"
     </div>
 
@@ -288,78 +292,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Colors, fonts, page header, card surface, buttons, form fields, list rows,
+   and state messages come from the shared .admin-page / .admin-card /
+   .admin-btn / .admin-form-group / .admin-list / .admin-state classes
+   (src/assets/admin-ui.css). Only this page's own layout remains here. */
+
 .find-replace-page {
-  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #42b983;
-  text-decoration: none;
-  font-weight: 500;
-  margin-bottom: 1rem;
-  transition: color 0.2s;
-}
-
-.back-link:hover {
-  color: #359670;
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  color: #2c3e50;
-  margin: 0 0 0.5rem 0;
-}
-
-.page-description {
-  color: #666;
-  margin: 0;
-}
-
-.search-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
-
-.search-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.input-group label {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.input-group input[type="text"] {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.input-group input[type="text"]:focus {
-  outline: none;
-  border-color: #42b983;
 }
 
 .checkbox-group {
@@ -373,7 +313,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.95rem;
-  color: #2c3e50;
+  color: var(--color-foreground);
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -382,43 +322,14 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #42b983;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #359670;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #c82333;
+.search-section {
+  margin-bottom: 2rem;
 }
 
 .results-summary {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--color-muted);
   border-radius: 4px;
   display: flex;
   justify-content: space-between;
@@ -429,28 +340,11 @@ onMounted(() => {
 .results-summary p {
   margin: 0;
   font-weight: 600;
-  color: #2c3e50;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-  font-size: 1.1rem;
-}
-
-.results-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  color: var(--color-foreground);
 }
 
 .select-all-container {
-  background: white;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #667eea;
+  border-left: 4px solid var(--color-primary);
 }
 
 .select-all-label {
@@ -458,7 +352,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-foreground);
   cursor: pointer;
   font-size: 1rem;
 }
@@ -474,11 +368,7 @@ onMounted(() => {
 }
 
 .result-item {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #42b983;
+  border-left: 4px solid var(--color-primary);
   display: flex;
   gap: 1rem;
   align-items: flex-start;
@@ -510,48 +400,29 @@ onMounted(() => {
 
 .book-chapter {
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--color-foreground);
   font-size: 1.1rem;
 }
 
-.field-type {
-  background: #42b983;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .result-content {
-  color: #333;
+  color: var(--color-foreground);
   line-height: 1.6;
   font-size: 1rem;
   text-align: left;
 }
 
 .result-content :deep(mark) {
-  background: #ffeb3b;
+  background: var(--color-highlight-from);
   padding: 0.1rem 0.2rem;
   border-radius: 2px;
   font-weight: 600;
-}
-
-.no-results {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .success-message {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  background: #28a745;
+  background: var(--color-success);
   color: white;
   padding: 1rem 1.5rem;
   border-radius: 8px;
@@ -572,10 +443,6 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .find-replace-page {
-    padding: 1rem;
-  }
-
   .search-section {
     padding: 1rem;
   }

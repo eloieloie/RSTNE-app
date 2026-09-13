@@ -1,38 +1,38 @@
 <template>
-  <div class="chapter-ann">
-    <header class="page-header">
+  <div class="chapter-ann admin-page">
+    <header class="admin-page-header">
       <div>
-        <h1>🔔 Chapter Announcements</h1>
-        <p class="subtitle">
+        <h1 class="admin-title">🔔 Chapter Announcements</h1>
+        <p class="admin-subtitle">
           Generate pre-recorded audio for chapter headings (e.g. "Chapter 1" / "అధ్యాయం 1")
           played automatically when audio continues to the next chapter.
         </p>
       </div>
-      <router-link to="/admin" class="back-link">← Dashboard</router-link>
+      <router-link to="/admin" class="admin-back-link">← Dashboard</router-link>
     </header>
 
     <!-- Controls -->
-    <div class="controls-bar">
-      <div class="filter-group">
-        <label>Book</label>
-        <select v-model.number="selectedBookId" @change="loadBook">
+    <div class="controls-bar admin-toolbar">
+      <div class="filter-group admin-form-group">
+        <label class="admin-label">Book</label>
+        <select v-model.number="selectedBookId" @change="loadBook" class="admin-select">
           <option :value="null">Select a book…</option>
           <option v-for="b in books" :key="b.book_id" :value="b.book_id">{{ b.book_name }}</option>
         </select>
       </div>
 
       <div v-if="rows.length" class="batch-buttons">
-        <button class="btn-primary" :disabled="batchRunning" @click="batchGenerate('en')">
+        <button class="btn-primary admin-btn admin-btn--primary" :disabled="batchRunning" @click="batchGenerate('en')">
           {{ batchLang === 'en' ? `EN ${batchProgress.done}/${batchProgress.total}…` : 'Generate All EN' }}
         </button>
-        <button class="btn-primary te" :disabled="batchRunning" @click="batchGenerate('te')">
+        <button class="btn-primary te admin-btn admin-btn--primary" :disabled="batchRunning" @click="batchGenerate('te')">
           {{ batchLang === 'te' ? `TE ${batchProgress.done}/${batchProgress.total}…` : 'Generate All TE' }}
         </button>
-        <button class="btn-primary he" :disabled="batchRunning" @click="batchGenerate('he')">
+        <button class="btn-primary he admin-btn admin-btn--primary" :disabled="batchRunning" @click="batchGenerate('he')">
           {{ batchLang === 'he' ? `HE ${batchProgress.done}/${batchProgress.total}…` : 'Generate All HE' }}
         </button>
-        <button v-if="batchRunning" class="btn-secondary" @click="stopBatch = true">Stop</button>
-        <button class="btn-danger" :disabled="batchRunning || flushing" @click="flushAll">
+        <button v-if="batchRunning" class="btn-secondary admin-btn admin-btn--secondary" @click="stopBatch = true">Stop</button>
+        <button class="btn-danger admin-btn admin-btn--danger" :disabled="batchRunning || flushing" @click="flushAll">
           {{ flushing ? 'Clearing…' : 'Flush All' }}
         </button>
       </div>
@@ -41,18 +41,18 @@
     <!-- Generation error banner -->
     <div v-if="lastError" class="error-banner">
       {{ lastError }}
-      <button class="dismiss-btn" @click="lastError = ''">✕</button>
+      <button class="dismiss-btn admin-btn admin-btn--ghost admin-btn--sm" aria-label="Dismiss error" @click="lastError = ''">✕</button>
     </div>
 
     <!-- States -->
-    <div v-if="loadError" class="state-msg error">{{ loadError }}</div>
-    <div v-else-if="!selectedBookId" class="state-msg">Select a book above.</div>
-    <div v-else-if="loadingRows" class="state-msg">Loading chapters…</div>
-    <div v-else-if="rows.length === 0" class="state-msg">No chapters for this book.</div>
+    <div v-if="loadError" class="state-msg error admin-state admin-state--error">{{ loadError }}</div>
+    <div v-else-if="!selectedBookId" class="state-msg admin-state">Select a book above.</div>
+    <div v-else-if="loadingRows" class="state-msg admin-state">Loading chapters…</div>
+    <div v-else-if="rows.length === 0" class="state-msg admin-state">No chapters for this book.</div>
 
     <!-- Table -->
-    <div v-else class="table-wrap">
-      <table class="ann-table">
+    <div v-else class="table-wrap admin-table-wrap">
+      <table class="ann-table admin-table">
         <thead>
           <tr>
             <th>Ch</th>
@@ -74,7 +74,7 @@
             <!-- English -->
             <td>
               <span v-if="row.en_status === 'ready'" class="dot ready" title="Ready"></span>
-              <span v-else-if="row.en_status" class="badge" :class="row.en_status">{{ row.en_status }}</span>
+              <span v-else-if="row.en_status" class="admin-badge" :class="row.en_status === 'failed' ? 'admin-badge--error' : 'admin-badge--neutral'">{{ row.en_status }}</span>
               <span v-else class="muted">—</span>
               <div v-if="row.en_error" class="row-error" :title="row.en_error">{{ truncate(row.en_error, 60) }}</div>
             </td>
@@ -83,7 +83,12 @@
               <span v-else class="muted">—</span>
             </td>
             <td>
-              <button class="btn-xs" :disabled="batchRunning || busyMap[row.chapter_id]" @click="generateOne(row.chapter_id, 'en')">
+              <button
+                class="btn-xs admin-btn admin-btn--primary admin-btn--sm"
+                :aria-label="row.en_status === 'ready' ? `Regenerate English announcement for chapter ${row.chapter_number}` : `Generate English announcement for chapter ${row.chapter_number}`"
+                :disabled="batchRunning || busyMap[row.chapter_id]"
+                @click="generateOne(row.chapter_id, 'en')"
+              >
                 {{ busyMap[row.chapter_id] === 'en' ? '…' : row.en_status === 'ready' ? '↺' : '▶' }}
               </button>
             </td>
@@ -91,7 +96,7 @@
             <!-- Telugu -->
             <td>
               <span v-if="row.te_status === 'ready'" class="dot ready" title="Ready"></span>
-              <span v-else-if="row.te_status" class="badge" :class="row.te_status">{{ row.te_status }}</span>
+              <span v-else-if="row.te_status" class="admin-badge" :class="row.te_status === 'failed' ? 'admin-badge--error' : 'admin-badge--neutral'">{{ row.te_status }}</span>
               <span v-else class="muted">—</span>
               <div v-if="row.te_error" class="row-error" :title="row.te_error">{{ truncate(row.te_error, 60) }}</div>
             </td>
@@ -100,7 +105,12 @@
               <span v-else class="muted">—</span>
             </td>
             <td>
-              <button class="btn-xs te" :disabled="batchRunning || busyMap[row.chapter_id]" @click="generateOne(row.chapter_id, 'te')">
+              <button
+                class="btn-xs te admin-btn admin-btn--primary admin-btn--sm"
+                :aria-label="row.te_status === 'ready' ? `Regenerate Telugu announcement for chapter ${row.chapter_number}` : `Generate Telugu announcement for chapter ${row.chapter_number}`"
+                :disabled="batchRunning || busyMap[row.chapter_id]"
+                @click="generateOne(row.chapter_id, 'te')"
+              >
                 {{ busyMap[row.chapter_id] === 'te' ? '…' : row.te_status === 'ready' ? '↺' : '▶' }}
               </button>
             </td>
@@ -108,7 +118,7 @@
             <!-- Hebrew -->
             <td>
               <span v-if="row.he_status === 'ready'" class="dot ready" title="Ready"></span>
-              <span v-else-if="row.he_status" class="badge" :class="row.he_status">{{ row.he_status }}</span>
+              <span v-else-if="row.he_status" class="admin-badge" :class="row.he_status === 'failed' ? 'admin-badge--error' : 'admin-badge--neutral'">{{ row.he_status }}</span>
               <span v-else class="muted">—</span>
               <div v-if="row.he_error" class="row-error" :title="row.he_error">{{ truncate(row.he_error, 60) }}</div>
             </td>
@@ -117,7 +127,12 @@
               <span v-else class="muted">—</span>
             </td>
             <td>
-              <button class="btn-xs he" :disabled="batchRunning || busyMap[row.chapter_id]" @click="generateOne(row.chapter_id, 'he')">
+              <button
+                class="btn-xs he admin-btn admin-btn--primary admin-btn--sm"
+                :aria-label="row.he_status === 'ready' ? `Regenerate Hebrew announcement for chapter ${row.chapter_number}` : `Generate Hebrew announcement for chapter ${row.chapter_number}`"
+                :disabled="batchRunning || busyMap[row.chapter_id]"
+                @click="generateOne(row.chapter_id, 'he')"
+              >
                 {{ busyMap[row.chapter_id] === 'he' ? '…' : row.he_status === 'ready' ? '↺' : '▶' }}
               </button>
             </td>
@@ -278,93 +293,59 @@ function truncate(s: string, n: number): string {
 </script>
 
 <style scoped>
-.chapter-ann { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+/* Layout, colors, fonts, buttons, table, and badge chrome come from the shared
+   .admin-page / .admin-btn / .admin-table / .admin-badge classes
+   (src/assets/admin-ui.css). Only this page's own compact-table tweaks
+   (status dot, mini audio players, per-language accent colors) live here. */
 
-.page-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 1rem; margin-bottom: 1.5rem;
-}
-.page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.25rem; }
-.subtitle { color: #666; font-size: 0.875rem; margin: 0; }
-.back-link { color: #666; text-decoration: none; font-size: 0.875rem; white-space: nowrap; }
-.back-link:hover { color: #333; }
+.chapter-ann { max-width: 1200px; margin: 0 auto; }
 
 .controls-bar {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;
-  margin-bottom: 1.5rem; padding: 1rem;
-  background: #f8f8f8; border-radius: 8px;
+  align-items: flex-end;
+  padding: var(--space-4);
+  background: var(--color-background-alt);
+  border-radius: var(--radius-lg);
 }
-.filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
-.filter-group label { font-size: 0.75rem; font-weight: 600; color: #555; text-transform: uppercase; }
-.filter-group select { padding: 0.45rem 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.875rem; min-width: 200px; }
+.filter-group select { min-width: 200px; }
 
 .batch-buttons { display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap; }
 
-.btn-primary {
-  padding: 0.45rem 1rem; background: #8B4513; color: white;
-  border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; font-weight: 500;
-}
-.btn-primary.te { background: #1a6b3c; }
-.btn-primary.he { background: #1d4e7a; }
-.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
-.btn-secondary {
-  padding: 0.45rem 0.9rem; background: #eee; border: 1px solid #ccc;
-  border-radius: 6px; font-size: 0.875rem; cursor: pointer;
-}
-.btn-danger {
-  padding: 0.45rem 0.9rem; background: #dc3545; color: white;
-  border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; font-weight: 500;
-  margin-left: auto;
-}
-.btn-danger:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary.te { background: var(--color-success); }
+.btn-primary.te:hover:not(:disabled) { filter: brightness(0.9); }
+.btn-primary.he { background: var(--color-primary-hover); }
+
+.btn-danger { margin-left: auto; }
 
 .error-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-  padding: 0.6rem 1rem; margin-bottom: 1rem;
-  background: #fff0f0; border: 1px solid #f5c6cb; border-radius: 6px;
-  color: #721c24; font-size: 0.85rem;
+  padding: var(--space-2) var(--space-4); margin-bottom: var(--space-4);
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-default);
+  color: var(--color-error);
+  font-size: 0.85rem;
 }
-.dismiss-btn {
-  background: none; border: none; cursor: pointer; color: #721c24;
-  font-size: 0.85rem; padding: 0 0.25rem; line-height: 1;
-}
-
-.state-msg { padding: 2rem; text-align: center; color: #888; }
-.state-msg.error { color: #c00; }
+.dismiss-btn { color: var(--color-error); }
+.dismiss-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 16%, transparent); }
 
 .table-wrap { overflow-x: auto; }
-.ann-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.ann-table th { padding: 0.4rem 0.6rem; background: #f0f0f0; text-align: left; border-bottom: 1px solid #ddd; font-weight: 600; }
-.ann-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; vertical-align: middle; }
-.ann-table tr.row-busy td { background: #fafae8; }
-.sub-header th { font-weight: 500; font-size: 0.75rem; color: #666; background: #f7f7f7; }
+.ann-table tr.row-busy td { background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+.sub-header th { font-weight: 500; font-size: 0.75rem; color: var(--color-muted-foreground); background: var(--color-muted); }
 
-.ch-cell { font-weight: 700; color: #333; }
+.ch-cell { font-weight: 700; color: var(--color-foreground); }
 
 .dot {
   display: inline-block; width: 10px; height: 10px; border-radius: 50%;
 }
-.dot.ready { background: #28a745; }
+.dot.ready { background: var(--color-success); }
 
-.badge {
-  display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-}
-.badge.failed { background: #f8d7da; color: #721c24; }
-.badge.pending { background: #e9ecef; color: #555; }
-
-.row-error { font-size: 0.7rem; color: #c00; margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.row-error { font-size: 0.7rem; color: var(--color-error); margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
 .mini-audio { height: 28px; width: 160px; }
-.muted { color: #aaa; }
+.muted { color: var(--color-muted-foreground); }
 
-.btn-xs {
-  padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 4px; cursor: pointer;
-  background: #8B4513; color: white; border: none; font-weight: 600;
-  transition: opacity 0.13s;
-}
-.btn-xs.te { background: #1a6b3c; }
-.btn-xs.he { background: #1d4e7a; }
-.btn-xs:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-xs.te { background: var(--color-success); }
+.btn-xs.he { background: var(--color-primary-hover); }
 
-.summary { margin-top: 0.75rem; font-size: 0.8rem; color: #666; text-align: right; }
+.summary { margin-top: 0.75rem; font-size: 0.8rem; color: var(--color-muted-foreground); text-align: right; }
 </style>

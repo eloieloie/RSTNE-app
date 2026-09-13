@@ -1,21 +1,21 @@
 <template>
-  <div class="manage-books">
-    <header class="page-header">
-      <h1>Manage Books</h1>
-      <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
+  <div class="manage-books admin-page">
+    <header class="page-header admin-page-header">
+      <h1 class="admin-title">Manage Books</h1>
+      <router-link to="/admin" class="back-link admin-back-link">← Back to Dashboard</router-link>
     </header>
 
     <div class="content-container">
       <!-- Books List -->
-      <div class="list-card">
+      <div class="list-card admin-card">
         <h2>All Books</h2>
-        
-        <div v-if="loading" class="loading">Loading books...</div>
-        <div v-else-if="error" class="error">{{ error }}</div>
-        <div v-else-if="books.length === 0" class="empty">No books found</div>
-        
-        <div v-else class="books-table">
-          <table>
+
+        <div v-if="loading" class="loading admin-state">Loading books...</div>
+        <div v-else-if="error" class="error admin-state admin-state--error">{{ error }}</div>
+        <div v-else-if="books.length === 0" class="empty admin-state">No books found</div>
+
+        <div v-else class="books-table admin-table-wrap">
+          <table class="admin-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -42,7 +42,7 @@
                 <td>{{ getCategoryName(book.category_id) }}</td>
                 <td>{{ book.book_index || 'N/A' }}</td>
                 <td class="actions">
-                  <button @click="openEditModal(book)" class="btn-icon btn-edit" title="Edit">
+                  <button @click="openEditModal(book)" class="btn-icon btn-edit admin-btn admin-btn--ghost admin-btn--sm" title="Edit">
                     ✏️
                   </button>
                 </td>
@@ -57,7 +57,7 @@
     <AnimatePresence>
       <motion.div
         v-if="showEditModal"
-        class="modal-overlay"
+        class="modal-overlay admin-modal-overlay"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
         :exit="{ opacity: 0 }"
@@ -65,7 +65,7 @@
         @click="closeEditModal"
       >
       <motion.div
-        class="modal-content"
+        class="modal-content admin-modal"
         :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
         :animate="{ opacity: 1, scale: 1, y: 0 }"
         :exit="{ opacity: 0, scale: 0.94, y: 8 }"
@@ -74,79 +74,86 @@
       >
         <div class="modal-header">
           <h2>Edit Book</h2>
-          <motion.button class="close-button" :while-tap="tapScale" @click="closeEditModal">&times;</motion.button>
+          <motion.button class="close-button admin-btn admin-btn--ghost" :while-tap="tapScale" @click="closeEditModal">&times;</motion.button>
         </div>
         <form @submit.prevent="saveBook" class="modal-form">
-          <div class="form-group">
-            <label for="bookName">Book Name *</label>
+          <div class="form-group admin-form-group">
+            <label for="bookName" class="admin-label">Book Name *</label>
             <input
               id="bookName"
               v-model="formData.book_name"
               type="text"
               required
               placeholder="Enter book name"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="bookAbbr">Book Abbreviation (English)</label>
+          <div class="form-group admin-form-group">
+            <label for="bookAbbr" class="admin-label">Book Abbreviation (English)</label>
             <input
               id="bookAbbr"
               v-model="formData.book_abbr"
               type="text"
               maxlength="20"
               placeholder="e.g., Gen, Exod, Lev"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="hebrewBookAbbr">Hebrew Abbreviation</label>
+          <div class="form-group admin-form-group">
+            <label for="hebrewBookAbbr" class="admin-label">Hebrew Abbreviation</label>
             <input
               id="hebrewBookAbbr"
               v-model="formData.hebrew_book_abbr"
               type="text"
               maxlength="20"
               placeholder="e.g., bare, shem, uyiq"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="teluguBookAbbr">Telugu Abbreviation</label>
+          <div class="form-group admin-form-group">
+            <label for="teluguBookAbbr" class="admin-label">Telugu Abbreviation</label>
             <input
               id="teluguBookAbbr"
               v-model="formData.telugu_book_abbr"
               type="text"
               maxlength="30"
               placeholder="e.g., ఆది., నిర్గ."
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="hebrewBookName">Hebrew Book Name</label>
+          <div class="form-group admin-form-group">
+            <label for="hebrewBookName" class="admin-label">Hebrew Book Name</label>
             <input
               id="hebrewBookName"
               v-model="formData.hebrew_book_name"
               type="text"
               placeholder="Enter Hebrew book name"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="teluguBookName">Telugu Book Name</label>
+          <div class="form-group admin-form-group">
+            <label for="teluguBookName" class="admin-label">Telugu Book Name</label>
             <input
               id="teluguBookName"
               v-model="formData.telugu_book_name"
               type="text"
               placeholder="Enter Telugu book name"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="categoryId">Category *</label>
+          <div class="form-group admin-form-group">
+            <label for="categoryId" class="admin-label">Category *</label>
             <select
               id="categoryId"
               v-model.number="formData.category_id"
               required
+              class="admin-select"
             >
               <option :value="undefined" disabled>Select a category</option>
               <option
@@ -159,59 +166,64 @@
             </select>
           </div>
           
-          <div class="form-group">
-            <label for="bookDescription">Description</label>
+          <div class="form-group admin-form-group">
+            <label for="bookDescription" class="admin-label">Description</label>
             <textarea
               id="bookDescription"
               v-model="formData.book_description"
               rows="4"
               placeholder="Enter book description"
+              class="admin-textarea"
             ></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="bookHeader">Book Header</label>
+          <div class="form-group admin-form-group">
+            <label for="bookHeader" class="admin-label">Book Header</label>
             <textarea
               id="bookHeader"
               v-model="formData.book_header"
               rows="3"
               placeholder="Enter book header (optional)"
+              class="admin-textarea"
             ></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="bookFooter">Book Footer</label>
+          <div class="form-group admin-form-group">
+            <label for="bookFooter" class="admin-label">Book Footer</label>
             <textarea
               id="bookFooter"
               v-model="formData.book_footer"
               rows="3"
               placeholder="Enter book footer (optional)"
+              class="admin-textarea"
             ></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="bookLink">Book Link</label>
+          <div class="form-group admin-form-group">
+            <label for="bookLink" class="admin-label">Book Link</label>
             <input
               id="bookLink"
               v-model="formData.book_link"
               type="url"
               placeholder="https://example.com/book-page (optional)"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-group">
-            <label for="bookIndex">Book Index</label>
+          <div class="form-group admin-form-group">
+            <label for="bookIndex" class="admin-label">Book Index</label>
             <input
               id="bookIndex"
               v-model.number="formData.book_index"
               type="number"
               placeholder="Enter book index (optional)"
+              class="admin-input"
             />
           </div>
 
-          <div class="form-actions">
-            <motion.button type="submit" class="btn btn-primary" :while-tap="tapScale">Update Book</motion.button>
-            <motion.button type="button" :while-tap="tapScale" @click="closeEditModal" class="btn btn-secondary">Cancel</motion.button>
+          <div class="form-actions admin-modal-actions">
+            <motion.button type="submit" class="btn btn-primary admin-btn admin-btn--primary" :while-tap="tapScale">Update Book</motion.button>
+            <motion.button type="button" :while-tap="tapScale" @click="closeEditModal" class="btn btn-secondary admin-btn admin-btn--secondary">Cancel</motion.button>
           </div>
         </form>
       </motion.div>
@@ -364,10 +376,13 @@ function formatDate(date: Date): string {
 </script>
 
 <style scoped>
+/* Colors, fonts, cards, table, buttons, form fields and modal chrome come from
+   the shared .admin-page / .admin-card / .admin-table / .admin-btn / .admin-modal
+   classes (src/assets/admin-ui.css). Only this page's own layout sizing remains. */
+
 .manage-books {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 .page-header {
@@ -377,71 +392,9 @@ function formatDate(date: Date): string {
   margin-bottom: 2rem;
 }
 
-.page-header h1 {
-  color: #2c3e50;
-  margin: 0;
-}
-
-.back-link {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.back-link:hover {
-  text-decoration: underline;
-}
-
-.content-container {
-  width: 100%;
-}
-
-.list-card {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .list-card h2 {
   margin: 0 0 1.5rem 0;
-  color: #2c3e50;
-}
-
-.loading, .error, .empty {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.books-table {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: #f8f9fa;
-}
-
-th {
-  text-align: left;
-  padding: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-td {
-  padding: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  color: var(--color-foreground);
 }
 
 .actions {
@@ -450,11 +403,7 @@ td {
 }
 
 .btn-icon {
-  background: none;
-  border: none;
   font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
   transition: transform 0.2s;
 }
 
@@ -463,27 +412,11 @@ td {
 }
 
 /* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .modal-content {
-  background: white;
-  border-radius: 12px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -491,27 +424,12 @@ td {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #2c3e50;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .close-button {
-  background: none;
-  border: none;
   font-size: 2rem;
-  color: #666;
-  cursor: pointer;
-  padding: 0;
   line-height: 1;
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: #2c3e50;
 }
 
 .modal-form {
@@ -519,66 +437,5 @@ td {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: inherit;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5568d3;
-}
-
-.btn-secondary {
-  background: #e0e0e0;
-  color: #2c3e50;
-}
-
-.btn-secondary:hover {
-  background: #d0d0d0;
 }
 </style>

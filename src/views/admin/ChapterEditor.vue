@@ -1,16 +1,16 @@
 <template>
-  <div class="chapter-editor">
-    <header class="page-header">
+  <div class="chapter-editor admin-page">
+    <header class="page-header admin-page-header">
       <div class="page-header-titles">
-        <router-link to="/admin/chapters" class="back-link">← Back to Chapters</router-link>
-        <h1>{{ chapterTitle }}</h1>
-        <p v-if="chapter" class="chapter-subtitle">{{ getBookName(chapter.book_id) }} · Chapter {{ chapter.chapter_number }}</p>
+        <router-link to="/admin/chapters" class="admin-back-link">← Back to Chapters</router-link>
+        <h1 class="admin-title">{{ chapterTitle }}</h1>
+        <p v-if="chapter" class="admin-subtitle">{{ getBookName(chapter.book_id) }} · Chapter {{ chapter.chapter_number }}</p>
       </div>
       <div class="header-actions">
         <button
           v-if="!selectingVerseRange"
           @click="startRangeSelection"
-          class="action-pill action-pill-outline"
+          class="action-pill admin-btn admin-btn--secondary"
           title="Add note to multiple verses"
         >
           <span aria-hidden="true">📝</span> Add Note to Range
@@ -18,7 +18,7 @@
         <button
           v-if="selectingVerseRange"
           @click="cancelRangeSelection"
-          class="action-pill action-pill-cancel"
+          class="action-pill admin-btn admin-btn--secondary"
         >
           <span aria-hidden="true">✕</span> Cancel Range Selection
         </button>
@@ -27,7 +27,7 @@
 
     <div v-if="chapter" class="chapter-nav">
       <button
-        class="action-pill action-pill-nav"
+        class="action-pill admin-btn admin-btn--secondary"
         :disabled="!previousChapter"
         :title="previousChapter ? `Go to chapter ${previousChapter.chapter_number}` : 'This is the first chapter'"
         @click="previousChapter && goToChapter(previousChapter.chapter_id)"
@@ -38,7 +38,7 @@
         Chapter {{ chapter.chapter_number }} ({{ currentChapterIndex + 1 }} of {{ sortedBookChapters.length }})
       </span>
       <button
-        class="action-pill action-pill-nav"
+        class="action-pill admin-btn admin-btn--secondary"
         :disabled="!nextChapter"
         :title="nextChapter ? `Go to chapter ${nextChapter.chapter_number}` : 'This is the last chapter'"
         @click="nextChapter && goToChapter(nextChapter.chapter_id)"
@@ -48,15 +48,15 @@
     </div>
 
     <div class="editor-container">
-      <div v-if="loading" class="loading">Loading verses...</div>
-      <div v-else-if="error" class="error">{{ error }}</div>
-      
+      <div v-if="loading" class="loading admin-state">Loading verses...</div>
+      <div v-else-if="error" class="error admin-state admin-state--error">{{ error }}</div>
+
       <div v-else class="verses-list">
-        <div v-if="verses.length === 0" class="empty">
+        <div v-if="verses.length === 0" class="empty admin-state">
           No verses found for this chapter.
         </div>
-        
-        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item" :class="{ 'selected-for-range': selectedVerseIds && selectedVerseIds.includes(verse.verse_id), 'is-editing': editingVerseId === verse.verse_id }">
+
+        <div v-for="verse in sortedVerses" :key="verse.verse_id" class="verse-item admin-card" :class="{ 'selected-for-range': selectedVerseIds && selectedVerseIds.includes(verse.verse_id), 'is-editing': editingVerseId === verse.verse_id }">
           <div class="verse-header">
             <div class="verse-number-section">
               <input
@@ -72,21 +72,21 @@
             <div class="verse-actions" v-if="editingVerseId !== verse.verse_id">
               <button
                 @click="startEditVerse(verse)"
-                class="action-pill action-pill-primary"
+                class="action-pill admin-btn admin-btn--primary admin-btn--sm"
                 title="Edit verse"
               >
                 <span aria-hidden="true">✏️</span> Edit
               </button>
               <button
                 @click="toggleNotes(verse.verse_id)"
-                class="action-pill action-pill-notes"
+                class="action-pill admin-btn admin-btn--secondary admin-btn--sm"
                 title="Manage notes"
               >
                 <span aria-hidden="true">📝</span> Notes
               </button>
               <button
                 @click="openHistory(verse.verse_id)"
-                class="action-pill action-pill-history"
+                class="action-pill admin-btn admin-btn--secondary admin-btn--sm"
                 :disabled="!verse.history_count"
                 :title="verse.history_count ? 'View edit history' : 'No edit history yet for this verse'"
               >
@@ -94,10 +94,14 @@
               </button>
             </div>
             <div v-else class="verse-actions edit-actions">
-              <button @click="saveVerse(verse.verse_id)" class="action-pill action-pill-save">
-                <span aria-hidden="true">💾</span> Save
+              <button
+                @click="saveVerse(verse.verse_id)"
+                class="action-pill admin-btn admin-btn--primary admin-btn--sm"
+                :disabled="savingVerseId === verse.verse_id"
+              >
+                <span aria-hidden="true">💾</span> {{ savingVerseId === verse.verse_id ? 'Saving…' : 'Save' }}
               </button>
-              <button @click="cancelEdit" class="action-pill action-pill-cancel">
+              <button @click="cancelEdit" class="action-pill admin-btn admin-btn--secondary admin-btn--sm" :disabled="savingVerseId === verse.verse_id">
                 <span aria-hidden="true">✕</span> Cancel
               </button>
             </div>
@@ -129,25 +133,25 @@
                 <button
                   v-if="!verseNotes[verse.verse_id] || verseNotes[verse.verse_id].length === 0"
                   @click="startAddNote(verse.verse_id)"
-                  class="btn btn-sm btn-success btn-add-note"
+                  class="admin-btn admin-btn--primary admin-btn--sm"
                 >+ Add Note</button>
               </div>
               
               <div v-if="loadingNotes" class="loading-notes">Loading notes...</div>
               
-              <div v-else-if="verseNotes[verse.verse_id]?.length > 0" class="notes-list">
-                <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-item">
+              <div v-else-if="verseNotes[verse.verse_id]?.length > 0" class="notes-list admin-list">
+                <div v-for="note in verseNotes[verse.verse_id]" :key="note.note_id" class="note-item admin-list-item">
                   <div v-if="editingNoteId === note.note_id" class="note-edit-form">
-                    <input 
-                      v-model="editingNote.title" 
-                      type="text" 
+                    <input
+                      v-model="editingNote.title"
+                      type="text"
                       placeholder="Note title (optional)"
-                      class="note-title-input"
+                      class="note-title-input admin-input"
                     />
                     <div :ref="el => { if (el && editingNoteId === note.note_id) setupNoteEditor(el as HTMLElement); }" class="note-editor-container"></div>
                     <div class="note-form-actions">
-                      <button @click="saveEditedNote(note.note_id)" class="btn btn-sm btn-primary">Save</button>
-                      <button @click="cancelEditNote" class="btn btn-sm btn-secondary">Cancel</button>
+                      <button @click="saveEditedNote(note.note_id)" class="admin-btn admin-btn--primary admin-btn--sm">Save</button>
+                      <button @click="cancelEditNote" class="admin-btn admin-btn--secondary admin-btn--sm">Cancel</button>
                     </div>
                   </div>
                   <div v-else class="note-content-wrapper">
@@ -158,15 +162,15 @@
                   <div class="note-actions">
                     <button 
                       v-if="editingNoteId !== note.note_id"
-                      @click="startEditNote(note)" 
-                      class="btn btn-sm btn-primary btn-edit-note"
+                      @click="startEditNote(note)"
+                      class="admin-btn admin-btn--ghost admin-btn--sm"
                       title="Edit note"
                     >
                       ✏️
                     </button>
-                    <button 
-                      @click="deleteNoteFromVerse(verse.verse_id, note.verse_note_id)" 
-                      class="btn btn-sm btn-danger btn-delete-note"
+                    <button
+                      @click="deleteNoteFromVerse(verse.verse_id, note.verse_note_id)"
+                      class="admin-btn admin-btn--danger admin-btn--sm"
                       title="Delete note"
                     >
                       🗑️
@@ -180,15 +184,15 @@
               <!-- Add Note Form -->
               <div v-if="addingNoteToVerse === verse.verse_id" class="add-note-form">
                 <input 
-                  v-model="newNote.title" 
-                  type="text" 
+                  v-model="newNote.title"
+                  type="text"
                   placeholder="Note title (optional)"
-                  class="note-title-input"
+                  class="note-title-input admin-input"
                 />
                 <div :ref="el => { if (el && addingNoteToVerse === verse.verse_id) setupNewNoteEditor(el as HTMLElement); }" class="note-editor-container"></div>
                 <div class="note-form-actions">
-                  <button @click="saveNote(verse.verse_id)" class="btn btn-sm btn-primary btn-save-note">Save Note</button>
-                  <button @click="cancelAddNote" class="btn btn-sm btn-secondary btn-cancel-note">Cancel</button>
+                  <button @click="saveNote(verse.verse_id)" class="admin-btn admin-btn--primary admin-btn--sm">Save Note</button>
+                  <button @click="cancelAddNote" class="admin-btn admin-btn--secondary admin-btn--sm">Cancel</button>
                 </div>
               </div>
             </div>
@@ -196,15 +200,15 @@
           
           <div v-else class="verse-editor">
             <div class="editor-group">
-              <label>English Verse:</label>
+              <label class="admin-label">English Verse:</label>
               <div id="english-editor" class="quill-editor"></div>
             </div>
             <div class="editor-group">
-              <label class="telugu-label-with-action">
+              <label class="telugu-label-with-action admin-label">
                 <span>Telugu Verse (Optional):</span>
-                <button 
-                  @click="translateToTelugu" 
-                  class="btn btn-sm btn-info btn-translate"
+                <button
+                  @click="translateToTelugu"
+                  class="btn-translate admin-btn admin-btn--secondary admin-btn--sm"
                   :disabled="translating"
                   title="Translate English verse to Telugu using Google Translate"
                 >
@@ -216,9 +220,9 @@
               <div v-if="showTranslation && translatedText" class="translation-result">
                 <div class="translation-header">
                   <span class="translation-label">📝 Translation Result:</span>
-                  <button 
-                    @click="replaceTeluguVerse" 
-                    class="btn btn-sm btn-success btn-replace"
+                  <button
+                    @click="replaceTeluguVerse"
+                    class="btn-replace admin-btn admin-btn--primary admin-btn--sm"
                     title="Replace Telugu verse content with this translation"
                   >
                     ✅ Replace Telugu Verse
@@ -238,21 +242,21 @@
             <h3>Add Note to {{ selectedVerseIds.length }} Selected Verse(s)</h3>
             <p class="selected-verses-info">Verses: {{ getSelectedVerseNumbers() }}</p>
           </div>
-          <input 
-            v-model="rangeNote.title" 
-            type="text" 
+          <input
+            v-model="rangeNote.title"
+            type="text"
             placeholder="Note title (optional)"
-            class="form-control mb-2"
+            class="admin-input mb-2"
           />
-          <textarea 
-            v-model="rangeNote.content" 
+          <textarea
+            v-model="rangeNote.content"
             placeholder="Note content..."
             rows="4"
-            class="form-control mb-2"
+            class="admin-textarea mb-2"
           ></textarea>
           <div class="range-note-actions">
-            <button @click="saveRangeNote" class="btn btn-primary" :disabled="!rangeNote.content">Save Note for Selected Verses</button>
-            <button @click="cancelRangeSelection" class="btn btn-secondary">Cancel</button>
+            <button @click="saveRangeNote" class="admin-btn admin-btn--primary" :disabled="!rangeNote.content">Save Note for Selected Verses</button>
+            <button @click="cancelRangeSelection" class="admin-btn admin-btn--secondary">Cancel</button>
           </div>
         </div>
       </div>
@@ -261,7 +265,7 @@
     <AnimatePresence>
       <motion.div
         v-if="historyModalVerseId !== null"
-        class="history-modal-overlay"
+        class="history-modal-overlay admin-modal-overlay"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
         :exit="{ opacity: 0 }"
@@ -269,7 +273,7 @@
         @click="closeHistory"
       >
         <motion.div
-          class="history-modal-content"
+          class="history-modal-content admin-modal"
           :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
           :animate="{ opacity: 1, scale: 1, y: 0 }"
           :exit="{ opacity: 0, scale: 0.94, y: 8 }"
@@ -278,7 +282,7 @@
         >
           <div class="history-modal-header">
             <h3>Verse Edit History</h3>
-            <motion.button class="history-close-button" :while-tap="tapScale" @click="closeHistory" aria-label="Close history">&times;</motion.button>
+            <motion.button class="history-close-button admin-btn admin-btn--ghost" :while-tap="tapScale" @click="closeHistory" aria-label="Close history">&times;</motion.button>
           </div>
 
           <div class="history-modal-body">
@@ -288,10 +292,10 @@
               No prior edits recorded for this verse yet.
             </div>
 
-            <div v-else class="history-list">
-              <div v-for="entry in historyEntries" :key="entry.history_id" class="history-entry">
+            <div v-else class="history-list admin-list">
+              <div v-for="entry in historyEntries" :key="entry.history_id" class="history-entry admin-list-item">
                 <div class="history-entry-meta">
-                  <span class="history-entry-type" :class="`history-type-${entry.change_type.toLowerCase()}`">
+                  <span class="history-entry-type admin-badge" :class="entry.change_type === 'DELETE' ? 'admin-badge--error' : 'admin-badge--info'">
                     {{ entry.change_type === 'DELETE' ? 'Deleted' : 'Edited' }}
                   </span>
                   <span class="history-entry-date">{{ formatDateTime(entry.changed_at) }}</span>
@@ -302,7 +306,7 @@
                 <div class="history-entry-actions">
                   <button
                     @click="restoreHistoryEntry(entry)"
-                    class="btn btn-sm btn-restore"
+                    class="admin-btn admin-btn--primary admin-btn--sm"
                     :disabled="rollingBackId === entry.history_id"
                   >
                     {{ rollingBackId === entry.history_id ? '⏳ Restoring...' : '⏪ Restore this version' }}
@@ -351,6 +355,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 const editingVerseId = ref<number | null>(null);
+const savingVerseId = ref<number | null>(null);
 const editFormData = ref<VerseUpdate>({
   verse_index: undefined,
   verse: '',
@@ -643,10 +648,12 @@ async function saveVerse(verseId: number) {
     return;
   }
 
+  if (savingVerseId.value === verseId) return;
+  savingVerseId.value = verseId;
   try {
     console.log('Saving verse:', verseId, editFormData.value);
-    await updateVerse(verseId, editFormData.value);
-    
+    const result = await updateVerse(verseId, editFormData.value);
+
     // Update local data
     const index = verses.value.findIndex(v => v.verse_id === verseId);
     if (index !== -1) {
@@ -654,15 +661,19 @@ async function saveVerse(verseId: number) {
         ...verses.value[index],
         verse: editFormData.value.verse || verses.value[index].verse,
         telugu_verse: editFormData.value.telugu_verse || null,
-        dt_modified: new Date(),
-        history_count: (verses.value[index].history_count ?? 0) + 1
+        // A no-op save (identical text) doesn't archive a history row server-side.
+        ...(result.changed
+          ? { dt_modified: new Date(), history_count: (verses.value[index].history_count ?? 0) + 1 }
+          : {}),
         // verse_index is preserved from the spread operator
       };
     }
-    
+
     cancelEdit();
   } catch (e) {
     alert('Failed to save verse: ' + (e instanceof Error ? e.message : 'Unknown error'));
+  } finally {
+    savingVerseId.value = null;
   }
 }
 
@@ -980,22 +991,20 @@ async function saveNote(verseId: number) {
 </script>
 
 <style scoped>
+/* Layout, colors, fonts, cards, buttons, badges, form fields, and empty/error
+   states come from the shared .admin-page / .admin-card / .admin-btn /
+   .admin-badge / .admin-list / .admin-state / .admin-input / .admin-modal
+   classes (src/assets/admin-ui.css). Only this page's own structural layout,
+   verse-specific styling, and the Quill editor's own look stay here. */
 .chapter-editor {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
-  background: #f4f5f7;
 }
 
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .page-header-titles {
@@ -1006,28 +1015,7 @@ async function saveNote(verseId: number) {
 }
 
 .page-header h1 {
-  color: #1f2430;
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
   letter-spacing: -0.01em;
-}
-
-.chapter-subtitle {
-  color: #666;
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.back-link {
-  color: #667eea;
-  text-decoration: none;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.back-link:hover {
-  text-decoration: underline;
 }
 
 .editor-container {
@@ -1035,17 +1023,9 @@ async function saveNote(verseId: number) {
 }
 
 .loading, .error, .empty {
-  padding: 2rem;
-  text-align: center;
-  color: #666;
-  font-size: 0.875rem;
-  background: white;
-  border-radius: 10px;
-  border: 1px solid #e6e6e6;
-}
-
-.error {
-  color: #e74c3c;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
 .verses-list {
@@ -1055,27 +1035,23 @@ async function saveNote(verseId: number) {
 }
 
 .verse-item {
-  border: 1px solid #e6e6e6;
-  border-radius: 10px;
   padding: 1.1rem 1.25rem;
-  background: white;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
   transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .verse-item:hover {
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
-  border-color: #d8dce6;
+  box-shadow: var(--shadow-card);
+  border-color: var(--color-muted-foreground);
 }
 
 .verse-item.selected-for-range {
-  background: #eef5ff;
-  border-color: #667eea;
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 
 .verse-item.is-editing {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .verse-number-section {
@@ -1088,15 +1064,15 @@ async function saveNote(verseId: number) {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: var(--color-primary);
 }
 
 .range-note-form {
   position: sticky;
   bottom: 0;
-  background: white;
+  background: var(--color-card);
   padding: 1.5rem;
-  border-top: 2px solid #667eea;
+  border-top: 2px solid var(--color-primary);
   border-radius: 10px 10px 0 0;
   box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.1);
   margin-top: 0.5rem;
@@ -1104,12 +1080,12 @@ async function saveNote(verseId: number) {
 
 .range-note-header h3 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--color-foreground);
   font-size: 1.1rem;
 }
 
 .selected-verses-info {
-  color: #666;
+  color: var(--color-muted-foreground);
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -1137,7 +1113,7 @@ async function saveNote(verseId: number) {
 
 .chapter-nav-position {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-muted-foreground);
   white-space: nowrap;
 }
 
@@ -1158,8 +1134,8 @@ async function saveNote(verseId: number) {
   height: 32px;
   padding: 0 0.35rem;
   border-radius: 50%;
-  background: #eef0ff;
-  color: #4c56c9;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -1169,88 +1145,6 @@ async function saveNote(verseId: number) {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-/* Unified pill-style action buttons */
-.action-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.85rem;
-  min-height: 36px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: white;
-  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
-.action-pill:active {
-  transform: scale(0.97);
-}
-
-.action-pill:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.action-pill:disabled:active {
-  transform: none;
-}
-
-.action-pill-primary {
-  background: #667eea;
-}
-.action-pill-primary:hover {
-  background: #5568d3;
-}
-
-.action-pill-notes {
-  background: #28a745;
-}
-.action-pill-notes:hover {
-  background: #218838;
-}
-
-.action-pill-history {
-  background: #6c757d;
-}
-.action-pill-history:hover {
-  background: #5a6268;
-}
-
-.action-pill-save {
-  background: #28a745;
-}
-.action-pill-save:hover {
-  background: #218838;
-}
-
-.action-pill-cancel {
-  background: #6c757d;
-}
-.action-pill-cancel:hover {
-  background: #5a6268;
-}
-
-.action-pill-outline {
-  background: white;
-  color: #28a745;
-  border: 1px solid #28a745;
-}
-.action-pill-outline:hover {
-  background: #f0fdf4;
-}
-
-.action-pill-nav {
-  background: white;
-  color: #667eea;
-  border: 1px solid #667eea;
-}
-.action-pill-nav:hover:not(:disabled) {
-  background: #eef0ff;
 }
 
 .edit-actions {
@@ -1270,17 +1164,17 @@ async function saveNote(verseId: number) {
   align-items: flex-start;
   gap: 0.6rem;
   padding-left: 0.75rem;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid var(--color-primary);
 }
 
 .verse-text-block-telugu {
-  border-left-color: #28a745;
+  border-left-color: var(--color-success);
 }
 
 .verse-text {
   font-size: 1rem;
   line-height: 1.6;
-  color: #333;
+  color: var(--color-foreground);
   margin: 0;
   text-align: left;
   flex: 1;
@@ -1289,7 +1183,7 @@ async function saveNote(verseId: number) {
 .verse-telugu {
   font-size: 1rem;
   line-height: 1.6;
-  color: #444;
+  color: var(--color-foreground);
   margin: 0;
   flex: 1;
 }
@@ -1299,7 +1193,7 @@ async function saveNote(verseId: number) {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.72rem;
-  color: #999;
+  color: var(--color-muted-foreground);
   margin-top: 0.15rem;
 }
 
@@ -1328,12 +1222,6 @@ async function saveNote(verseId: number) {
   gap: 0.25rem;
 }
 
-.editor-group label {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.75rem;
-}
-
 .telugu-label-with-action {
   display: flex;
   justify-content: space-between;
@@ -1341,15 +1229,14 @@ async function saveNote(verseId: number) {
   width: 100%;
 }
 
-.btn-translate {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
+.btn-translate,
+.btn-replace {
   white-space: nowrap;
 }
 
 .translation-result {
-  background: #e7f3ff;
-  border: 2px solid #2196F3;
+  background: var(--color-primary-light);
+  border: 2px solid var(--color-primary);
   border-radius: 6px;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
@@ -1364,25 +1251,22 @@ async function saveNote(verseId: number) {
 
 .translation-label {
   font-weight: 600;
-  color: #1976D2;
+  color: var(--color-primary);
   font-size: 0.8rem;
-}
-
-.btn-replace {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
-  white-space: nowrap;
 }
 
 .translation-content {
   padding: 0.5rem;
-  background: white;
+  background: var(--color-card);
   border-radius: 4px;
-  color: #333;
+  color: var(--color-foreground);
   line-height: 1.6;
   font-size: 0.9rem;
 }
 
+/* Quill editor mount containers — sizing only. The internal .ql-editor /
+   .ql-toolbar / .ql-container rules below target Quill's own generated
+   markup and are intentionally left untouched (third-party component). */
 .quill-editor {
   background: white;
   min-height: 150px;
@@ -1410,9 +1294,9 @@ async function saveNote(verseId: number) {
 .notes-section {
   margin-top: 0.5rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--color-muted);
   border-radius: 8px;
-  border-left: 3px solid #28a745;
+  border-left: 3px solid var(--color-success);
 }
 
 .notes-header {
@@ -1424,46 +1308,15 @@ async function saveNote(verseId: number) {
 
 .notes-header h4 {
   margin: 0;
-  color: #333;
+  color: var(--color-foreground);
   font-size: 0.875rem;
-}
-
-.btn-add-note {
-  padding: 0.25rem 0.5rem;
-  background: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.btn-add-note:hover {
-  background: #218838;
 }
 
 .loading-notes, .no-notes {
   text-align: center;
   padding: 0.75rem;
-  color: #999;
+  color: var(--color-muted-foreground);
   font-size: 0.8rem;
-}
-
-.notes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.note-item {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
 }
 
 .note-content-wrapper {
@@ -1476,59 +1329,45 @@ async function saveNote(verseId: number) {
   flex-shrink: 0;
 }
 
-.btn-edit-note {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.btn-delete-note {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
 .note-edit-form {
   width: 100%;
 }
 
 .note-item h5 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--color-foreground);
   font-size: 0.875rem;
 }
 
 .note-content {
   font-size: 0.8rem;
   line-height: 1.5;
-  color: #555;
+  color: var(--color-muted-foreground);
   margin-bottom: 0.5rem;
 }
 
 .note-meta {
   font-size: 0.7rem;
-  color: #999;
+  color: var(--color-muted-foreground);
 }
 
 .add-note-form {
-  background: white;
+  background: var(--color-card);
   padding: 0.75rem;
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border);
 }
 
 .note-title-input {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
   margin-bottom: 0.5rem;
-  font-size: 0.8rem;
-  border-radius: 4px;
 }
 
 .note-editor-container {
   margin-bottom: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  background: white;
+  background: var(--color-card);
   min-height: 150px;
 }
 
@@ -1548,52 +1387,20 @@ async function saveNote(verseId: number) {
   gap: 0.5rem;
 }
 
-.btn-save-note, .btn-cancel-note {
-  padding: 0.375rem 0.75rem;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-save-note {
-  background: #28a745;
-  color: white;
-}
-
-.btn-save-note:hover {
-  background: #218838;
-}
-
-.btn-cancel-note {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-cancel-note:hover {
-  background: #5a6268;
-}
-
 /* Verse History Modal */
-.history-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.history-modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 80vh;
-  display: flex;
+/* `.admin-page .admin-modal` (admin-ui.css) sets `display: block !important`
+   (added to defeat a leftover Bootstrap `.modal{display:none}` rule elsewhere)
+   which otherwise silently wins over this component's own `display: flex` —
+   !important always beats a non-!important rule regardless of specificity or
+   source order — breaking the flex-column layout the body's internal scroll
+   depends on. Raising this selector's specificity to 3 classes (still
+   `!important`) beats that rule outright instead of relying on load order. */
+.history-modal-overlay .history-modal-content.admin-modal {
+  display: flex !important;
   flex-direction: column;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  max-width: 760px;
+  max-height: 80vh;
+  overflow: hidden;
   text-align: left;
 }
 
@@ -1602,46 +1409,26 @@ async function saveNote(verseId: number) {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .history-modal-header h3 {
   margin: 0;
   font-size: 1rem;
-  color: #333;
+  color: var(--color-foreground);
 }
 
 .history-close-button {
-  background: none;
-  border: none;
   font-size: 1.5rem;
   line-height: 1;
-  color: #999;
-  cursor: pointer;
   padding: 0;
-}
-
-.history-close-button:hover {
-  color: #333;
 }
 
 .history-modal-body {
   padding: 1rem 1.25rem;
   overflow-y: auto;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.history-entry {
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 0.75rem;
+  min-height: 0;
 }
 
 .history-entry-meta {
@@ -1653,41 +1440,26 @@ async function saveNote(verseId: number) {
   font-size: 0.7rem;
 }
 
-.history-entry-type {
-  padding: 0.15rem 0.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  color: white;
-}
-
-.history-type-update {
-  background: #667eea;
-}
-
-.history-type-delete {
-  background: #e74c3c;
-}
-
 .history-entry-date {
-  color: #666;
+  color: var(--color-muted-foreground);
 }
 
 .history-entry-by {
-  color: #999;
+  color: var(--color-muted-foreground);
   font-style: italic;
 }
 
 .history-entry-text {
   font-size: 0.85rem;
   line-height: 1.5;
-  color: #333;
+  color: var(--color-foreground);
   margin-bottom: 0.35rem;
 }
 
 .history-entry-telugu {
   font-size: 0.85rem;
   line-height: 1.5;
-  color: #666;
+  color: var(--color-muted-foreground);
   margin-bottom: 0.5rem;
 }
 
@@ -1695,24 +1467,5 @@ async function saveNote(verseId: number) {
   display: flex;
   justify-content: flex-end;
 }
-
-.btn-restore {
-  padding: 0.375rem 0.75rem;
-  background: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-}
-
-.btn-restore:hover:not(:disabled) {
-  background: #218838;
-}
-
-.btn-restore:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 </style>
 

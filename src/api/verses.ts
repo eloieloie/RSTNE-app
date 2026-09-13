@@ -40,7 +40,7 @@ export interface VerseWithLinks extends Verse {
 }
 
 export async function getVersesByChapterId(chapterId: number): Promise<VerseWithLinks[]> {
-  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: await getAuthHeaders() });
+  const response = await fetch(`${API_URL}/chapters/${chapterId}/verses`, { headers: API_HEADERS });
   if (!response.ok) {
     throw new Error('Failed to fetch verses');
   }
@@ -68,7 +68,7 @@ export async function createVerse(verse: VerseInsert): Promise<Verse> {
   return response.json();
 }
 
-export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<Verse> {
+export async function updateVerse(verseId: number, verse: VerseUpdate): Promise<{ message: string; changed: boolean }> {
   const response = await fetch(`${API_URL}/verses/${verseId}`, {
     method: 'POST',
     headers: {

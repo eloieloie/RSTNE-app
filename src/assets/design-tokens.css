@@ -40,6 +40,12 @@
   --color-primary-light:        #F3E0D8;
   --color-primary-foreground:   var(--color-neutral-0);
 
+  /* ===== Semantic — Admin accent (lighter terracotta than --color-primary; a dozen
+     buttons at full reading-UI darkness reads heavy on a dashboard, so admin's
+     resting state is lighter and darkens to --color-primary on hover) ===== */
+  --color-admin-accent:         #A3491F;
+  --color-admin-accent-hover:   var(--color-primary);
+
   /* ===== Semantic — Category tokens ===== */
   --color-cat-1:        var(--color-covenant1-500);
   --color-cat-1-light:  var(--color-covenant1-100);
@@ -52,6 +58,18 @@
   --color-success: var(--color-success-500);
   --color-warning: var(--color-warning-500);
   --color-error:   var(--color-error-500);
+
+  /* ===== Semantic — Status badge tint pairs (hand-picked for WCAG AA on
+     small text, ~14px — color-mix() tints of the raw status colors above
+     don't reliably clear 4.5:1, so these are fixed instead) ===== */
+  --color-badge-success-bg:   #DCFCE7;
+  --color-badge-success-text: #15803D;
+  --color-badge-warning-bg:   #FEF3C7;
+  --color-badge-warning-text: #92400E;
+  --color-badge-error-bg:     #FEE2E2;
+  --color-badge-error-text:   #B91C1C;
+  --color-badge-info-bg:      #E0F2FE;
+  --color-badge-info-text:    #0369A1;
 
   /* ===== Semantic — Note callout ===== */
   --color-note-bg:     #FEFCE8;

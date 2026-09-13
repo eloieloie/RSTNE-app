@@ -1,12 +1,12 @@
 <template>
-  <div class="manage-chapters">
-    <header class="page-header">
+  <div class="manage-chapters admin-page">
+    <header class="page-header admin-page-header">
       <div>
-        <h1>Manage Chapters</h1>
-        <p class="page-subtitle">Select a book to browse and edit its chapters</p>
+        <h1 class="admin-title">Manage Chapters</h1>
+        <p class="page-subtitle admin-subtitle">Select a book to browse and edit its chapters</p>
       </div>
       <div class="header-actions">
-        <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
+        <router-link to="/admin" class="back-link admin-back-link">← Back to Dashboard</router-link>
       </div>
     </header>
 
@@ -18,8 +18,8 @@
         <div class="skeleton skeleton-search"></div>
         <div v-for="i in 6" :key="i" class="skeleton skeleton-row"></div>
       </div>
-      <div v-else-if="error" class="error">⚠ {{ error }}</div>
-      <div v-else-if="Object.keys(groupedChapters).length === 0" class="empty">No chapters found</div>
+      <div v-else-if="error" class="error admin-state admin-state--error">⚠ {{ error }}</div>
+      <div v-else-if="Object.keys(groupedChapters).length === 0" class="empty admin-state">No chapters found</div>
 
       <div v-else>
         <!-- Sticky Category Tabs -->
@@ -45,7 +45,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              class="search-input"
+              class="search-input admin-input"
               placeholder="Search books…"
               @input="onSearch"
             />
@@ -63,7 +63,7 @@
 
         <!-- Books List -->
         <div class="books-list">
-          <div v-if="visibleBooks.length === 0" class="no-results">
+          <div v-if="visibleBooks.length === 0" class="no-results admin-state">
             No books match "<strong>{{ searchQuery }}</strong>"
           </div>
 
@@ -248,10 +248,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Colors, fonts, header, and state messages come from the shared .admin-page /
+   .admin-title / .admin-state classes (src/assets/admin-ui.css). Only this
+   page's own layout sizing, skeleton loader, and tab/grid visuals remain. */
+
 .manage-chapters {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 .page-header {
@@ -261,18 +264,6 @@ onMounted(async () => {
   margin-bottom: 2rem;
 }
 
-.page-header h1 {
-  color: #1a1f36;
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
-}
-
-.page-subtitle {
-  color: #6b7280;
-  margin: 0;
-  font-size: 0.9rem;
-}
-
 .header-actions {
   display: flex;
   gap: 1rem;
@@ -280,19 +271,14 @@ onMounted(async () => {
 }
 
 .back-link {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
   white-space: nowrap;
 }
-
-.back-link:hover { text-decoration: underline; }
 
 /* Skeleton loaders */
 .loading-state { padding: 0.5rem; }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-background-alt) 25%, var(--color-border) 50%, var(--color-background-alt) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 8px;
@@ -308,39 +294,15 @@ onMounted(async () => {
 .skeleton-search { height: 44px; margin-bottom: 1rem; }
 .skeleton-row { height: 56px; margin-bottom: 0.5rem; }
 
-/* Error / empty */
-.error {
-  text-align: center;
-  padding: 2rem;
-  color: #dc2626;
-  background: #fef2f2;
-  border-radius: 10px;
-}
-
-.empty {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-}
-
-.no-results {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-  background: #f9fafb;
-  border-radius: 10px;
-  font-size: 0.95rem;
-}
-
 /* Sticky tabs */
 .category-tabs-wrapper {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: white;
+  background: var(--color-card);
   padding: 0.75rem 0;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .category-tabs {
@@ -354,8 +316,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #f8f9fa;
-  color: #374151;
+  background: var(--color-muted);
+  color: var(--color-foreground);
   border: 2px solid transparent;
   padding: 0.75rem 1rem;
   border-radius: 10px;
@@ -366,15 +328,15 @@ onMounted(async () => {
 }
 
 .category-tab:hover {
-  background: #e9ecef;
-  border-color: #667eea33;
+  background: var(--color-background-alt);
+  border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .category-tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  color: var(--color-primary-foreground);
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .tab-label { white-space: nowrap; }
@@ -421,17 +383,8 @@ onMounted(async () => {
 .search-input {
   width: 100%;
   padding: 0.6rem 2.25rem 0.6rem 2.25rem;
-  border: 2px solid #e5e7eb;
   border-radius: 10px;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
-}
-
-.search-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 .clear-search {
@@ -442,7 +395,7 @@ onMounted(async () => {
   background: none;
   border: none;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   font-size: 0.85rem;
   line-height: 1;
   padding: 0.15rem;
@@ -450,7 +403,7 @@ onMounted(async () => {
   transition: color 0.15s;
 }
 
-.clear-search:hover { color: #374151; }
+.clear-search:hover { color: var(--color-foreground); }
 
 .stats-row {
   display: flex;
@@ -459,8 +412,8 @@ onMounted(async () => {
 }
 
 .stat-chip {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-muted);
+  color: var(--color-foreground);
   font-size: 0.8rem;
   font-weight: 600;
   padding: 0.35rem 0.75rem;
@@ -480,7 +433,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: #f8f9fa;
+  background: var(--color-muted);
   border: 2px solid transparent;
   border-radius: 10px;
   cursor: pointer;
@@ -489,21 +442,21 @@ onMounted(async () => {
 }
 
 .book-title:hover {
-  background: #eef0fb;
-  border-color: #667eea44;
+  background: var(--color-primary-light);
+  border-color: color-mix(in srgb, var(--color-primary) 27%, transparent);
 }
 
 .book-title.expanded {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
   border-radius: 10px 10px 0 0;
 }
 
 .book-index {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   min-width: 1.5rem;
   text-align: right;
   flex-shrink: 0;
@@ -522,17 +475,17 @@ onMounted(async () => {
 
 .book-hebrew {
   font-weight: 700;
-  color: #667eea;
+  color: var(--color-primary);
   font-size: 1rem;
 }
 
 .book-title.expanded .book-hebrew,
 .book-title.expanded .book-english {
-  color: white;
+  color: var(--color-primary-foreground);
 }
 
 .book-separator {
-  color: #d1d5db;
+  color: var(--color-border);
   font-size: 0.85rem;
   flex-shrink: 0;
 }
@@ -540,14 +493,14 @@ onMounted(async () => {
 .book-title.expanded .book-separator { color: rgba(255,255,255,0.4); }
 
 .book-english {
-  color: #374151;
+  color: var(--color-foreground);
   font-size: 0.95rem;
   font-weight: 500;
 }
 
 .chapter-count-badge {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.55rem;
@@ -558,17 +511,17 @@ onMounted(async () => {
 
 .book-title.expanded .chapter-count-badge {
   background: rgba(255,255,255,0.2);
-  color: white;
+  color: var(--color-primary-foreground);
 }
 
 .expand-icon {
-  color: #9ca3af;
+  color: var(--color-muted-foreground);
   font-size: 1rem;
   flex-shrink: 0;
   transition: transform 0.2s;
 }
 
-.book-title.expanded .expand-icon { color: white; }
+.book-title.expanded .expand-icon { color: var(--color-primary-foreground); }
 
 /* Chapter grid */
 .chapters-grid {
@@ -576,8 +529,8 @@ onMounted(async () => {
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #f1f3fb;
-  border: 2px solid #667eea44;
+  background: var(--color-primary-light);
+  border: 2px solid color-mix(in srgb, var(--color-primary) 27%, transparent);
   border-top: none;
   border-radius: 0 0 10px 10px;
   margin-bottom: 0.25rem;
@@ -588,8 +541,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 0.65rem 0.5rem;
-  background: white;
-  border: 2px solid #e5e7eb;
+  background: var(--color-card);
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
@@ -597,25 +550,23 @@ onMounted(async () => {
 }
 
 .chapter-link:hover {
-  background: #667eea;
-  border-color: #667eea;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .chapter-number {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--color-foreground);
 }
 
-.chapter-link:hover .chapter-number { color: white; }
+.chapter-link:hover .chapter-number { color: var(--color-primary-foreground); }
 
 
 /* Responsive */
 @media (max-width: 768px) {
-  .manage-chapters { padding: 1rem; }
-
   .page-header {
     flex-direction: column;
     align-items: flex-start;
@@ -649,8 +600,6 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
-  .manage-chapters { padding: 0.5rem; }
-
   .page-header h1 { font-size: 1.2rem; }
 
   .category-tabs { flex-direction: column; gap: 0.4rem; }

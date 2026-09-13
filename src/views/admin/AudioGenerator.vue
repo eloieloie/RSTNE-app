@@ -1,32 +1,32 @@
 <template>
-  <div class="audio-generator">
-    <header class="page-header">
+  <div class="audio-generator admin-page">
+    <header class="admin-page-header">
       <div>
-        <h1>🔊 Verse Audio Generator</h1>
-        <p class="subtitle">Generate and validate text-to-speech audio for verses before shipping playback in the app.</p>
+        <h1 class="admin-title">🔊 Verse Audio Generator</h1>
+        <p class="admin-subtitle">Generate and validate text-to-speech audio for verses before shipping playback in the app.</p>
       </div>
-      <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
+      <router-link to="/admin" class="admin-back-link">← Back to Dashboard</router-link>
     </header>
 
     <!-- Picker -->
-    <div class="filters-bar">
-      <div class="filter-group">
-        <label>Book</label>
-        <select v-model.number="selectedBookId">
+    <div class="filters-bar admin-toolbar">
+      <div class="filter-group admin-form-group">
+        <label class="admin-label">Book</label>
+        <select v-model.number="selectedBookId" class="admin-select">
           <option :value="null">Select a book…</option>
           <option v-for="b in books" :key="b.book_id" :value="b.book_id">{{ b.book_name }}</option>
         </select>
       </div>
-      <div class="filter-group">
-        <label>Chapter</label>
-        <select v-model.number="selectedChapterId" :disabled="!selectedBookId">
+      <div class="filter-group admin-form-group">
+        <label class="admin-label">Chapter</label>
+        <select v-model.number="selectedChapterId" :disabled="!selectedBookId" class="admin-select">
           <option :value="null">Select a chapter…</option>
           <option v-for="c in chapters" :key="c.chapter_id" :value="c.chapter_id">{{ c.chapter_number }}</option>
         </select>
       </div>
-      <div class="filter-group">
-        <label>Language</label>
-        <select v-model="lang">
+      <div class="filter-group admin-form-group">
+        <label class="admin-label">Language</label>
+        <select v-model="lang" class="admin-select">
           <option value="en">English</option>
           <option value="te">Telugu</option>
         </select>
@@ -36,25 +36,25 @@
           <input v-model="regenerateAll" type="checkbox" />
           Regenerate already-ready verses too
         </label>
-        <button class="btn-primary" :disabled="!selectedChapterId || generatingAll || bookGenerating || rows.length === 0" @click="generateAll">
+        <button class="btn-primary admin-btn admin-btn--primary" :disabled="!selectedChapterId || generatingAll || bookGenerating || rows.length === 0" @click="generateAll">
           {{ generatingAll ? `Generating ${generateProgress.done}/${generateProgress.total}…` : 'Generate All in Chapter' }}
         </button>
-        <button v-if="generatingAll" class="btn-secondary" @click="stopRequested = true">Stop</button>
-        <button class="btn-primary" :disabled="!selectedBookId || generatingAll || bookGenerating || bookModalLoading || chapters.length === 0" @click="openBookModal">
+        <button v-if="generatingAll" class="btn-secondary admin-btn admin-btn--secondary" @click="stopRequested = true">Stop</button>
+        <button class="btn-primary admin-btn admin-btn--primary" :disabled="!selectedBookId || generatingAll || bookGenerating || bookModalLoading || chapters.length === 0" @click="openBookModal">
           {{ bookGenerating ? `Ch ${bookProgress.chapterDone}/${bookProgress.chapterTotal} · Verse ${bookProgress.verseDone}/${bookProgress.verseTotal}…` : bookModalLoading ? 'Checking…' : 'Generate All in Book' }}
         </button>
-        <button class="btn-primary btn-all-books" :disabled="allBooksGenerating || allBooksModalLoading || books.length === 0" @click="openAllBooksModal">
+        <button class="btn-primary btn-all-books admin-btn admin-btn--primary" :disabled="allBooksGenerating || allBooksModalLoading || books.length === 0" @click="openAllBooksModal">
           {{ allBooksGenerating ? `Book ${allBooksProgress.bookDone}/${allBooksProgress.bookTotal}…` : allBooksModalLoading ? 'Scanning…' : 'Generate All Books' }}
         </button>
-        <button class="btn-danger" :disabled="!selectedChapterId || resetting" @click="handleReset">
+        <button class="btn-danger admin-btn admin-btn--danger" :disabled="!selectedChapterId || resetting" @click="handleReset">
           {{ resetting ? 'Resetting…' : 'Reset All in Chapter' }}
         </button>
       </div>
     </div>
 
     <!-- Confirm-before-generate / progress modal -->
-    <div v-if="showBookModal" class="modal-overlay" @click.self="closeBookModal">
-      <div class="modal-box">
+    <div v-if="showBookModal" class="modal-overlay admin-modal-overlay" @click.self="closeBookModal">
+      <div class="modal-box admin-modal">
         <h2>Generate All in Book</h2>
 
         <template v-if="!bookGenerating && !bookDone">
@@ -74,9 +74,9 @@
           <p v-if="bookModalStats.noText > 0" class="modal-note">
             {{ bookModalStats.noText }} verse{{ bookModalStats.noText === 1 ? '' : 's' }} have no {{ langLabel }} text and will be skipped.
           </p>
-          <div class="modal-actions">
-            <button class="btn-secondary" @click="closeBookModal">Cancel</button>
-            <button class="btn-primary" :disabled="bookModalStats.toGenerate === 0" @click="confirmGenerateAllInBook">Confirm &amp; Generate</button>
+          <div class="modal-actions admin-modal-actions">
+            <button class="btn-secondary admin-btn admin-btn--secondary" @click="closeBookModal">Cancel</button>
+            <button class="btn-primary admin-btn admin-btn--primary" :disabled="bookModalStats.toGenerate === 0" @click="confirmGenerateAllInBook">Confirm &amp; Generate</button>
           </div>
         </template>
 
@@ -95,17 +95,17 @@
             <div class="progress-bar-fill" :style="{ width: versePercent + '%' }"></div>
           </div>
           <p v-if="bookDone" class="modal-note success">Done! Generated {{ bookModalStats.toGenerate }} verse audio file{{ bookModalStats.toGenerate === 1 ? '' : 's' }}.</p>
-          <div class="modal-actions">
-            <button v-if="bookGenerating" class="btn-secondary" @click="bookStopRequested = true">Stop</button>
-            <button v-else class="btn-primary" @click="closeBookModal">Close</button>
+          <div class="modal-actions admin-modal-actions">
+            <button v-if="bookGenerating" class="btn-secondary admin-btn admin-btn--secondary" @click="bookStopRequested = true">Stop</button>
+            <button v-else class="btn-primary admin-btn admin-btn--primary" @click="closeBookModal">Close</button>
           </div>
         </template>
       </div>
     </div>
 
     <!-- Generate All Books modal -->
-    <div v-if="showAllBooksModal" class="modal-overlay" @click.self="closeAllBooksModal">
-      <div class="modal-box modal-box--wide">
+    <div v-if="showAllBooksModal" class="modal-overlay admin-modal-overlay" @click.self="closeAllBooksModal">
+      <div class="modal-box modal-box--wide admin-modal">
         <h2>Generate All Books</h2>
 
         <template v-if="allBooksModalLoading">
@@ -117,8 +117,8 @@
           <div class="progress-bar">
             <div class="progress-bar-fill progress-bar-fill--green" :style="{ width: Math.round((allBooksScanning.done / (allBooksScanning.total || 1)) * 100) + '%' }"></div>
           </div>
-          <div class="modal-actions">
-            <button class="btn-secondary" @click="closeAllBooksModal">Cancel</button>
+          <div class="modal-actions admin-modal-actions">
+            <button class="btn-secondary admin-btn admin-btn--secondary" @click="closeAllBooksModal">Cancel</button>
           </div>
         </template>
 
@@ -140,9 +140,9 @@
           <p v-if="allBooksModalStats.noText > 0" class="modal-note">
             {{ allBooksModalStats.noText }} verse{{ allBooksModalStats.noText === 1 ? '' : 's' }} have no {{ langLabel }} text and will be skipped.
           </p>
-          <div class="modal-actions">
-            <button class="btn-secondary" @click="closeAllBooksModal">Cancel</button>
-            <button class="btn-primary" :disabled="allBooksModalStats.toGenerate === 0" @click="confirmGenerateAllBooks">Confirm &amp; Generate</button>
+          <div class="modal-actions admin-modal-actions">
+            <button class="btn-secondary admin-btn admin-btn--secondary" @click="closeAllBooksModal">Cancel</button>
+            <button class="btn-primary admin-btn admin-btn--primary" :disabled="allBooksModalStats.toGenerate === 0" @click="confirmGenerateAllBooks">Confirm &amp; Generate</button>
           </div>
         </template>
 
@@ -170,23 +170,23 @@
           <p v-if="allBooksDone" class="modal-note success">
             Done! Generated {{ allBooksModalStats.toGenerate }} verse audio file{{ allBooksModalStats.toGenerate === 1 ? '' : 's' }} across {{ allBooksModalStats.bookCount }} book{{ allBooksModalStats.bookCount === 1 ? '' : 's' }}.
           </p>
-          <div class="modal-actions">
-            <button v-if="allBooksGenerating" class="btn-secondary" @click="allBooksStopRequested = true">Stop</button>
-            <button v-else class="btn-primary" @click="closeAllBooksModal">Close</button>
+          <div class="modal-actions admin-modal-actions">
+            <button v-if="allBooksGenerating" class="btn-secondary admin-btn admin-btn--secondary" @click="allBooksStopRequested = true">Stop</button>
+            <button v-else class="btn-primary admin-btn admin-btn--primary" @click="closeAllBooksModal">Close</button>
           </div>
         </template>
       </div>
     </div>
 
     <!-- Status -->
-    <div v-if="loadError" class="state-msg error">{{ loadError }}</div>
-    <div v-else-if="!selectedChapterId" class="state-msg">Pick a book and chapter to view its verses.</div>
-    <div v-else-if="loading" class="state-msg">Loading verses…</div>
-    <div v-else-if="rows.length === 0" class="state-msg">No verses in this chapter.</div>
+    <div v-if="loadError" class="state-msg error admin-state admin-state--error">{{ loadError }}</div>
+    <div v-else-if="!selectedChapterId" class="state-msg admin-state">Pick a book and chapter to view its verses.</div>
+    <div v-else-if="loading" class="state-msg admin-state">Loading verses…</div>
+    <div v-else-if="rows.length === 0" class="state-msg admin-state">No verses in this chapter.</div>
 
     <!-- Table -->
-    <div v-else class="table-wrap">
-      <table class="verses-table">
+    <div v-else class="table-wrap admin-table-wrap">
+      <table class="verses-table admin-table">
         <thead>
           <tr>
             <th>#</th>
@@ -204,7 +204,10 @@
               <div v-else>{{ row.previewText }}</div>
             </td>
             <td class="status-cell">
-              <span class="status-badge" :class="row.status ?? 'none'">{{ row.status ?? 'not generated' }}</span>
+              <span
+                class="status-badge admin-badge"
+                :class="row.status === 'ready' ? 'admin-badge--success' : row.status === 'stale' ? 'admin-badge--warning' : row.status === 'failed' ? 'admin-badge--error' : 'admin-badge--neutral'"
+              >{{ row.status ?? 'not generated' }}</span>
               <div v-if="row.error" class="row-error" :title="row.error">{{ truncate(row.error, 80) }}</div>
             </td>
             <td class="listen-cell">
@@ -213,7 +216,7 @@
             </td>
             <td class="actions-cell">
               <button
-                class="action-btn"
+                class="action-btn admin-btn admin-btn--secondary admin-btn--sm"
                 :disabled="!row.sourceText || row.generating"
                 @click="generateOne(row, row.status === 'ready' || row.status === 'stale')"
               >
@@ -672,77 +675,30 @@ onMounted(loadBooks);
 </script>
 
 <style scoped>
+/* Layout, colors, fonts, buttons, table, badges, and modal chrome come from the
+   shared .admin-page / .admin-btn / .admin-table / .admin-badge / .admin-modal
+   classes (src/assets/admin-ui.css). Only this page's own layout tweaks and
+   the progress-bar styling (unique to this page) live here. */
+
 .audio-generator {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  font-family: inherit;
 }
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-}
-
-.page-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0; }
-.subtitle { margin: 0.35rem 0 0; color: #6b7280; font-size: 0.95rem; }
-
-.back-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-.back-link:hover { color: #1E40AF; }
-
-.btn-danger {
-  padding: 7px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-danger:hover:not(:disabled) { background: #fee2e2; }
-.btn-danger:disabled { opacity: 0.6; cursor: default; }
 
 .filters-bar {
-  display: flex;
   align-items: flex-end;
-  gap: 1.25rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
+  gap: var(--space-4);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
 }
 
 .filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filter-group label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b7280;
+  margin-bottom: 0;
 }
 
 .filter-group select {
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
   min-width: 160px;
 }
 
@@ -759,175 +715,74 @@ onMounted(loadBooks);
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-foreground);
   white-space: nowrap;
 }
 
-.btn-primary {
-  padding: 7px 14px;
-  border: none;
-  border-radius: 8px;
-  background: #667eea;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
+.btn-all-books {
+  background: var(--color-success);
 }
-.btn-primary:hover:not(:disabled) { background: #5568d3; }
-.btn-primary:disabled { opacity: 0.6; cursor: default; }
-.btn-all-books { background: #059669; }
-.btn-all-books:hover:not(:disabled) { background: #047857; }
+.btn-all-books:hover:not(:disabled) { filter: brightness(0.9); }
 
-.btn-secondary {
-  padding: 7px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-secondary:hover { background: #f9fafb; }
-
-.state-msg {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-}
-.state-msg.error { color: #dc2626; }
-.state-msg.book-progress {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  margin-top: 0.75rem;
-  background: #eff6ff;
-  color: #1e40af;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.75rem;
-  max-width: 460px;
-  width: 90%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-.modal-box h2 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-}
 .modal-box p {
   margin: 0 0 0.75rem;
   line-height: 1.5;
-  color: #374151;
+  color: var(--color-foreground);
 }
+
 .modal-note {
   font-size: 0.85rem;
-  color: #92400e;
-  background: #fffbeb;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  color: var(--color-note-title);
+  background: var(--color-note-bg);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-default);
 }
 .modal-note.success {
-  color: #065f46;
-  background: #ecfdf5;
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
 }
+
 .progress-bar {
   width: 100%;
   height: 10px;
-  background: #e5e7eb;
-  border-radius: 999px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 .progress-bar-fill {
   height: 100%;
-  background: #2563eb;
-  border-radius: 999px;
-  transition: width 0.2s ease;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-default);
 }
-.progress-bar-fill--green { background: #059669; }
-.progress-bar-fill--teal { background: #0d9488; }
+.progress-bar-fill--green { background: var(--color-success); }
+.progress-bar-fill--teal { background: var(--color-primary-hover); }
 
 .modal-box--wide { max-width: 540px; }
-.modal-scanning-progress { color: #374151; font-size: 0.9rem; margin-bottom: 0.25rem !important; }
-.progress-label { color: #6b7280; font-size: 0.875rem; }
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-.table-wrap {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: auto;
-}
-
-.verses-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
+.modal-scanning-progress { color: var(--color-foreground); font-size: 0.9rem; margin-bottom: 0.25rem !important; }
+.progress-label { color: var(--color-muted-foreground); font-size: 0.875rem; }
 
 .verses-table thead th {
-  text-align: left;
-  padding: 10px 14px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b7280;
   white-space: nowrap;
 }
 
-.verse-row { transition: background 0.1s; }
-.verse-row:hover { background: #f9fafb; }
+.verse-row { transition: background var(--duration-fast) var(--ease-default); }
 
 .verses-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #f3f4f6;
   vertical-align: top;
 }
 
-.idx-cell { white-space: nowrap; color: #6b7280; font-weight: 600; }
-.text-cell { line-height: 1.45; color: #111827; max-width: 480px; text-align: left; }
-.no-text { color: #9ca3af; font-style: italic; }
+.idx-cell { white-space: nowrap; color: var(--color-muted-foreground); font-weight: 600; }
+.text-cell { line-height: 1.45; color: var(--color-foreground); max-width: 480px; text-align: left; }
+.no-text { color: var(--color-muted-foreground); font-style: italic; }
 
 .status-cell { white-space: nowrap; }
-.status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.status-badge.ready { background: #dcfce7; color: #166534; }
-.status-badge.pending { background: #e0e7ff; color: #3730a3; }
-.status-badge.stale { background: #fef3c7; color: #92400e; }
-.status-badge.failed { background: #fee2e2; color: #991b1b; }
-.status-badge.none { background: #f3f4f6; color: #6b7280; }
+
 .row-error {
   margin-top: 4px;
   font-size: 11px;
-  color: #dc2626;
+  color: var(--color-error);
   max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
@@ -937,22 +792,8 @@ onMounted(loadBooks);
 .listen-cell audio { height: 32px; max-width: 220px; }
 
 .actions-cell { white-space: nowrap; }
-.action-btn {
-  background: #fff;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 6px;
-  transition: background 0.1s, border-color 0.1s;
-}
-.action-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #9ca3af; }
-.action-btn:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 640px) {
-  .audio-generator { padding: 1rem; }
   .filter-actions { margin-left: 0; }
 }
 </style>

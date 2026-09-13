@@ -1,13 +1,13 @@
 <template>
-  <div class="manage-timeline">
-    <header class="mte-header">
-      <h1>📜 Timeline Events</h1>
+  <div class="manage-timeline admin-page">
+    <header class="mte-header admin-page-header">
+      <h1 class="admin-title">📜 Timeline Events</h1>
       <div class="header-actions">
-        <router-link to="/timeline" class="preview-link" target="_blank">
+        <router-link to="/timeline" class="preview-link admin-btn admin-btn--secondary" target="_blank">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Preview Timeline
         </router-link>
-        <router-link to="/admin" class="back-link">← Admin</router-link>
+        <router-link to="/admin" class="admin-back-link">← Admin</router-link>
       </div>
     </header>
 
@@ -33,25 +33,25 @@
             v-model="searchQuery"
             type="text"
             placeholder="Search events…"
-            class="search-input"
+            class="search-input admin-input"
           />
-          <button class="add-btn" @click="startNew">
+          <button class="add-btn admin-btn admin-btn--primary" @click="startNew">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Event
           </button>
         </div>
 
-        <div v-if="loading" class="list-loading">
+        <div v-if="loading" class="list-loading admin-state">
           <div class="spinner"></div> Loading…
         </div>
-        <div v-else-if="filteredList.length === 0" class="list-empty">
+        <div v-else-if="filteredList.length === 0" class="list-empty admin-state">
           No events found.
         </div>
-        <div v-else class="event-list">
+        <div v-else class="event-list admin-list">
           <div
             v-for="ev in filteredList"
             :key="ev.event_id"
-            class="event-row"
+            class="event-row admin-list-item"
             :class="{ active: editingEvent?.event_id === ev.event_id }"
             @click="startEdit(ev)"
           >
@@ -63,9 +63,9 @@
               </div>
             </div>
             <div class="row-badges">
-              <span v-if="ev.is_jubilee" class="mini-badge jubilee">J</span>
-              <span v-if="ev.is_shemittah" class="mini-badge shemittah">S</span>
-              <button class="delete-btn" @click.stop="confirmDelete(ev)" title="Delete event">
+              <span v-if="ev.is_jubilee" class="mini-badge jubilee admin-badge admin-badge--warning">J</span>
+              <span v-if="ev.is_shemittah" class="mini-badge shemittah admin-badge admin-badge--info">S</span>
+              <button class="delete-btn admin-btn admin-btn--danger admin-btn--sm" @click.stop="confirmDelete(ev)" title="Delete event">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
               </button>
             </div>
@@ -75,7 +75,7 @@
 
       <!-- Right: form -->
       <div class="event-form-panel">
-        <div v-if="!editingEvent && !isNew" class="form-placeholder">
+        <div v-if="!editingEvent && !isNew" class="form-placeholder admin-state">
           <div class="placeholder-icon">📜</div>
           <p>Select an event to edit, or click <strong>Add Event</strong> to create a new one.</p>
         </div>
@@ -83,35 +83,35 @@
         <form v-else @submit.prevent="saveEvent" class="event-form">
           <div class="form-title-row">
             <h2>{{ isNew ? 'New Event' : 'Edit Event' }}</h2>
-            <button type="button" class="cancel-btn" @click="cancelEdit">Cancel</button>
+            <button type="button" class="cancel-btn admin-btn admin-btn--secondary admin-btn--sm" @click="cancelEdit">Cancel</button>
           </div>
 
           <!-- Title -->
-          <div class="field">
-            <label>Title <span class="required">*</span></label>
-            <input v-model="form.title" type="text" required placeholder="e.g. Creation, Nisan 1" />
+          <div class="field admin-form-group">
+            <label class="admin-label">Title <span class="required">*</span></label>
+            <input v-model="form.title" type="text" required placeholder="e.g. Creation, Nisan 1" class="admin-input" />
           </div>
 
           <!-- Description -->
-          <div class="field">
-            <label>Description</label>
-            <textarea v-model="form.description" rows="3" placeholder="Brief description of the event…"></textarea>
+          <div class="field admin-form-group">
+            <label class="admin-label">Description</label>
+            <textarea v-model="form.description" rows="3" placeholder="Brief description of the event…" class="admin-textarea"></textarea>
           </div>
 
           <!-- Year fields -->
           <div class="field-row">
-            <div class="field">
-              <label>AM Year <span class="required">*</span></label>
-              <input v-model.number="form.am_year" type="number" required min="1" max="6001" placeholder="e.g. 1" />
+            <div class="field admin-form-group">
+              <label class="admin-label">AM Year <span class="required">*</span></label>
+              <input v-model.number="form.am_year" type="number" required min="1" max="6001" placeholder="e.g. 1" class="admin-input" />
               <span class="field-hint">Anno Mundi (year since Creation)</span>
             </div>
-            <div class="field">
-              <label>BC / AD Year</label>
-              <input v-model.number="form.bc_ad_year" type="number" placeholder="e.g. 3925" />
+            <div class="field admin-form-group">
+              <label class="admin-label">BC / AD Year</label>
+              <input v-model.number="form.bc_ad_year" type="number" placeholder="e.g. 3925" class="admin-input" />
             </div>
-            <div class="field field-sm">
-              <label>Era</label>
-              <select v-model.number="form.is_bc">
+            <div class="field admin-form-group field-sm">
+              <label class="admin-label">Era</label>
+              <select v-model.number="form.is_bc" class="admin-select">
                 <option :value="1">BC</option>
                 <option :value="0">AD</option>
               </select>
@@ -120,16 +120,16 @@
 
           <!-- Date fields -->
           <div class="field-row">
-            <div class="field">
-              <label>Hebrew Month</label>
-              <select v-model="form.month_name">
+            <div class="field admin-form-group">
+              <label class="admin-label">Hebrew Month</label>
+              <select v-model="form.month_name" class="admin-select">
                 <option value="">— none —</option>
                 <option v-for="m in HEBREW_MONTHS" :key="m" :value="m">{{ m }}</option>
               </select>
             </div>
-            <div class="field field-sm">
-              <label>Day</label>
-              <input v-model.number="form.day_number" type="number" min="1" max="30" placeholder="e.g. 1" />
+            <div class="field admin-form-group field-sm">
+              <label class="admin-label">Day</label>
+              <input v-model.number="form.day_number" type="number" min="1" max="30" placeholder="e.g. 1" class="admin-input" />
             </div>
           </div>
 
@@ -146,36 +146,36 @@
           </div>
 
           <!-- Jubilee Reference -->
-          <div class="field">
-            <label>Jubilee Reference</label>
-            <input v-model="form.jubilee_ref" type="text" placeholder="e.g. Y1 S1 J1 O1" />
+          <div class="field admin-form-group">
+            <label class="admin-label">Jubilee Reference</label>
+            <input v-model="form.jubilee_ref" type="text" placeholder="e.g. Y1 S1 J1 O1" class="admin-input" />
             <span class="field-hint">Format: Y{year} S{shemittah} J{jubilee} O{onah}</span>
           </div>
 
           <!-- Category -->
           <div class="field-row">
-            <div class="field">
-              <label>Category</label>
-              <select v-model="form.category">
+            <div class="field admin-form-group">
+              <label class="admin-label">Category</label>
+              <select v-model="form.category" class="admin-select">
                 <option value="">— none —</option>
                 <option v-for="cat in CATEGORIES" :key="cat.key" :value="cat.key">{{ cat.label }}</option>
               </select>
             </div>
-            <div class="field field-sm">
-              <label>Sort Order</label>
-              <input v-model.number="form.sort_order" type="number" placeholder="e.g. 10" />
+            <div class="field admin-form-group field-sm">
+              <label class="admin-label">Sort Order</label>
+              <input v-model.number="form.sort_order" type="number" placeholder="e.g. 10" class="admin-input" />
             </div>
           </div>
 
           <!-- Bible Reference -->
-          <div class="field">
-            <label>Bible Reference</label>
-            <input v-model="form.bible_ref" type="text" placeholder="e.g. Genesis 1:1" />
+          <div class="field admin-form-group">
+            <label class="admin-label">Bible Reference</label>
+            <input v-model="form.bible_ref" type="text" placeholder="e.g. Genesis 1:1" class="admin-input" />
           </div>
 
           <!-- Actions -->
           <div class="form-actions">
-            <button type="submit" class="save-btn" :disabled="saving">
+            <button type="submit" class="save-btn admin-btn admin-btn--primary" :disabled="saving">
               <svg v-if="!saving" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               <div v-else class="spinner-sm"></div>
               {{ saving ? 'Saving…' : isNew ? 'Create Event' : 'Save Changes' }}
@@ -189,7 +189,7 @@
     <AnimatePresence>
       <motion.div
         v-if="deletingEvent"
-        class="modal-backdrop"
+        class="modal-backdrop admin-modal-overlay"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
         :exit="{ opacity: 0 }"
@@ -197,7 +197,7 @@
         @click.self="deletingEvent = null"
       >
         <motion.div
-          class="modal"
+          class="admin-modal"
           :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: 8 }"
           :animate="{ opacity: 1, scale: 1, y: 0 }"
           :exit="{ opacity: 0, scale: 0.94, y: 8 }"
@@ -205,9 +205,9 @@
         >
           <h3>Delete Event</h3>
           <p>Delete <strong>{{ deletingEvent.title }}</strong>? This cannot be undone.</p>
-          <div class="modal-actions">
-            <motion.button class="modal-cancel" :while-tap="tapScale" @click="deletingEvent = null">Cancel</motion.button>
-            <motion.button class="modal-confirm" :while-tap="tapScale" @click="doDelete" :disabled="saving">
+          <div class="modal-actions admin-modal-actions">
+            <motion.button class="modal-cancel admin-btn admin-btn--secondary" :while-tap="tapScale" @click="deletingEvent = null">Cancel</motion.button>
+            <motion.button class="modal-confirm admin-btn admin-btn--danger" :while-tap="tapScale" @click="doDelete" :disabled="saving">
               {{ saving ? 'Deleting…' : 'Delete' }}
             </motion.button>
           </div>
@@ -386,52 +386,35 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Layout, colors, fonts, buttons, form fields, list items, badges, and modal
+   come from the shared .admin-page / .admin-btn / .admin-list / .admin-badge /
+   .admin-form-group / .admin-modal classes (src/assets/admin-ui.css). Only this
+   page's two-panel split layout and category/jubilee accent colors live here. */
+
 .manage-timeline {
-  min-height: 100vh;
-  background: #f3f4f6;
+  /* Fixed height (not min-height) so .mte-body's flex:1 + min-height:0 can
+     actually cap the two-panel body at the viewport and let the event list
+     scroll internally — a min-height here lets 230+ events stretch the
+     whole page instead (pre-existing bug, made slightly worse by this
+     refactor's taller .admin-list-item padding; fixed while touching this file). */
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
-.mte-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1.25rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-.mte-header h1 { font-size: 1.5rem; margin: 0; }
-.header-actions { display: flex; gap: 0.75rem; align-items: center; }
-
-.preview-link, .back-link {
-  color: white;
-  text-decoration: none;
-  padding: 0.4rem 0.9rem;
-  background: rgba(255,255,255,0.2);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: background 0.2s;
-}
-.preview-link:hover, .back-link:hover { background: rgba(255,255,255,0.3); }
+.header-actions { display: flex; gap: var(--space-3); align-items: center; }
 
 /* ── Notification ────────────────────────────────────────────────── */
 .notification {
-  padding: 0.75rem 2rem;
-  font-size: 0.9rem;
+  padding: var(--space-3) var(--space-8);
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
-.notification.success { background: #d1fae5; color: #065f46; }
-.notification.error   { background: #fee2e2; color: #991b1b; }
+.notification.success { background: color-mix(in srgb, var(--color-success) 16%, transparent); color: var(--color-success); }
+.notification.error   { background: color-mix(in srgb, var(--color-error) 16%, transparent);   color: var(--color-error); }
 
-/* ── Body layout ─────────────────────────────────────────────────── */
+/* ── Body layout (two-panel split — page-specific) ──────────────────── */
 .mte-body {
   display: flex;
   flex: 1;
@@ -443,76 +426,45 @@ onMounted(async () => {
 .event-list-panel {
   width: 340px;
   min-width: 260px;
-  background: white;
-  border-right: 1px solid #e5e7eb;
+  background: var(--color-card);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .list-toolbar {
-  padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-.search-input {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.search-input:focus { border-color: #667eea; }
+.search-input { flex: 1; }
 
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.85rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.add-btn:hover { background: #5568d3; }
-
-.list-loading, .list-empty {
+.list-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: #9ca3af;
-  font-size: 0.9rem;
+  gap: var(--space-2);
 }
 
-.event-list { flex: 1; overflow-y: auto; }
+.event-list { padding: var(--space-4); overflow-y: auto; flex: 1; }
 
 .event-row {
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-default);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-  transition: background 0.1s;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
-.event-row:hover  { background: #f9fafb; }
-.event-row.active { background: #eff6ff; border-left: 3px solid #667eea; }
+.event-row:hover  { background: var(--color-background-alt); }
+.event-row.active { background: var(--color-primary-light); border-left: 3px solid var(--color-primary); }
 
 .row-left {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   min-width: 0;
 }
 .row-cat-dot {
@@ -522,44 +474,22 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .row-title {
-  font-size: 0.85rem;
   font-weight: 600;
-  color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
 }
-.row-year { font-size: 0.72rem; color: #6b7280; }
+.row-year { font-size: var(--font-size-xs); color: var(--color-muted-foreground); }
 
-.row-badges { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
-.mini-badge {
-  font-size: 0.6rem;
-  font-weight: 800;
-  padding: 0.1rem 0.35rem;
-  border-radius: 6px;
-}
-.mini-badge.jubilee   { background: #fef3c7; color: #92400e; }
-.mini-badge.shemittah { background: #ede9fe; color: #5b21b6; }
-
-.delete-btn {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 0.2rem;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  transition: color 0.15s, background 0.15s;
-}
-.delete-btn:hover { color: #dc2626; background: #fee2e2; }
+.row-badges { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
+.mini-badge { padding: 2px var(--space-2); font-weight: 800; }
 
 /* ── Form panel ──────────────────────────────────────────────────── */
 .event-form-panel {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
+  padding: var(--space-6) var(--space-8);
 }
 
 .form-placeholder {
@@ -568,165 +498,71 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #9ca3af;
-  gap: 0.75rem;
-  text-align: center;
+  gap: var(--space-3);
 }
 .placeholder-icon { font-size: 2.5rem; }
-.form-placeholder p { font-size: 0.9rem; }
 
 .form-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--space-5);
 }
-.form-title-row h2 { font-size: 1.2rem; font-weight: 700; color: #111827; margin: 0; }
+.form-title-row h2 { font-size: var(--font-size-lg); font-weight: 700; margin: 0; }
 
-.cancel-btn {
-  background: #f3f4f6;
-  border: none;
-  border-radius: 8px;
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
-  color: #374151;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.15s;
-}
-.cancel-btn:hover { background: #e5e7eb; }
+.event-form { display: flex; flex-direction: column; gap: var(--space-4); max-width: 680px; }
 
-.event-form { display: flex; flex-direction: column; gap: 1rem; max-width: 680px; }
-
-.field { display: flex; flex-direction: column; gap: 0.3rem; }
-.field label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.required { color: #dc2626; }
-.field-hint { font-size: 0.72rem; color: #9ca3af; }
-
-.field input, .field select, .field textarea {
-  padding: 0.55rem 0.75rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #1f2937;
-  outline: none;
-  transition: border-color 0.15s;
-  background: white;
-  font-family: inherit;
-}
-.field input:focus, .field select:focus, .field textarea:focus { border-color: #667eea; }
-.field textarea { resize: vertical; min-height: 80px; }
+.required { color: var(--color-error); }
+.field-hint { font-size: var(--font-size-xs); color: var(--color-muted-foreground); }
 
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
-.field-row.checkboxes { align-items: center; gap: 1.5rem; }
+.field-row.checkboxes { align-items: center; gap: var(--space-6); }
 .field-sm { max-width: 120px; }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   cursor: pointer;
 }
 .checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #667eea;
+  accent-color: var(--color-primary);
   cursor: pointer;
 }
-.cb-text { font-size: 0.88rem; font-weight: 600; }
-.jubilee-text   { color: #92400e; }
-.shemittah-text { color: #5b21b6; }
+.cb-text { font-size: var(--font-size-base); font-weight: 600; }
+.jubilee-text   { color: var(--color-warning); }
+.shemittah-text { color: var(--color-primary); }
 
-.form-actions { padding-top: 0.5rem; }
-.save-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1.5rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.save-btn:hover:not(:disabled) { background: #5568d3; }
-.save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.form-actions { padding-top: var(--space-2); }
 
 /* ── Spinner ─────────────────────────────────────────────────────── */
 .spinner {
   width: 20px; height: 20px;
-  border: 2.5px solid #e5e7eb;
-  border-top-color: #667eea;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 .spinner-sm {
   width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: white;
+  border: 2px solid color-mix(in srgb, var(--color-primary-foreground) 40%, transparent);
+  border-top-color: var(--color-primary-foreground);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Delete modal ────────────────────────────────────────────────── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-}
-.modal h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
-.modal p { color: #4b5563; font-size: 0.9rem; margin: 0 0 1.25rem; }
-.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-.modal-cancel {
-  padding: 0.5rem 1.25rem;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.modal-confirm {
-  padding: 0.5rem 1.25rem;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
-
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .mte-body { flex-direction: column; }
-  .event-list-panel { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; max-height: 280px; }
-  .event-form-panel { padding: 1rem; }
+  .event-list-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--color-border); max-height: 280px; }
+  .event-form-panel { padding: var(--space-4); }
   .field-row { grid-template-columns: 1fr; }
   .field-sm { max-width: none; }
 }

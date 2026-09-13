@@ -73,7 +73,76 @@
                   <svg v-else-if="chapterAudioPaused === selectedChapterId" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
+                <button
+                  v-if="isAdmin"
+                  class="audio-status-btn"
+                  :class="{ 'has-issues': audioStatusHasIssues }"
+                  title="Audio generation status (English / Telugu)"
+                  @click.stop="toggleAudioStatusPanel"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M21 16a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2z"/><path d="M3 16a2 2 0 0 0 2 2h1v-5H5a2 2 0 0 0-2 2z"/></svg>
+                </button>
               </div>
+
+              <AnimatePresence>
+                <motion.div
+                  v-if="showAudioStatusPanel"
+                  class="audio-status-panel"
+                  :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94, y: -6 }"
+                  :animate="{ opacity: 1, scale: 1, y: 0 }"
+                  :exit="{ opacity: 0, scale: 0.94, y: -6 }"
+                  :transition="tooltipSpring"
+                  @click.stop
+                >
+                  <div class="audio-status-header">
+                    <span>Audio generation status</span>
+                    <button class="audio-status-close" @click="showAudioStatusPanel = false" aria-label="Close">&times;</button>
+                  </div>
+
+                  <div v-if="audioStatusLoading" class="audio-status-loading">Loading…</div>
+
+                  <div v-else class="audio-status-body">
+                    <div v-for="lang in (['en', 'te'] as const)" :key="lang" class="audio-status-lang">
+                      <div class="audio-status-lang-name">{{ lang === 'en' ? 'English' : 'Telugu' }}</div>
+                      <div class="audio-status-counts">
+                        <span class="audio-count audio-count--ready">✅ {{ audioSummary(lang).ready }} ready</span>
+                        <span v-if="audioSummary(lang).stale" class="audio-count audio-count--stale">⚠️ {{ audioSummary(lang).stale }} stale</span>
+                        <span v-if="audioSummary(lang).missing" class="audio-count audio-count--missing">⬜ {{ audioSummary(lang).missing }} not generated</span>
+                      </div>
+                      <div class="audio-status-updated">
+                        Last updated: {{ audioSummary(lang).lastGenerated ? formatAudioDate(audioSummary(lang).lastGenerated!) : 'never' }}
+                      </div>
+                      <div class="audio-status-actions">
+                        <button
+                          v-if="audioSummary(lang).missing"
+                          class="audio-action-btn"
+                          :disabled="audioGenerateProgress !== null"
+                          @click="generateChapterAudio(lang, 'missing')"
+                        >
+                          {{ audioGenerateProgress?.lang === lang ? `Generating ${audioGenerateProgress.done}/${audioGenerateProgress.total}…` : `Generate missing (${audioSummary(lang).missing})` }}
+                        </button>
+                        <button
+                          v-if="audioSummary(lang).stale"
+                          class="audio-action-btn"
+                          :disabled="audioGenerateProgress !== null"
+                          @click="generateChapterAudio(lang, 'stale')"
+                        >
+                          {{ audioGenerateProgress?.lang === lang ? `Regenerating ${audioGenerateProgress.done}/${audioGenerateProgress.total}…` : `Regenerate stale (${audioSummary(lang).stale})` }}
+                        </button>
+                        <button
+                          v-if="audioSummary(lang).ready && !audioSummary(lang).missing && !audioSummary(lang).stale"
+                          class="audio-action-btn audio-action-btn--ghost"
+                          :disabled="audioGenerateProgress !== null"
+                          title="Force-regenerate every verse in this chapter, even ones already ready"
+                          @click="generateChapterAudio(lang, 'all')"
+                        >
+                          {{ audioGenerateProgress?.lang === lang ? `Regenerating ${audioGenerateProgress.done}/${audioGenerateProgress.total}…` : 'Regenerate all' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <motion.button class="verse-picker-button" :while-hover="hoverLift" :while-tap="tapScale" @click="showVersePicker = true">
@@ -572,7 +641,7 @@ import {
   linkPersonalNoteToVerse,
   unlinkPersonalNoteFromVerse,
 } from '@/api/personalNotes';
-import { getChapterAudio } from '@/api/verseAudio';
+import { getChapterAudio, generateVerseAudio, type ChapterAudioRow } from '@/api/verseAudio';
 import { getChapterAnnouncement } from '@/api/chapterAnnouncements';
 import type { VerseAudioLanguage } from '@/utils/collectionReferences';
 
@@ -871,6 +940,97 @@ watch(currentPlayingVerseId, (verseId) => {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
+
+// ── Audio generation status (admin only) ────────────────────────────────────
+// Informational read-out of verse_audio_tbl state for the current chapter,
+// plus generate/regenerate actions — mirrors the status semantics used in the
+// admin AudioGenerator tool (ready/stale/missing), scoped to one chapter so an
+// admin reading the live page can fix audio without leaving it.
+const showAudioStatusPanel = ref(false);
+const audioStatusLoading   = ref(false);
+const audioRowsEn = ref<ChapterAudioRow[]>([]);
+const audioRowsTe = ref<ChapterAudioRow[]>([]);
+const audioGenerateProgress = ref<{ lang: VerseAudioLanguage; done: number; total: number } | null>(null);
+
+function audioRowsFor(lang: VerseAudioLanguage): ChapterAudioRow[] {
+  return lang === 'en' ? audioRowsEn.value : audioRowsTe.value;
+}
+
+function audioSummary(lang: VerseAudioLanguage) {
+  const rows = audioRowsFor(lang);
+  const ready   = rows.filter(r => r.status === 'ready').length;
+  const stale   = rows.filter(r => r.status === 'stale' || r.status === 'failed').length;
+  const missing = rows.filter(r => r.status === null).length;
+  const generatedDates = rows.map(r => r.dt_generated).filter((d): d is string => !!d);
+  const lastGenerated = generatedDates.length ? generatedDates.reduce((a, b) => (a > b ? a : b)) : null;
+  return { ready, stale, missing, lastGenerated };
+}
+
+const audioStatusHasIssues = computed(() =>
+  (['en', 'te'] as const).some(lang => {
+    const s = audioSummary(lang);
+    return s.stale > 0 || s.missing > 0;
+  })
+);
+
+function formatAudioDate(value: string): string {
+  return new Date(value).toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+async function loadAudioStatus(chapterId: number) {
+  audioStatusLoading.value = true;
+  try {
+    const [en, te] = await Promise.all([
+      getChapterAudio(chapterId, 'en'),
+      getChapterAudio(chapterId, 'te'),
+    ]);
+    audioRowsEn.value = en;
+    audioRowsTe.value = te;
+  } catch (e) {
+    console.error('Failed to load audio status:', e);
+  } finally {
+    audioStatusLoading.value = false;
+  }
+}
+
+function toggleAudioStatusPanel() {
+  showAudioStatusPanel.value = !showAudioStatusPanel.value;
+  if (showAudioStatusPanel.value && selectedChapterId.value !== null) {
+    void loadAudioStatus(selectedChapterId.value);
+  }
+}
+
+// Close the panel (rather than leaving it open on stale data) whenever the
+// reader navigates to a different chapter.
+watch(selectedChapterId, () => {
+  showAudioStatusPanel.value = false;
+});
+
+async function generateChapterAudio(lang: VerseAudioLanguage, mode: 'missing' | 'stale' | 'all') {
+  const chapterId = selectedChapterId.value;
+  if (!chapterId || audioGenerateProgress.value !== null) return;
+
+  const rows = audioRowsFor(lang).filter(r => {
+    if (mode === 'missing') return r.status === null;
+    if (mode === 'stale') return r.status === 'stale' || r.status === 'failed';
+    return true; // 'all' — force-regenerate every verse regardless of status
+  });
+  if (!rows.length) return;
+
+  audioGenerateProgress.value = { lang, done: 0, total: rows.length };
+  for (const row of rows) {
+    try {
+      await generateVerseAudio(row.verse_id, lang, mode !== 'missing');
+    } catch (e) {
+      console.error(`Failed to generate ${lang} audio for verse ${row.verse_id}:`, e);
+    }
+    audioGenerateProgress.value = { lang, done: audioGenerateProgress.value.done + 1, total: rows.length };
+  }
+  audioGenerateProgress.value = null;
+  await loadAudioStatus(chapterId);
+}
 
 
 // ── Admin Notes (in-place editing) & My Notes (personal, per-user) ──────────
@@ -1961,7 +2121,16 @@ function formatVerseWithPaleoBora(text: string): string {
     }
     return match;
   });
-  
+
+  // Convert same-chapter forward/back references like "(→ v.2)" or "(→ v.10-21)"
+  // into clickable links that scroll to that verse within the current chapter.
+  // These are always a single verse number (or a range — only the first verse
+  // of a range is used as the scroll target), unlike the #BookAbbr links above
+  // which cross into a different book/chapter.
+  formatted = formatted.replace(/\(→\s*v\.(\d+)(?:-\d+)?\)/gi, (match, verseIndex) => {
+    return `<a href="#" class="inline-same-chapter-ref" data-target-verse-index="${verseIndex}">${match}</a>`;
+  });
+
   return formatted;
 }
 
@@ -2024,7 +2193,26 @@ async function handleTooltipVerseRefClick(event: Event) {
 // Handle clicks on inline verse references using event delegation
 async function handleVerseRefClick(event: Event) {
   const target = event.target as HTMLElement;
-  
+
+  // Same-chapter forward/back reference — e.g. "(→ v.2)" — smooth-scroll to
+  // that verse number within the chapter the click happened in, no tooltip.
+  if (target.tagName === 'A' && target.classList.contains('inline-same-chapter-ref')) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const targetVerseIndex = parseInt(target.getAttribute('data-target-verse-index') || '0');
+    const chapterSection = target.closest('.chapter-section') as HTMLElement | null;
+    const chapterId = parseInt(chapterSection?.getAttribute('data-chapter-id') || '0');
+    if (!targetVerseIndex || !chapterId) return;
+
+    const chapterData = loadedChapters.value.get(chapterId);
+    const targetVerse = chapterData?.verses.find(v => v.verse_index === targetVerseIndex);
+    if (targetVerse) {
+      scrollToVerse(targetVerse.verse_id);
+    }
+    return;
+  }
+
   // Check if clicked element is an inline verse reference link
   if (target.tagName === 'A' && target.classList.contains('inline-verse-ref')) {
     event.preventDefault();
@@ -2163,19 +2351,23 @@ function handleSearch() {
 function closeContextMenu(event: Event) {
   // Don't close if clicking on verse ref link, inside context menu, or cross-ref badge
   const target = event.target as HTMLElement;
-  if (target.closest('.context-menu') || 
-      target.closest('.cross-ref-tooltip') || 
+  if (target.closest('.context-menu') ||
+      target.closest('.cross-ref-tooltip') ||
       target.classList.contains('inline-verse-ref') ||
       target.classList.contains('cross-ref-badge')) {
     return;
   }
-  
+
   if (contextMenu.value.show) {
     contextMenu.value.show = false;
   }
-  
+
   if (crossRefTooltip.value.show) {
     crossRefTooltip.value.show = false;
+  }
+
+  if (showAudioStatusPanel.value && !target.closest('.audio-status-panel') && !target.closest('.audio-status-btn')) {
+    showAudioStatusPanel.value = false;
   }
 }
 
@@ -3396,6 +3588,19 @@ defineExpose({ showCrossRefTooltip });
   padding: 0;
 }
 
+/* Editor-authored inline highlights (background-color spans from the CMS's
+   rich-text editor) clip the descenders of below-base Telugu conjuncts (e.g.
+   ర్ణ) — the glyph ink extends past the font's own descent metrics, which is
+   what background-color painting is normally bounded by. Padding grows the
+   highlighted span's own painted box enough to contain them; box-decoration-break
+   keeps that padding correct on every line if the highlight wraps. */
+.verse-telugu :deep([style*="background-color"]),
+.verse-text :deep([style*="background-color"]) {
+  padding: 0.3em 0;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 :deep(.verse-telugu.inline p) {
   display: inline;
 }
@@ -3498,6 +3703,20 @@ defineExpose({ showCrossRefTooltip });
 :deep(.inline-verse-ref:hover) {
   color: var(--color-primary-hover);
   border-bottom: 1px solid var(--color-primary-hover);
+}
+
+/* Same-chapter "(→ v.N)" forward/back references — keep the verse text's own
+   red styling (inherit, don't force blue like cross-book refs) and just add
+   an interactive affordance. */
+:deep(.inline-same-chapter-ref) {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+
+:deep(.inline-same-chapter-ref:hover) {
+  opacity: 0.7;
 }
 
 /* Context Menu */
@@ -4163,6 +4382,145 @@ body {
 /* ── Chapter audio controls ───────────────────────────────────────────────── */
 .nav-audio-wrap {
   flex-shrink: 0;
+  position: relative;
+}
+
+.audio-status-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgb(255 255 255 / 0.18);
+  color: rgb(255 255 255 / 0.85);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.13s, transform 0.13s;
+}
+.audio-status-btn:hover {
+  background: rgb(255 255 255 / 0.32);
+  transform: scale(1.08);
+}
+.audio-status-btn.has-issues {
+  color: #ffd54a;
+}
+.audio-status-btn.has-issues::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff5252;
+  border: 1.5px solid var(--color-primary);
+}
+
+.audio-status-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 500;
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-tooltip, var(--shadow-lg));
+  overflow: hidden;
+  text-align: left;
+  color: var(--color-foreground);
+}
+
+.audio-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.audio-status-close {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-muted-foreground);
+  padding: 0 0.2rem;
+}
+
+.audio-status-loading {
+  padding: 1rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--color-muted-foreground);
+}
+
+.audio-status-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.audio-status-lang {
+  padding: 0.7rem 0.9rem;
+}
+.audio-status-lang + .audio-status-lang {
+  border-top: 1px solid var(--color-border);
+}
+
+.audio-status-lang-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.audio-status-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  margin-bottom: 0.3rem;
+}
+.audio-count--ready   { color: var(--color-success, #2e7d32); }
+.audio-count--stale   { color: var(--color-note-text, #b26a00); }
+.audio-count--missing { color: var(--color-muted-foreground); }
+
+.audio-status-updated {
+  font-size: 0.72rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 0.5rem;
+}
+
+.audio-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.audio-action-btn {
+  min-height: 30px;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+}
+.audio-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.audio-action-btn--ghost {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--color-foreground);
 }
 
 /* Nav audio pill — standalone (no .audio-group base, no specificity conflict) */

@@ -1,21 +1,21 @@
 <template>
-  <div class="punctuation-suggestions">
-    <header class="page-header">
+  <div class="punctuation-suggestions admin-page">
+    <header class="page-header admin-page-header">
       <div>
-        <h1>🎯 Punctuation Suggestions</h1>
-        <p class="subtitle">
+        <h1 class="admin-title">🎯 Punctuation Suggestions</h1>
+        <p class="subtitle admin-subtitle">
           Telugu verses where the local model suggests punctuation matching the English reference —
           review each side-by-side before applying. English text is shown as context only.
         </p>
       </div>
-      <router-link to="/admin" class="back-link">← Back to Dashboard</router-link>
+      <router-link to="/admin" class="admin-back-link">← Back to Dashboard</router-link>
     </header>
 
     <!-- Filters -->
-    <div class="filters-bar">
+    <div class="filters-bar admin-toolbar admin-card">
       <div class="filter-group">
         <label>Status</label>
-        <select v-model="filterStatus" @change="load">
+        <select v-model="filterStatus" class="admin-select" @change="load">
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
@@ -24,47 +24,47 @@
       </div>
       <div class="filter-group grow">
         <label>Search</label>
-        <input v-model="search" type="text" placeholder="Filter by reference or verse text…" />
+        <input v-model="search" type="text" placeholder="Filter by reference or verse text…" class="admin-input" />
       </div>
       <div class="filter-stats">
-        <span class="stat-badge total">{{ total }} total{{ filterStatus ? ` ${filterStatus}` : '' }}</span>
-        <span v-if="items.length < total" class="stat-badge capped" title="Only the most recent 1000 are loaded for review; approve/reject to work through the rest.">
+        <span class="stat-badge total admin-badge admin-badge--neutral">{{ total }} total{{ filterStatus ? ` ${filterStatus}` : '' }}</span>
+        <span v-if="items.length < total" class="stat-badge capped admin-badge admin-badge--warning" title="Only the most recent 1000 are loaded for review; approve/reject to work through the rest.">
           {{ items.length }} loaded
         </span>
-        <span class="stat-badge shown">{{ filtered.length }} shown</span>
+        <span class="stat-badge shown admin-badge admin-badge--info">{{ filtered.length }} shown</span>
       </div>
     </div>
 
     <!-- Loading / empty -->
-    <div v-if="loading" class="state-msg">Loading…</div>
-    <div v-else-if="error" class="state-msg error">{{ error }}</div>
-    <div v-else-if="items.length === 0" class="state-msg">
+    <div v-if="loading" class="state-msg admin-state">Loading…</div>
+    <div v-else-if="error" class="state-msg admin-state admin-state--error">{{ error }}</div>
+    <div v-else-if="items.length === 0" class="state-msg admin-state">
       🎉 No {{ filterStatus || '' }} suggestions right now — run the punctuation_corrector tool to generate some.
     </div>
-    <div v-else-if="filtered.length === 0" class="state-msg">No suggestions match the current filter.</div>
+    <div v-else-if="filtered.length === 0" class="state-msg admin-state">No suggestions match the current filter.</div>
 
     <!-- Cards -->
-    <div v-else class="suggestion-list">
-      <article v-for="item in filtered" :key="item.suggestion_id" class="suggestion-card">
+    <div v-else class="suggestion-list admin-list">
+      <article v-for="item in filtered" :key="item.suggestion_id" class="suggestion-card admin-list-item">
         <header class="card-header">
           <div class="card-ref">
             <span class="ref-book" :class="{ orphaned: !item.book_name }">
               {{ item.book_name || `Book #${item.book_id} (missing)` }}
             </span>
             <span class="ref-loc">{{ item.chapter_number }}:{{ item.verse_index ?? '—' }}</span>
-            <span :class="['status-badge', item.status]">{{ item.status }}</span>
+            <span :class="['status-badge', item.status, 'admin-badge', item.status === 'approved' ? 'admin-badge--success' : item.status === 'rejected' ? 'admin-badge--error' : 'admin-badge--warning']">{{ item.status }}</span>
           </div>
           <div class="card-actions">
             <span class="model-tag">{{ item.model_used }}</span>
             <template v-if="item.status === 'pending'">
-              <button class="action-btn approve" :disabled="busyId === item.suggestion_id" title="Apply to verses_tbl" @click="approve(item)">
+              <button class="action-btn approve admin-btn admin-btn--primary admin-btn--sm" :disabled="busyId === item.suggestion_id" title="Apply to verses_tbl" @click="approve(item)">
                 ✅ Approve
               </button>
-              <button class="action-btn reject" :disabled="busyId === item.suggestion_id" title="Dismiss" @click="reject(item)">
+              <button class="action-btn reject admin-btn admin-btn--danger admin-btn--sm" :disabled="busyId === item.suggestion_id" title="Dismiss" @click="reject(item)">
                 ❌ Reject
               </button>
             </template>
-            <button class="action-btn danger" :disabled="busyId === item.suggestion_id" title="Delete permanently" @click="remove(item)">
+            <button class="action-btn danger admin-btn admin-btn--danger admin-btn--sm" :disabled="busyId === item.suggestion_id" title="Delete permanently" @click="remove(item)">
               🗑️
             </button>
           </div>
@@ -222,222 +222,123 @@ onMounted(load);
 </script>
 
 <style scoped>
+/* Layout, colors, fonts, list items, badges, buttons, and form fields come from
+   the shared .admin-page / .admin-list / .admin-badge / .admin-btn / .admin-input
+   classes (src/assets/admin-ui.css). Only this page's stacked text-comparison
+   layout and diff-highlight styling live here. */
+
 .punctuation-suggestions {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  font-family: inherit;
-  text-align: left;
 }
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-}
-
-.page-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0; }
-.subtitle { margin: 0.35rem 0 0; color: #6b7280; font-size: 0.95rem; max-width: 640px; }
-
-.back-link {
-  color: #6b7280;
-  text-decoration: none;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-.back-link:hover { color: #1E40AF; }
+.subtitle { max-width: 640px; }
 
 /* Filters */
 .filters-bar {
-  display: flex;
   align-items: flex-end;
-  gap: 1.25rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .filter-group.grow { flex: 1; min-width: 200px; }
+.filter-group.grow .admin-input { width: 100%; }
 
 .filter-group label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
 }
-
-.filter-group select,
-.filter-group input {
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  min-width: 140px;
-}
-.filter-group.grow input { width: 100%; }
 
 .filter-stats {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   margin-left: auto;
 }
 
-.stat-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.stat-badge.total { background: #fee2e2; color: #991b1b; }
-.stat-badge.capped { background: #fef3c7; color: #92400e; }
-.stat-badge.shown { background: #e0e7ff; color: #3730a3; }
-
 /* Suggestion cards */
-.suggestion-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.suggestion-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 20px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--space-3);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-background-alt);
+  border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-default) var(--radius-default) 0 0;
 }
 
 .card-ref {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
-.ref-book { font-weight: 700; font-size: 15px; color: #111827; }
-.ref-book.orphaned { color: #b45309; font-style: italic; }
-.ref-loc { color: #6b7280; font-size: 14px; }
+.ref-book { font-weight: 700; }
+.ref-book.orphaned { color: var(--color-warning); font-style: italic; }
+.ref-loc { color: var(--color-muted-foreground); font-size: var(--font-size-sm); }
 
 .card-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .model-tag {
-  color: #6b7280;
-  font-size: 12px;
-  padding: 4px 8px;
-  background: #eef2ff;
-  border-radius: 6px;
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-default);
   white-space: nowrap;
 }
-
-.status-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.status-badge.pending { background: #fef3c7; color: #92400e; }
-.status-badge.approved { background: #d1fae5; color: #065f46; }
-.status-badge.rejected { background: #fee2e2; color: #991b1b; }
-
-.action-btn {
-  background: #fff;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 12px;
-  min-height: 32px;
-  border-radius: 6px;
-  transition: background 0.1s, border-color 0.1s;
-}
-.action-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #9ca3af; }
-.action-btn:disabled { opacity: 0.5; cursor: default; }
-
-.action-btn.approve { border-color: #10b981; color: #065f46; }
-.action-btn.approve:hover:not(:disabled) { background: #d1fae5; }
-.action-btn.reject { border-color: #f59e0b; color: #92400e; }
-.action-btn.reject:hover:not(:disabled) { background: #fef3c7; }
-.action-btn.danger { border-color: #ef4444; color: #991b1b; }
-.action-btn.danger:hover:not(:disabled) { background: #fee2e2; }
 
 /* Stacked English → Original → Suggested text blocks */
 .card-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
+  gap: var(--space-5);
 }
 
-.text-block { display: flex; flex-direction: column; gap: 6px; }
+.text-block { display: flex; flex-direction: column; gap: var(--space-2); }
 
 .text-label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
+  color: var(--color-muted-foreground);
 }
 .text-label-note { font-weight: 500; text-transform: none; letter-spacing: 0; }
 
 .text-content {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-md);
   line-height: 1.7;
-  color: #111827;
 }
-.text-content.telugu { font-size: 17px; }
+.text-content.telugu { font-size: var(--font-size-lg); }
 
-.english-block .text-content { color: #4b5563; font-style: italic; }
+.english-block .text-content { color: var(--color-muted-foreground); font-style: italic; }
 
 .suggested-text :deep(.highlight) {
-  background: #d1fae5;
-  color: #065f46;
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  color: var(--color-success);
   font-weight: 700;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   padding: 0 2px;
 }
 
-/* State messages */
-.state-msg {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-}
-.state-msg.error { color: #dc2626; }
-
 @media (max-width: 640px) {
-  .punctuation-suggestions { padding: 1rem; }
   .filter-stats { margin-left: 0; }
 }
 </style>

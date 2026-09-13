@@ -1,19 +1,19 @@
 <template>
-  <div class="compare-page">
-    <header class="compare-header">
+  <div class="compare-page admin-page">
+    <header class="compare-header admin-page-header">
       <div class="header-left">
-        <router-link to="/admin" class="back-link">← Admin Dashboard</router-link>
-        <h1>📑 Compare Book with RSTNE Page</h1>
+        <router-link to="/admin" class="back-link admin-back-link">← Admin Dashboard</router-link>
+        <h1 class="admin-title">📑 Compare Book with RSTNE Page</h1>
       </div>
       <div class="header-right">
-        <button class="ignore-btn" @click="showIgnorePanel = !showIgnorePanel">
+        <button class="ignore-btn admin-btn admin-btn--secondary" @click="showIgnorePanel = !showIgnorePanel">
           🚫 Ignore List ({{ ignorePairs.length }})
         </button>
       </div>
     </header>
 
     <!-- Ignore list panel -->
-    <div v-if="showIgnorePanel" class="ignore-panel">
+    <div v-if="showIgnorePanel" class="ignore-panel admin-card">
       <div class="ignore-panel-header">
         <strong>Ignored word pairs</strong>
         <span class="ignore-hint">
@@ -26,30 +26,30 @@
           <span class="ignore-word">{{ pair.left }}</span>
           <span class="ignore-arrow">↔</span>
           <span class="ignore-word">{{ pair.right }}</span>
-          <button class="ignore-remove" @click="removeIgnorePair(idx)" title="Remove">✕</button>
+          <button class="ignore-remove admin-btn admin-btn--danger admin-btn--sm" @click="removeIgnorePair(idx)" title="Remove">✕</button>
         </li>
         <li v-if="ignorePairsLoading" class="ignore-empty">Loading…</li>
         <li v-else-if="ignorePairs.length === 0" class="ignore-empty">No ignored pairs yet.</li>
       </ul>
       <div class="ignore-add-form">
-        <input v-model="newIgnoreLeft" placeholder="DB word (e.g. HWHY)" @keyup.enter="addManualIgnorePair" />
+        <input v-model="newIgnoreLeft" class="admin-input" placeholder="DB word (e.g. HWHY)" @keyup.enter="addManualIgnorePair" />
         <span>↔</span>
-        <input v-model="newIgnoreRight" placeholder="RSTNE word (e.g. YHUH)" @keyup.enter="addManualIgnorePair" />
-        <button @click="addManualIgnorePair">Add</button>
+        <input v-model="newIgnoreRight" class="admin-input" placeholder="RSTNE word (e.g. YHUH)" @keyup.enter="addManualIgnorePair" />
+        <button class="admin-btn admin-btn--primary admin-btn--sm" @click="addManualIgnorePair">Add</button>
       </div>
     </div>
 
     <!-- Picking-a-pair banner -->
     <div v-if="pendingIgnoreLeft" class="pending-ignore-banner">
       Picking pair for “{{ pendingIgnoreLeft }}” — click the matching word on the RSTNE side to ignore this difference.
-      <button @click="pendingIgnoreLeft = null">Cancel</button>
+      <button class="admin-btn admin-btn--secondary admin-btn--sm" @click="pendingIgnoreLeft = null">Cancel</button>
     </div>
 
     <!-- Book Selector -->
     <div class="selector-bar">
       <div class="selector-inner">
-        <label for="book-select">Select a Book:</label>
-        <select id="book-select" v-model="selectedBookId" @change="onBookChange" :disabled="loadingBooks">
+        <label for="book-select" class="admin-label">Select a Book:</label>
+        <select id="book-select" class="admin-select" v-model="selectedBookId" @change="onBookChange" :disabled="loadingBooks">
           <option value="">-- Choose a book --</option>
           <option
             v-for="book in booksWithLink"
@@ -61,22 +61,22 @@
         </select>
         <span v-if="loadingBooks" class="inline-spinner">Loading books…</span>
         <span v-if="booksWithLink.length === 0 && !loadingBooks" class="warning-text">
-          No books have a <code>book_link</code> set yet.
+          No books have a <code class="admin-mono">book_link</code> set yet.
         </span>
         <span v-else-if="!loadingBooks" class="link-coverage-text">
-          {{ booksWithLink.length }} of {{ allBooks.length }} books have a <code>book_link</code> —
+          {{ booksWithLink.length }} of {{ allBooks.length }} books have a <code class="admin-mono">book_link</code> —
           missing #s: {{ missingBookIndexes }}
         </span>
       </div>
 
       <!-- Stats bar when loaded -->
       <div v-if="selectedBook && !loading" class="stats-bar">
-        <span class="stat">📖 {{ selectedBook.book_name }}</span>
-        <span class="stat">Chapters: {{ dbChapters.length }}</span>
-        <span class="stat total-diff" :class="{ 'has-diff': totalDiffCount > 0 }">
+        <span class="stat admin-badge admin-badge--neutral">📖 {{ selectedBook.book_name }}</span>
+        <span class="stat admin-badge admin-badge--neutral">Chapters: {{ dbChapters.length }}</span>
+        <span class="stat admin-badge total-diff" :class="{ 'has-diff': totalDiffCount > 0 }">
           Differences: {{ totalDiffCount }}
         </span>
-        <span class="stat matched-stat">✅ Matched: {{ totalMatchedCount }}</span>
+        <span class="stat admin-badge matched-stat">✅ Matched: {{ totalMatchedCount }}</span>
         <label class="hide-matched-toggle">
           <input type="checkbox" v-model="hideMatched" />
           Hide matched verses
@@ -88,15 +88,15 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
+    <div v-if="loading" class="loading-state admin-state">
       <div class="spinner"></div>
       <p>{{ loadingMessage }}</p>
     </div>
 
     <!-- Error State -->
-    <div v-if="error" class="error-state">
+    <div v-if="error" class="error-state admin-state admin-state--error">
       <p>⚠️ {{ error }}</p>
-      <button @click="loadComparison">Retry</button>
+      <button class="admin-btn admin-btn--primary" @click="loadComparison">Retry</button>
     </div>
 
     <!-- Comparison View -->
@@ -172,10 +172,10 @@
     </div>
 
     <!-- Empty state after selection -->
-    <div v-if="!loading && !error && selectedBookId && dbChapters.length === 0" class="empty-state">
+    <div v-if="!loading && !error && selectedBookId && dbChapters.length === 0" class="empty-state admin-state">
       No chapters found in database for this book.
     </div>
-    <div v-if="!loading && !error && dbChapters.length > 0 && displayedChapters.length === 0" class="empty-state">
+    <div v-if="!loading && !error && dbChapters.length > 0 && displayedChapters.length === 0" class="empty-state admin-state">
       All verses match — nothing to show with "Hide matched verses" enabled.
     </div>
   </div>
@@ -583,7 +583,7 @@ async function loadComparison() {
       const batch = chapters.slice(b, b + BATCH_SIZE);
       loadingMessage.value = `Loading verses… (${Math.min(b + BATCH_SIZE, chapters.length)} / ${chapters.length})`;
       const results = await Promise.all(
-        batch.map(ch => getVersesByChapterId(ch.chapter_id))
+        batch.map(ch => fetchVersesWithRetry(ch.chapter_id))
       );
       batch.forEach((ch, idx) => newMap.set(ch.chapter_id, results[idx]));
     }
@@ -594,6 +594,23 @@ async function loadComparison() {
   } finally {
     loading.value = false;
   }
+}
+
+// The shared GoDaddy host occasionally drops a request under a burst of
+// concurrent connections (10 chapters fetched in parallel per batch above),
+// which surfaces in the browser as a CORS/network failure even though the
+// server itself is configured correctly. Retry transient failures instead of
+// aborting the whole comparison.
+async function fetchVersesWithRetry(chapterId: number, attempts = 3): Promise<Verse[]> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await getVersesByChapterId(chapterId);
+    } catch (e) {
+      if (attempt === attempts) throw e;
+      await new Promise(resolve => setTimeout(resolve, 300 * attempt));
+    }
+  }
+  throw new Error('unreachable');
 }
 
 async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }> {
@@ -608,21 +625,21 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 </script>
 
 <style scoped>
-/* ── Layout ──────────────────────────────────────────────────────────────── */
-.compare-page {
-  min-height: 100vh;
-  background: #f0f2f5;
-  font-family: 'Segoe UI', sans-serif;
+/* Page background, text color, and font come from .admin-page (admin-ui.css).
+   The old purple/blue gradient header and white-on-color chrome are
+   superseded by .admin-page-header / .admin-title / .admin-back-link /
+   .admin-btn. This page keeps its full-bleed toolbar layout (header,
+   selector bar, ignore panel span the full width rather than the shared
+   1200px centered column), so .admin-page's own padding is zeroed out here
+   and each bar keeps its own horizontal padding instead. */
+.compare-page.admin-page {
+  padding: 0;
 }
 
 .compare-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  max-width: none;
+  margin: 0;
   padding: 1.2rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .header-left {
@@ -636,25 +653,9 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   align-items: center;
 }
 
-.ignore-btn {
-  padding: 0.45rem 0.9rem;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-.ignore-btn:hover { background: rgba(255,255,255,0.35); }
-
 /* ── Ignore list panel ──────────────────────────────────────────────────── */
 .ignore-panel {
-  background: #2c2c3a;
-  color: #eee;
-  padding: 1rem 2rem;
+  margin: 0 2rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -667,7 +668,7 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 }
 .ignore-hint {
   font-size: 0.82rem;
-  color: #bbb;
+  color: var(--color-muted-foreground);
 }
 
 .ignore-list {
@@ -682,23 +683,14 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: #3d3d4d;
-  border-radius: 6px;
+  background: var(--color-muted);
+  border-radius: var(--radius-default);
   padding: 0.3rem 0.5rem;
   font-size: 0.85rem;
 }
 .ignore-word { font-weight: 600; }
-.ignore-arrow { color: #999; }
-.ignore-empty { color: #999; font-style: italic; background: transparent; }
-.ignore-remove {
-  background: none;
-  border: none;
-  color: #f18a8a;
-  cursor: pointer;
-  font-size: 0.85rem;
-  padding: 0 0.2rem;
-}
-.ignore-remove:hover { color: #ff5252; }
+.ignore-arrow { color: var(--color-muted-foreground); }
+.ignore-empty { color: var(--color-muted-foreground); font-style: italic; background: transparent; }
 
 .ignore-add-form {
   display: flex;
@@ -706,66 +698,25 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   gap: 0.5rem;
 }
 .ignore-add-form input {
-  padding: 0.35rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background: #1f1f2b;
-  color: #eee;
   font-size: 0.85rem;
 }
-.ignore-add-form button {
-  padding: 0.35rem 0.9rem;
-  border-radius: 6px;
-  border: none;
-  background: #667eea;
-  color: white;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.ignore-add-form button:hover { background: #5a6fd8; }
 
 /* ── Pending-pick banner ─────────────────────────────────────────────────── */
 .pending-ignore-banner {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--color-note-bg);
+  color: var(--color-note-text);
+  border-left: 3px solid var(--color-note-border);
   padding: 0.6rem 2rem;
   font-size: 0.88rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-.pending-ignore-banner button {
-  padding: 0.25rem 0.7rem;
-  border: none;
-  border-radius: 5px;
-  background: #856404;
-  color: white;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.compare-header h1 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-.back-link {
-  color: rgba(255,255,255,0.85);
-  text-decoration: none;
-  padding: 0.4rem 0.9rem;
-  background: rgba(255,255,255,0.2);
-  border-radius: 6px;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-.back-link:hover { background: rgba(255,255,255,0.35); }
 
 /* ── Selector bar ────────────────────────────────────────────────────────── */
 .selector-bar {
-  background: white;
-  border-bottom: 1px solid #dde1e9;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
   padding: 1rem 2rem;
   display: flex;
   flex-wrap: wrap;
@@ -780,41 +731,28 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   flex-shrink: 0;
 }
 
-.selector-inner label {
-  font-weight: 600;
-  color: #333;
-  white-space: nowrap;
-}
-
 #book-select {
-  padding: 0.45rem 0.8rem;
-  border: 1.5px solid #c0c7d8;
-  border-radius: 6px;
-  font-size: 1rem;
   min-width: 260px;
-  background: #fafbff;
-  cursor: pointer;
-  transition: border-color 0.2s;
 }
-#book-select:focus { outline: none; border-color: #667eea; }
 
 .inline-spinner {
-  color: #888;
+  color: var(--color-muted-foreground);
   font-size: 0.9rem;
   font-style: italic;
 }
 .warning-text {
-  color: #c0392b;
+  color: var(--color-error);
   font-size: 0.9rem;
 }
 .link-coverage-text {
-  color: #666;
+  color: var(--color-muted-foreground);
   font-size: 0.85rem;
 }
+.warning-text code,
 .link-coverage-text code {
-  background: #f0f2f5;
+  background: var(--color-muted);
   padding: 0.05rem 0.3rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .stats-bar {
@@ -823,28 +761,20 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   gap: 1.2rem;
   flex-wrap: wrap;
 }
-.stat {
-  font-size: 0.9rem;
-  color: #555;
-  background: #f0f2f5;
-  padding: 0.3rem 0.7rem;
-  border-radius: 6px;
-}
 .stat.total-diff.has-diff {
-  background: #fff3cd;
-  color: #856404;
-  font-weight: 600;
+  background: var(--color-note-bg);
+  color: var(--color-note-text);
 }
 .stat.matched-stat {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
 }
 .hide-matched-toggle {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-muted-foreground);
   cursor: pointer;
   user-select: none;
 }
@@ -853,55 +783,33 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 }
 .rstne-link {
   font-size: 0.85rem;
-  color: #667eea;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
 .rstne-link:hover { text-decoration: underline; }
 
-/* ── Loading / error ─────────────────────────────────────────────────────── */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 5rem 2rem;
-  gap: 1rem;
-  color: #555;
-}
-.spinner {
-  width: 44px;
-  height: 44px;
-  border: 4px solid #e0e0e0;
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
+/* ── Loading / error ───────────────────────────────────────────────────────
+   Color/padding/text-align come from .admin-state / .admin-state--error;
+   this keeps only the flex centering layout and the spinner, which aren't
+   part of the shared class. */
+.loading-state,
 .error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3rem 2rem;
+  justify-content: center;
   gap: 1rem;
-  color: #c0392b;
 }
-.error-state button {
-  padding: 0.5rem 1.5rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
-
-.empty-state {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: #888;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Compare columns ─────────────────────────────────────────────────────── */
 .compare-container {
@@ -925,20 +833,28 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   font-weight: 700;
   font-size: 1rem;
   padding: 0.6rem 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-default);
   letter-spacing: 0.02em;
 }
+/* Database = blue / RSTNE Page = green is a two-source brand color-code
+   reused across this header, the chapter-title bars, the "Matched" stat
+   pill, and the missing-on-RSTNE row highlight below. Left as literal hex
+   rather than tokenized: the app's blue/green-adjacent tokens (--color-cat-2,
+   --color-success) are reserved for book-category tagging and generic
+   success states elsewhere in the app, so reusing them here would blur
+   those meanings, and tokenizing only some of the repeated usages would
+   break the intentional visual pairing between them. */
 .db-header    { background: #e8f4fd; color: #1565c0; }
 .rstne-header { background: #e8f5e9; color: #2e7d32; }
 
 /* ── Chapter block ───────────────────────────────────────────────────────── */
 .chapter-block {
   margin-bottom: 1rem;
-  border: 1px solid #dde1e9;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  background: var(--color-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .chapter-title-row {
@@ -961,11 +877,11 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 .verse-count {
   font-weight: 400;
   font-size: 0.82rem;
-  color: #888;
+  color: var(--color-muted-foreground);
 }
 .count-mismatch {
   font-size: 0.8rem;
-  color: #e65100;
+  color: var(--color-warning);
   font-weight: 600;
 }
 
@@ -973,20 +889,21 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 .verse-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid var(--color-border);
   transition: background 0.1s;
 }
 
 .verse-row.verse-identical:hover {
-  background: #fafbff;
+  background: var(--color-background-alt);
 }
 .verse-row.verse-different {
-  background: #fffde7;
+  background: var(--color-note-bg);
 }
 .verse-row.verse-missing-db {
-  background: #fce4ec;
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 .verse-row.verse-missing-rstne {
+  /* Matches the RSTNE-column brand green above — see note-block comment. */
   background: #e8f5e9;
 }
 
@@ -999,12 +916,12 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
   align-items: flex-start;
   text-align: left;
 }
-.db-cell    { border-right: 1px solid #e8eaf0; }
+.db-cell    { border-right: 1px solid var(--color-border); }
 .rstne-cell { background: transparent; }
 
 .verse-num {
   font-weight: 700;
-  color: #999;
+  color: var(--color-muted-foreground);
   font-size: 0.78rem;
   flex-shrink: 0;
   min-width: 1.8rem;
@@ -1013,18 +930,19 @@ async function fetchRstnePage(url: string): Promise<{ chapters: RstneChapter[] }
 
 .verse-text {
   flex: 1;
-  color: #2c2c2c;
+  color: var(--color-foreground);
 }
 
 .missing-tag {
-  color: #bbb;
+  color: var(--color-muted-foreground);
   font-style: italic;
   font-size: 0.88rem;
 }
 
-/* ── Diff highlights ─────────────────────────────────────────────────────── */
-.diff-same    { color: #2c2c2c; }
-.diff-removed { background: #ffcdd2; color: #b71c1c; border-radius: 3px; padding: 0 1px; cursor: pointer; }
-.diff-added   { background: #c8e6c9; color: #1b5e20; border-radius: 3px; padding: 0 1px; cursor: pointer; }
-.diff-removed:hover, .diff-added:hover { outline: 2px solid #667eea; outline-offset: 1px; }
+/* ── Diff highlights ──────────────────────────────────────────────────────
+   Insertions/deletions map cleanly onto the success/error tokens. */
+.diff-same    { color: var(--color-foreground); }
+.diff-removed { background: color-mix(in srgb, var(--color-error) 20%, transparent); color: var(--color-error); border-radius: 3px; padding: 0 1px; cursor: pointer; }
+.diff-added   { background: color-mix(in srgb, var(--color-success) 20%, transparent); color: var(--color-success); border-radius: 3px; padding: 0 1px; cursor: pointer; }
+.diff-removed:hover, .diff-added:hover { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 </style>

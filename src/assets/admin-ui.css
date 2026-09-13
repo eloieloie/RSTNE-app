@@ -1,0 +1,375 @@
+/* RSTNE Admin UI — shared component classes for the /admin/* section.
+   Built entirely on tokens from design-tokens.css (see design-system/MASTER.md §8.7).
+   Class names are all prefixed `admin-` so they never collide with reading-UI styles.
+   Every admin page should wrap its root element in `.admin-page` so these tokens
+   (font, color, spacing) cascade to the whole page instead of being redeclared per file.
+
+   Every selector below (other than `.admin-page` itself) is scoped under `.admin-page`
+   as an ancestor. This isn't for matching precision — every admin-* element really is
+   inside `.admin-page` — it's to guarantee specificity (0,2,0), which beats any bare
+   single-class Bootstrap selector (`.btn`, `.btn-primary`, `.card-header`, `.modal`,
+   `.modal-backdrop`, ...) regardless of stylesheet import order. Several admin pages
+   still carry those legacy Bootstrap classes alongside the new admin-* ones (kept for
+   layout reasons during the migration), and Bootstrap's CSS is loaded globally for the
+   rest of the app, so without this, Bootstrap's defaults silently win on tied specificity. */
+
+.admin-page {
+  min-height: 100vh;
+  background: var(--color-background-alt);
+  color: var(--color-foreground);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  padding: var(--space-8) var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .admin-page {
+    padding: var(--space-4);
+  }
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.admin-page .admin-page-header {
+  max-width: 1200px;
+  margin: 0 auto var(--space-8);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.admin-page .admin-page-header h1,
+.admin-page .admin-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.admin-page .admin-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted-foreground);
+  margin: var(--space-1) 0 0;
+}
+
+.admin-page .admin-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-default);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.admin-page .admin-back-link:hover {
+  background: var(--color-muted);
+  color: var(--color-primary-hover);
+}
+
+/* ── Toolbar (filters, search, bulk actions) ─────────────────────────────── */
+
+.admin-page .admin-toolbar {
+  max-width: 1200px;
+  margin: 0 auto var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.admin-page .admin-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────
+   Base `.admin-btn` + one modifier. All meet the 44px touch-target minimum. */
+
+.admin-page .admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-default);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default),
+              opacity var(--duration-fast) var(--ease-default);
+}
+
+.admin-page .admin-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-page .admin-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.admin-page .admin-btn--sm {
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+}
+
+.admin-page .admin-btn--primary {
+  background: var(--color-admin-accent);
+  color: var(--color-primary-foreground);
+}
+.admin-page .admin-btn--primary:hover:not(:disabled) {
+  background: var(--color-admin-accent-hover);
+  /* Explicit color pin: some of these buttons are <router-link>s, and the
+     boilerplate global `a:hover { color: #535bf2 }` in style.css otherwise
+     wins on hover — a bare element+pseudo selector outranks our un-hovered
+     class selector for the `color` property once :hover is active. */
+  color: var(--color-primary-foreground);
+}
+
+.admin-page .admin-btn--secondary {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border-color: var(--color-border);
+}
+.admin-page .admin-btn--secondary:hover:not(:disabled) {
+  background: var(--color-background-alt);
+  border-color: var(--color-primary);
+  color: var(--color-foreground);
+}
+
+.admin-page .admin-btn--danger {
+  background: var(--color-error);
+  color: #fff;
+}
+.admin-page .admin-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.9);
+  color: #fff;
+}
+
+.admin-page .admin-btn--ghost {
+  background: transparent;
+  color: var(--color-muted-foreground);
+}
+.admin-page .admin-btn--ghost:hover:not(:disabled) {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────
+   Both a bare surface card and the dashboard's clickable link-tile share this. */
+
+.admin-page .admin-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.admin-page .admin-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+
+/* ── Data table ───────────────────────────────────────────────────────────
+   Compact density, consistent across every admin list view. */
+
+.admin-page .admin-table-wrap {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-page .admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.admin-page .admin-table th,
+.admin-page .admin-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.admin-page .admin-table th {
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-muted-foreground);
+  background: var(--color-background-alt);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.admin-page .admin-table tbody tr:hover {
+  background: var(--color-background-alt);
+}
+
+.admin-page .admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-page .admin-table--striped tbody tr:nth-child(even) {
+  background: var(--color-background-alt);
+}
+
+/* ── Badges / pills / chips ──────────────────────────────────────────────── */
+
+.admin-page .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Fixed AA-safe tint/text pairs (design-tokens.css) rather than color-mix()
+   derived tints, which don't reliably clear 4.5:1 contrast at badge text size. */
+.admin-page .admin-badge--neutral  { background: var(--color-muted); color: color-mix(in srgb, var(--color-muted-foreground) 65%, var(--color-foreground) 35%); }
+.admin-page .admin-badge--success  { background: var(--color-badge-success-bg); color: var(--color-badge-success-text); }
+.admin-page .admin-badge--warning  { background: var(--color-badge-warning-bg); color: var(--color-badge-warning-text); }
+.admin-page .admin-badge--error    { background: var(--color-badge-error-bg);   color: var(--color-badge-error-text); }
+.admin-page .admin-badge--info     { background: var(--color-badge-info-bg);    color: var(--color-badge-info-text); }
+
+/* ── List rows (feedback items, suggestion queues, etc.) ─────────────────── */
+
+.admin-page .admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-page .admin-list-item {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-default);
+  padding: var(--space-4);
+}
+
+/* ── Empty / loading / error states ──────────────────────────────────────── */
+
+.admin-page .admin-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--color-muted-foreground);
+  font-size: var(--font-size-sm);
+}
+
+.admin-page .admin-state--error {
+  color: var(--color-error);
+}
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+
+.admin-page .admin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.admin-page .admin-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.admin-page .admin-input,
+.admin-page .admin-select,
+.admin-page .admin-textarea {
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-default);
+  background: var(--color-card);
+  color: var(--color-foreground);
+  transition: border-color var(--duration-fast) var(--ease-default);
+}
+
+.admin-page .admin-textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.admin-page .admin-input:focus,
+.admin-page .admin-select:focus,
+.admin-page .admin-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+/* ── Monospace — regex/JS-rule/code display only, never body copy ───────── */
+
+.admin-page .admin-mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: var(--font-size-sm);
+}
+
+/* ── Modal ────────────────────────────────────────────────────────────────── */
+
+.admin-page .admin-modal-overlay {
+  display: flex !important;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal, 400);
+  padding: var(--space-4);
+}
+
+.admin-page .admin-modal {
+  /* !important: a stray leftover Bootstrap `.modal` class (display:none by
+     default, only shown via its own JS adding `.show`) has nothing competing
+     against it for `display` otherwise, since this rule didn't used to set
+     one at all — that silently hid at least one confirm dialog. */
+  display: block !important;
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg, var(--shadow-nav));
+  padding: var(--space-6);
+  max-width: 480px;
+  width: 100%;
+}
+
+.admin-page .admin-modal h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-lg);
+  color: var(--color-foreground);
+}
+
+.admin-page .admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
