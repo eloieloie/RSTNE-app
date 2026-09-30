@@ -237,14 +237,14 @@ function formatVerseWithPaleoBora(text: string): string {
   let formatted = text;
   patterns.forEach(p => { formatted = formatted.replace(p.search, p.replace); });
 
-  // Convert inline verse references like #Yoch1 3 to clickable links
-  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+  // Convert inline verse references like #Yoch1 3 or #Gene9 11-17 to clickable links
+  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)(?:-(\d+))?/gi, (match, bookAbbr, chapter, verse, verseEnd) => {
     const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
     if (bookId) {
       const bookObj = allBooks.value.find(b => b.book_id === bookId);
       const displayAbbr = bookObj ? getBookAbbr(bookObj) : bookAbbr;
-      const label = `#${displayAbbr}${chapter} ${verse}`;
-      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${label}</a>`;
+      const label = `#${displayAbbr}${chapter} ${verse}${verseEnd ? '-' + verseEnd : ''}`;
+      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}" data-verse-end="${verseEnd || verse}">${label}</a>`;
     }
     return match;
   });

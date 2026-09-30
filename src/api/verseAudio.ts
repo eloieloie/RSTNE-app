@@ -64,6 +64,27 @@ export async function resetVerseAudioData(
   if (!res.ok) throw new Error('Failed to reset audio data');
 }
 
+// One-off maintenance call: finds every 'ready' audio row whose source text
+// contains a "#Book9 11-17"-style range reference (audio generated before
+// stripInlineVerseRefs() was fixed to drop the whole range would have spoken
+// the "-17" tail aloud) and marks those rows 'stale' so the existing
+// regenerate-stale flow picks them up.
+export async function markStaleRangeRefAudio(): Promise<{
+  success: boolean;
+  markedStale: number;
+  audio: { audio_id: number; verse_id: number; language: VerseAudioLanguage }[];
+}> {
+  const res = await fetch(`${API_URL}/verse-audio/mark-stale-range-refs`, {
+    method: 'POST',
+    headers: await getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 export async function generateVerseAudio(
   verseId: number,
   lang: VerseAudioLanguage,

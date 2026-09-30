@@ -499,7 +499,7 @@
             <motion.div
               v-if="crossRefTooltip.show"
               class="cross-ref-tooltip"
-              :class="{ 'broadcast-mode': broadcastMode }"
+              :class="{ 'broadcast-mode': broadcastMode, 'range-mode': crossRefTooltip.verses.length > 1 }"
               :style="{ left: crossRefTooltip.x + 'px', top: crossRefTooltip.y + 'px' }"
               :initial="prefersReducedMotion ? false : { opacity: 0, scale: 0.94 }"
               :animate="{ opacity: 1, scale: 1 }"
@@ -524,6 +524,16 @@
                 <div v-if="crossRefTooltip.loading" class="tooltip-loading">
                   <div class="loading-spinner"></div>
                   <p>Loading verse...</p>
+                </div>
+                <div v-else-if="crossRefTooltip.verses.length > 0">
+                  <div v-for="v in crossRefTooltip.verses" :key="v.verseIndex" class="tooltip-verse-row">
+                    <div class="tooltip-verse-main">
+                      <span class="tooltip-verse-num">{{ v.verseIndex }}</span>
+                      <span v-if="showEnglish && v.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="v.verseText"></span>
+                      <span v-if="!showEnglish && showTelugu && v.teluguVerseText" class="tooltip-verse telugu-verse inline" :style="{ fontSize: fontSize + 'px' }" v-html="v.teluguVerseText"></span>
+                    </div>
+                    <div v-if="showEnglish && showTelugu && v.teluguVerseText" class="tooltip-verse telugu-verse" :style="{ fontSize: fontSize + 'px' }" v-html="v.teluguVerseText"></div>
+                  </div>
                 </div>
                 <div v-else>
                   <div v-if="showEnglish && crossRefTooltip.verseText" class="tooltip-verse" :class="{ 'hide-superscript': !showSuperscript }" :style="{ fontSize: fontSize + 'px' }" v-html="crossRefTooltip.verseText"></div>
@@ -1250,6 +1260,7 @@ const crossRefTooltip = ref<{
   loading: boolean;
   verseText: string;
   teluguVerseText: string;
+  verses: { verseIndex: number; verseText: string; teluguVerseText: string }[];
   bookName: string;
   hebrewBookName: string;
   chapterNumber: string;
@@ -1265,6 +1276,7 @@ const crossRefTooltip = ref<{
   loading: false,
   verseText: '',
   teluguVerseText: '',
+  verses: [],
   bookName: '',
   hebrewBookName: '',
   chapterNumber: '',
@@ -2108,16 +2120,16 @@ function formatVerseWithPaleoBora(text: string): string {
     formatted = formatted.replace(pattern.search, pattern.replace);
   });
   
-  // Convert inline verse references like #Yech18 4 to clickable links
-  // Pattern: #[4-char-abbr][chapter-number] [verse-number]
+  // Convert inline verse references like #Yech18 4 or #Gene9 11-17 to clickable links
+  // Pattern: #[4-char-abbr][chapter-number] [verse-number](-[end-verse-number])?
   // Using book abbreviations from allBooks
-  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)/gi, (match, bookAbbr, chapter, verse) => {
+  formatted = formatted.replace(/#([a-z]{4})(\d+)\s+(\d+)(?:-(\d+))?/gi, (match, bookAbbr, chapter, verse, verseEnd) => {
     const bookId = bookAbbreviations.value[bookAbbr.toLowerCase()];
     if (bookId) {
       const bookObj = allBooks.value.find(b => b.book_id === bookId);
       const displayAbbr = bookObj ? getBookAbbr(bookObj) : bookAbbr;
-      const label = `#${displayAbbr}${chapter} ${verse}`;
-      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}">${label}</a>`;
+      const label = `#${displayAbbr}${chapter} ${verse}${verseEnd ? '-' + verseEnd : ''}`;
+      return `<a href="#" class="inline-verse-ref" data-book-id="${bookId}" data-chapter="${chapter}" data-verse="${verse}" data-verse-end="${verseEnd || verse}">${label}</a>`;
     }
     return match;
   });
@@ -2145,20 +2157,22 @@ async function handleTooltipVerseRefClick(event: Event) {
   const bookId = parseInt(target.getAttribute('data-book-id') || '0');
   const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
   const verseNum = parseInt(target.getAttribute('data-verse') || '0');
+  const verseEndNum = parseInt(target.getAttribute('data-verse-end') || '0') || verseNum;
   if (!bookId || !chapterNum || !verseNum) return;
-  
+
   const targetBook = allBooks.value.find(b => b.book_id === bookId);
   if (!targetBook) return;
-  
+
   // Update tooltip header and show loading
   crossRefTooltip.value.loading = true;
   crossRefTooltip.value.bookName = targetBook.book_name;
   crossRefTooltip.value.hebrewBookName = BOOKS_DATA.find(b => b.book_id === bookId)?.hebrew_book_name || '';
   crossRefTooltip.value.chapterNumber = String(chapterNum);
-  crossRefTooltip.value.verseNumber = String(verseNum);
+  crossRefTooltip.value.verseNumber = verseEndNum > verseNum ? `${verseNum}-${verseEndNum}` : String(verseNum);
   crossRefTooltip.value.verseText = '';
   crossRefTooltip.value.teluguVerseText = '';
-  
+  crossRefTooltip.value.verses = [];
+
   try {
     const targetChapters = await getChaptersByBookId(bookId);
     const targetChapter = targetChapters.find(ch => String(ch.chapter_number) === String(chapterNum));
@@ -2167,15 +2181,39 @@ async function handleTooltipVerseRefClick(event: Event) {
       crossRefTooltip.value.loading = false;
       return;
     }
-    
+
     const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+
+    if (verseEndNum > verseNum) {
+      const rangeVerses = targetVerses
+        .filter(v => (v.verse_index ?? 0) >= verseNum && (v.verse_index ?? 0) <= verseEndNum)
+        .sort((a, b) => (a.verse_index ?? 0) - (b.verse_index ?? 0));
+      if (rangeVerses.length === 0) {
+        crossRefTooltip.value.verseText = 'Verse not found';
+        crossRefTooltip.value.loading = false;
+        return;
+      }
+
+      crossRefTooltip.value.bookId = bookId;
+      crossRefTooltip.value.chapterId = targetChapter.chapter_id;
+      crossRefTooltip.value.verseId = rangeVerses[0].verse_id;
+      crossRefTooltip.value.verseIndex = rangeVerses[0].verse_index ?? verseNum;
+      crossRefTooltip.value.verses = rangeVerses.map(v => ({
+        verseIndex: v.verse_index ?? verseNum,
+        verseText: formatVerseWithPaleoBora(v.verse || ''),
+        teluguVerseText: formatVerseWithPaleoBora(v.telugu_verse || '')
+      }));
+      crossRefTooltip.value.loading = false;
+      return;
+    }
+
     const targetVerse = targetVerses.find(v => String(v.verse_index) === String(verseNum));
     if (!targetVerse) {
       crossRefTooltip.value.verseText = 'Verse not found';
       crossRefTooltip.value.loading = false;
       return;
     }
-    
+
     crossRefTooltip.value.bookId = bookId;
     crossRefTooltip.value.chapterId = targetChapter.chapter_id;
     crossRefTooltip.value.verseId = targetVerse.verse_id;
@@ -2221,11 +2259,12 @@ async function handleVerseRefClick(event: Event) {
     const bookId = parseInt(target.getAttribute('data-book-id') || '0');
     const chapterNum = parseInt(target.getAttribute('data-chapter') || '0');
     const verseNum = parseInt(target.getAttribute('data-verse') || '0');
-    
+    const verseEndNum = parseInt(target.getAttribute('data-verse-end') || '0') || verseNum;
+
     // Get the target book
     const targetBook = allBooks.value.find(b => b.book_id === bookId);
     if (!targetBook) return;
-    
+
     // Show tooltip like cross references
     if (!crossRefTooltip.value.show) {
       const pos = getTooltipCenterPosition();
@@ -2237,36 +2276,64 @@ async function handleVerseRefClick(event: Event) {
     crossRefTooltip.value.hebrewBookName = BOOKS_DATA.find(b => b.book_id === bookId)?.hebrew_book_name || '';
     crossRefTooltip.value.bookName = targetBook.book_name;
     crossRefTooltip.value.chapterNumber = String(chapterNum);
-    crossRefTooltip.value.verseNumber = String(verseNum);
-    
+    crossRefTooltip.value.verseNumber = verseEndNum > verseNum ? `${verseNum}-${verseEndNum}` : String(verseNum);
+    crossRefTooltip.value.verseText = '';
+    crossRefTooltip.value.teluguVerseText = '';
+    crossRefTooltip.value.verses = [];
+
     try {
       // Find the chapter
       const targetChapters = await getChaptersByBookId(bookId);
       const normalizedChapterNum = String(chapterNum);
       const targetChapter = targetChapters.find(ch => String(ch.chapter_number) === normalizedChapterNum);
-      
+
       if (!targetChapter) {
         crossRefTooltip.value.verseText = 'Chapter not found';
         crossRefTooltip.value.loading = false;
         return;
       }
-      
-      // Find the verse
+
       const targetVerses = await getVersesByChapterId(targetChapter.chapter_id);
+
+      if (verseEndNum > verseNum) {
+        // Range reference (e.g. #Gene9 11-17) — resolve every verse in range
+        const rangeVerses = targetVerses
+          .filter(v => (v.verse_index ?? 0) >= verseNum && (v.verse_index ?? 0) <= verseEndNum)
+          .sort((a, b) => (a.verse_index ?? 0) - (b.verse_index ?? 0));
+
+        if (rangeVerses.length === 0) {
+          crossRefTooltip.value.verseText = 'Verse not found';
+          crossRefTooltip.value.loading = false;
+          return;
+        }
+
+        crossRefTooltip.value.bookId = bookId;
+        crossRefTooltip.value.chapterId = targetChapter.chapter_id;
+        crossRefTooltip.value.verseId = rangeVerses[0].verse_id;
+        crossRefTooltip.value.verses = rangeVerses.map(v => ({
+          verseIndex: v.verse_index ?? verseNum,
+          verseText: formatVerseWithPaleoBora(v.verse || ''),
+          teluguVerseText: formatVerseWithPaleoBora(v.telugu_verse || '')
+        }));
+        crossRefTooltip.value.loading = false;
+        return;
+      }
+
+      // Find the verse
       const normalizedVerseNum = String(verseNum);
       const targetVerse = targetVerses.find(v => String(v.verse_index) === normalizedVerseNum);
-      
+
       if (!targetVerse) {
         crossRefTooltip.value.verseText = 'Verse not found';
         crossRefTooltip.value.loading = false;
         return;
       }
-      
+
       // Store IDs for navigation
       crossRefTooltip.value.bookId = bookId;
       crossRefTooltip.value.chapterId = targetChapter.chapter_id;
       crossRefTooltip.value.verseId = targetVerse.verse_id;
-      
+
       // Set verse text with formatting
       crossRefTooltip.value.verseText = formatVerseWithPaleoBora(targetVerse.verse || '');
       crossRefTooltip.value.teluguVerseText = formatVerseWithPaleoBora(targetVerse.telugu_verse || '');
@@ -3782,6 +3849,17 @@ body {
   width: calc(70vw - 2rem);
 }
 
+.cross-ref-tooltip.range-mode {
+  max-width: 600px;
+  max-height: 80vh;
+  /* A range popup holds a variable, often-tall list of verses, so its position
+     can't be pre-computed like the single-verse tooltip's fixed-size box —
+     always center it on the viewport instead of trusting the click-based x/y. */
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
 .tooltip-header {
   display: flex;
   align-items: center;
@@ -3844,6 +3922,39 @@ body {
   padding: 16px;
   max-height: 50vh;
   overflow-y: auto;
+}
+
+.range-mode .tooltip-content {
+  max-height: 65vh;
+}
+
+.tooltip-verse-row {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tooltip-verse-row:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.tooltip-verse-main {
+  display: block;
+  text-align: left;
+}
+
+.tooltip-verse-num {
+  display: inline;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+}
+
+.tooltip-verse.telugu-verse.inline {
+  margin-top: 0;
 }
 
 .tooltip-loading {

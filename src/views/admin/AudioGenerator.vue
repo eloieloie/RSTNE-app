@@ -49,6 +49,9 @@
         <button class="btn-danger admin-btn admin-btn--danger" :disabled="!selectedChapterId || resetting" @click="handleReset">
           {{ resetting ? 'Resetting…' : 'Reset All in Chapter' }}
         </button>
+        <button class="btn-secondary admin-btn admin-btn--secondary" :disabled="markingRangeRefsStale" @click="handleMarkStaleRangeRefs" title="One-off: mark 'ready' audio stale where the source text has a #Book9 11-17 style range reference generated before that was handled correctly">
+          {{ markingRangeRefsStale ? 'Scanning…' : 'Mark Stale Audio (Range Refs)' }}
+        </button>
       </div>
     </div>
 
@@ -235,7 +238,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId, type VerseWithLinks } from '@/api/verses';
-import { getChapterAudio, generateVerseAudio, resetVerseAudioData } from '@/api/verseAudio';
+import { getChapterAudio, generateVerseAudio, resetVerseAudioData, markStaleRangeRefAudio } from '@/api/verseAudio';
 import { stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import type { Book, Chapter, VerseAudioLanguage, VerseAudioStatus } from '@/utils/collectionReferences';
 
@@ -265,6 +268,7 @@ const generatingAll = ref(false);
 const stopRequested = ref(false);
 const generateProgress = ref({ done: 0, total: 0 });
 const resetting = ref(false);
+const markingRangeRefsStale = ref(false);
 
 const bookGenerating = ref(false);
 const bookStopRequested = ref(false);
@@ -346,6 +350,30 @@ async function handleReset() {
   }
 }
 
+// One-off cleanup for the verse-range inline ref bug: stripInlineVerseRefs()
+// used to leave the "-17" tail of a "#Book9 11-17" reference in the text sent
+// to TTS. Scans every already-'ready' row across the whole app (not scoped to
+// the selected book/chapter) and flips affected ones to 'stale' so they surface
+// through the normal regenerate-stale flow (per-chapter here, or the "Regenerate
+// stale" button in ChaptersView.vue).
+async function handleMarkStaleRangeRefs() {
+  if (!confirm('Scan all \'ready\' audio for verse-range references (e.g. "#Gene9 11-17") that were spoken incorrectly, and mark matches stale for regeneration?')) {
+    return;
+  }
+  markingRangeRefsStale.value = true;
+  try {
+    const result = await markStaleRangeRefAudio();
+    alert(result.markedStale > 0
+      ? `Marked ${result.markedStale} audio file${result.markedStale === 1 ? '' : 's'} stale. Regenerate them via the chapter/book tools above.`
+      : 'No affected audio found — nothing to mark stale.');
+    await loadRows();
+  } catch (e: unknown) {
+    loadError.value = e instanceof Error ? e.message : 'Scan failed';
+  } finally {
+    markingRangeRefsStale.value = false;
+  }
+}
+
 const langLabel = computed(() => (lang.value === 'en' ? 'English' : 'Telugu'));
 
 async function loadBooks() {
@@ -363,12 +391,13 @@ watch(selectedBookId, async (bookId) => {
 watch([selectedChapterId, lang], loadRows);
 
 // Mirrors VerseAudioEndpoint::stripInlineVerseRefs() in RSTNE-apis/endpoints/verse-audio.php —
-// drops inline cross-reference shorthand like "#Yoch1 3" so the preview matches what's
-// actually sent to TTS (that shorthand is otherwise turned into a clickable link by
-// formatVerseWithPaleoBora() in ChaptersView.vue, using the same underlying pattern).
+// drops inline cross-reference shorthand like "#Yoch1 3" or a verse-range shorthand like
+// "#Gene9 11-17" so the preview matches what's actually sent to TTS (that shorthand is
+// otherwise turned into a clickable link by formatVerseWithPaleoBora() in ChaptersView.vue,
+// using the same underlying pattern — including the optional "-end" range suffix).
 function stripInlineVerseRefs(text: string): string {
   return text
-    .replace(/;?\s*#[a-zA-Z]{4}\d+\s+\d+/g, '')
+    .replace(/;?\s*#[a-zA-Z]{4}\d+\s+\d+(?:-\d+)?/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
