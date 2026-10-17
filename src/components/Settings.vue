@@ -22,23 +22,12 @@
         <motion.button class="close-button" :while-tap="tapScale" @click="close">&times;</motion.button>
       </div>
       <div class="modal-body">
-        <div class="settings-section">
+        <div v-if="!user" class="settings-section">
           <h4>Account</h4>
           <div class="settings-group">
-            <div v-if="user" class="account-info">
-              <div class="account-details">
-                <span class="account-email">{{ user.email }}</span>
-                <span v-if="isAdmin" class="admin-badge">Admin</span>
-              </div>
-              <motion.button class="account-btn" :while-tap="tapScale" @click="handleSignOut">Sign Out</motion.button>
-            </div>
-            <router-link v-else to="/login" class="account-btn account-btn-primary" @click="close">
+            <router-link to="/login" class="account-btn account-btn-primary" @click="close">
               Sign In / Register
             </router-link>
-            <motion.button v-if="canClaimAdmin" class="account-btn claim-admin-btn" :while-tap="tapScale" @click="handleClaimAdmin">
-              Become Admin
-            </motion.button>
-            <p v-if="claimError" class="claim-error">{{ claimError }}</p>
           </div>
         </div>
 
@@ -94,6 +83,23 @@
               >{{ opt.label }}</motion.button>
             </div>
             <p class="setting-hint">Used when playing chapter audio. Tap the play button in the top bar to start.</p>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4>Playback Speed</h4>
+          <div class="settings-group">
+            <div class="speed-slider-row">
+              <input
+                type="range"
+                class="speed-slider"
+                min="0.85"
+                max="1.15"
+                step="0.05"
+                v-model.number="audioSpeed"
+              />
+              <span class="speed-slider-value">{{ audioSpeed.toFixed(2) }}x</span>
+            </div>
           </div>
         </div>
 
@@ -199,6 +205,31 @@
             </label>
           </div>
         </div>
+
+        <div v-if="user" class="settings-section">
+          <h4>Account</h4>
+          <div class="settings-group">
+            <div class="account-info">
+              <div class="account-details">
+                <span class="account-email">{{ user.email }}</span>
+                <span v-if="isAdmin" class="admin-badge">Admin</span>
+              </div>
+              <motion.button class="account-btn" :while-tap="tapScale" @click="handleSignOut">Sign Out</motion.button>
+            </div>
+            <motion.button v-if="canClaimAdmin" class="account-btn claim-admin-btn" :while-tap="tapScale" @click="handleClaimAdmin">
+              Become Admin
+            </motion.button>
+            <p v-if="claimError" class="claim-error">{{ claimError }}</p>
+            <motion.button
+              class="account-btn delete-account-btn"
+              :while-tap="tapScale"
+              :disabled="deletingAccount"
+              @click="handleDeleteAccount"
+            >
+              {{ deletingAccount ? 'Deleting…' : 'Delete Account' }}
+            </motion.button>
+          </div>
+        </div>
       </div>
     </motion.div>
     </motion.div>
@@ -210,6 +241,7 @@ import { ref, watch } from 'vue';
 import { motion, AnimatePresence } from 'motion-v';
 import { useBookLanguage, type BookNameLanguage } from '@/composables/useBookLanguage';
 import { useAudioLanguage } from '@/composables/useAudioLanguage';
+import { useAudioSpeed } from '@/composables/useAudioSpeed';
 import type { VerseAudioLanguage } from '@/utils/collectionReferences';
 import { useReaderSettings, type ReaderSettings } from '@/composables/useReaderSettings';
 import { useAuth } from '@/composables/useAuth';
@@ -229,6 +261,7 @@ const emit = defineEmits<{
 
 const { bookNameLanguage } = useBookLanguage();
 const { audioLang } = useAudioLanguage();
+const { audioSpeed } = useAudioSpeed();
 
 const langOptions: { value: BookNameLanguage; label: string }[] = [
   { value: 'english', label: 'English' },
@@ -244,12 +277,31 @@ const audioLangOptions: { value: VerseAudioLanguage; label: string }[] = [
 
 const { settings } = useReaderSettings();
 const { theme, themeOptions } = useTheme();
-const { user, isAdmin, canClaimAdmin, signOutUser, claimAdmin } = useAuth();
+const { user, isAdmin, canClaimAdmin, signOutUser, deleteAccount, claimAdmin } = useAuth();
 const { prefersReducedMotion, tooltipSpring, tapScale, overlayFade } = useMotionPresets();
 const claimError = ref('');
+const deletingAccount = ref(false);
 
 async function handleSignOut() {
   await signOutUser();
+}
+
+async function handleDeleteAccount() {
+  if (!confirm('Delete your account? This permanently removes your personal notes and settings and cannot be undone.')) return;
+  deletingAccount.value = true;
+  try {
+    await deleteAccount();
+    close();
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    if (code === 'auth/requires-recent-login') {
+      alert('For your security, please sign out, sign back in, and try deleting your account again.');
+    } else {
+      alert('Failed to delete account. Please try again.');
+    }
+  } finally {
+    deletingAccount.value = false;
+  }
 }
 
 async function handleClaimAdmin() {
@@ -473,6 +525,24 @@ function close() {
   font-size: 0.85rem;
 }
 
+.delete-account-btn {
+  margin-top: 0.75rem;
+  width: 100%;
+  border-color: #b91c1c;
+  color: #b91c1c;
+  background: var(--color-card);
+}
+
+.delete-account-btn:hover {
+  background: #fef2f2;
+  border-color: #b91c1c;
+}
+
+.delete-account-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 /* Toggle switch */
 .toggle-switch {
   position: relative;
@@ -558,6 +628,27 @@ function close() {
   display: flex;
   gap: 0.5rem;
   padding: 0.5rem 0;
+}
+
+.speed-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.speed-slider {
+  flex: 1;
+  accent-color: #2c3e50;
+}
+
+.speed-slider-value {
+  min-width: 48px;
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 .lang-option-btn {

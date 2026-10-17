@@ -85,6 +85,37 @@ export async function markStaleRangeRefAudio(): Promise<{
   return data;
 }
 
+export interface RangeRefAudioItem {
+  audio_id: number;
+  verse_id: number;
+  chapter_id: number;
+  book_id: number;
+  book_name: string | null;
+  chapter_number: string;
+  verse_index: number | null;
+  text: string;
+}
+
+// TEMPORARY read-only counterpart to markStaleRangeRefAudio() — runs the same
+// scan but performs no UPDATE, so the affected list/count can be previewed
+// (and regenerated on demand) before committing to marking anything stale.
+// Remove once the range-ref review/regeneration is done.
+export async function getRangeRefAudioCount(): Promise<{
+  success: boolean;
+  wouldMarkStale: number;
+  byLanguage: { en: number; te: number };
+  audio: { en: RangeRefAudioItem[]; te: RangeRefAudioItem[] };
+}> {
+  const res = await fetch(`${API_URL}/verse-audio/range-ref-audio-count`, {
+    headers: await getAuthHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 export async function generateVerseAudio(
   verseId: number,
   lang: VerseAudioLanguage,

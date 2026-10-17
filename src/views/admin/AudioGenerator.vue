@@ -49,9 +49,108 @@
         <button class="btn-danger admin-btn admin-btn--danger" :disabled="!selectedChapterId || resetting" @click="handleReset">
           {{ resetting ? 'Resetting…' : 'Reset All in Chapter' }}
         </button>
+        <button class="btn-secondary admin-btn admin-btn--secondary" :disabled="checkingRangeRefCount" @click="handleCheckRangeRefCount" title="Read-only: count 'ready' audio that would be marked stale, without changing anything">
+          {{ checkingRangeRefCount ? 'Checking…' : 'Preview Range-Ref Count' }}
+        </button>
         <button class="btn-secondary admin-btn admin-btn--secondary" :disabled="markingRangeRefsStale" @click="handleMarkStaleRangeRefs" title="One-off: mark 'ready' audio stale where the source text has a #Book9 11-17 style range reference generated before that was handled correctly">
           {{ markingRangeRefsStale ? 'Scanning…' : 'Mark Stale Audio (Range Refs)' }}
         </button>
+        <button class="btn-secondary admin-btn admin-btn--secondary" @click="toggleStaleBrowser">
+          {{ staleBrowserOpen ? 'Hide Stale Audio' : 'Browse All Stale Audio' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Stale Audio Browser — app-wide, not scoped to the selected book/chapter -->
+    <div v-if="staleBrowserOpen" class="stale-browser admin-card">
+      <div class="stale-browser-header">
+        <h2 class="stale-browser-title">Stale Audio</h2>
+        <div class="stale-browser-filters">
+          <div class="filter-group admin-form-group">
+            <label class="admin-label">Language</label>
+            <select v-model="staleLangFilter" class="admin-select">
+              <option value="">Both</option>
+              <option value="en">English</option>
+              <option value="te">Telugu</option>
+            </select>
+          </div>
+          <div class="filter-group admin-form-group">
+            <label class="admin-label">Book</label>
+            <select v-model.number="staleBookFilter" class="admin-select">
+              <option :value="null">All books</option>
+              <option v-for="b in books" :key="b.book_id" :value="b.book_id">{{ b.book_name }}</option>
+            </select>
+          </div>
+          <button class="btn-secondary admin-btn admin-btn--secondary" :disabled="staleLoading" @click="loadStaleRows">
+            {{ staleLoading ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+        <div class="filter-stats">
+          <span class="stat-badge admin-badge admin-badge--warning">{{ staleRows.length }} stale{{ staleRows.length >= 500 ? ' (capped at 500 — narrow the filters)' : '' }}</span>
+          <span class="stat-badge admin-badge admin-badge--info">{{ filteredStaleRows.length }} shown</span>
+        </div>
+        <div class="filter-actions">
+          <button
+            class="btn-primary admin-btn admin-btn--primary"
+            :disabled="regeneratingStale || filteredStaleRows.length === 0"
+            @click="regenerateAllStale"
+          >
+            {{ regeneratingStale ? `Regenerating ${staleRegenProgress.done}/${staleRegenProgress.total}…` : `Regenerate All Shown (${filteredStaleRows.length})` }}
+          </button>
+          <button v-if="regeneratingStale" class="btn-secondary admin-btn admin-btn--secondary" @click="staleStopRequested = true">Stop</button>
+        </div>
+      </div>
+
+      <div v-if="staleError" class="state-msg admin-state admin-state--error">{{ staleError }}</div>
+      <div v-else-if="staleLoading" class="state-msg admin-state">Loading stale audio…</div>
+      <div v-else-if="staleRows.length === 0" class="state-msg admin-state">🎉 No stale audio found.</div>
+      <div v-else-if="filteredStaleRows.length === 0" class="state-msg admin-state">No stale audio matches the current filters.</div>
+
+      <div v-else class="table-wrap admin-table-wrap">
+        <table class="verses-table admin-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Language</th>
+              <th>Previous Audio</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in filteredStaleRows" :key="`${row.verse_id}-${row.language}`" class="verse-row">
+              <td class="ref-cell">
+                <span class="ref-book" :class="{ orphaned: !row.book_name }">{{ row.book_name || `Book #${row.book_id} (missing)` }}</span>
+                <span class="ref-loc">{{ row.chapter_number }}:{{ row.verse_index ?? '—' }}</span>
+              </td>
+              <td>{{ row.language === 'en' ? 'English' : 'Telugu' }}</td>
+              <td class="listen-cell">
+                <audio v-if="row.audio_url" :src="row.audio_url" controls preload="none"></audio>
+                <span v-else>—</span>
+              </td>
+              <td class="status-cell">
+                <span
+                  class="status-badge admin-badge"
+                  :class="row.localStatus === 'fixed' ? 'admin-badge--success' : row.localStatus === 'regenerating' ? 'admin-badge--info' : row.localStatus === 'error' ? 'admin-badge--error' : 'admin-badge--warning'"
+                >{{ row.localStatus === 'fixed' ? 'regenerated' : row.localStatus === 'regenerating' ? 'regenerating…' : row.localStatus === 'error' ? 'failed' : 'stale' }}</span>
+                <div v-if="row.localError" class="row-error" :title="row.localError">{{ truncate(row.localError, 80) }}</div>
+              </td>
+              <td class="actions-cell">
+                <button
+                  class="action-btn admin-btn admin-btn--secondary admin-btn--sm"
+                  :disabled="row.localStatus === 'regenerating' || regeneratingStale"
+                  @click="regenerateStaleRow(row)"
+                >{{ row.localStatus === 'fixed' ? 'Regenerate Again' : 'Regenerate' }}</button>
+                <button
+                  v-if="row.book_name"
+                  class="action-btn admin-btn admin-btn--ghost admin-btn--sm"
+                  title="Open in reading pane"
+                  @click="openStaleVerse(row)"
+                >Open ↗</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -235,10 +334,19 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { getAllBooks } from '@/api/books';
 import { getChaptersByBookId } from '@/api/chapters';
 import { getVersesByChapterId, type VerseWithLinks } from '@/api/verses';
-import { getChapterAudio, generateVerseAudio, resetVerseAudioData, markStaleRangeRefAudio } from '@/api/verseAudio';
+import {
+  getChapterAudio,
+  generateVerseAudio,
+  resetVerseAudioData,
+  markStaleRangeRefAudio,
+  getRangeRefAudioCount,
+  getVerseAudioStatusList,
+  type VerseAudioStatusRow,
+} from '@/api/verseAudio';
 import { stripHtmlKeepPaleo } from '@/utils/paleoBora';
 import type { Book, Chapter, VerseAudioLanguage, VerseAudioStatus } from '@/utils/collectionReferences';
 
@@ -252,6 +360,8 @@ interface Row {
   error: string | null;
   generating: boolean;
 }
+
+const router = useRouter();
 
 const books = ref<Book[]>([]);
 const chapters = ref<Chapter[]>([]);
@@ -269,6 +379,7 @@ const stopRequested = ref(false);
 const generateProgress = ref({ done: 0, total: 0 });
 const resetting = ref(false);
 const markingRangeRefsStale = ref(false);
+const checkingRangeRefCount = ref(false);
 
 const bookGenerating = ref(false);
 const bookStopRequested = ref(false);
@@ -356,6 +467,20 @@ async function handleReset() {
 // the selected book/chapter) and flips affected ones to 'stale' so they surface
 // through the normal regenerate-stale flow (per-chapter here, or the "Regenerate
 // stale" button in ChaptersView.vue).
+async function handleCheckRangeRefCount() {
+  checkingRangeRefCount.value = true;
+  try {
+    const result = await getRangeRefAudioCount();
+    alert(result.wouldMarkStale > 0
+      ? `${result.wouldMarkStale} ready audio file${result.wouldMarkStale === 1 ? '' : 's'} would be marked stale (English: ${result.byLanguage.en}, Telugu: ${result.byLanguage.te}). Nothing has been changed — use "Mark Stale Audio (Range Refs)" to actually flag them for regeneration.`
+      : 'No affected audio found — nothing would be marked stale.');
+  } catch (e: unknown) {
+    loadError.value = e instanceof Error ? e.message : 'Count check failed';
+  } finally {
+    checkingRangeRefCount.value = false;
+  }
+}
+
 async function handleMarkStaleRangeRefs() {
   if (!confirm('Scan all \'ready\' audio for verse-range references (e.g. "#Gene9 11-17") that were spoken incorrectly, and mark matches stale for regeneration?')) {
     return;
@@ -372,6 +497,92 @@ async function handleMarkStaleRangeRefs() {
   } finally {
     markingRangeRefsStale.value = false;
   }
+}
+
+// ── Stale Audio Browser — app-wide list of status='stale' rows, independent
+// of the book/chapter picker above, so stale audio from any book can be found
+// and regenerated without hunting chapter by chapter. ───────────────────────
+type StaleLocalStatus = 'stale' | 'regenerating' | 'fixed' | 'error';
+interface StaleRow extends VerseAudioStatusRow {
+  localStatus: StaleLocalStatus;
+  localError: string | null;
+}
+
+const staleBrowserOpen = ref(false);
+const staleRows = ref<StaleRow[]>([]);
+const staleLoading = ref(false);
+const staleError = ref('');
+const staleLangFilter = ref<VerseAudioLanguage | ''>('');
+const staleBookFilter = ref<number | null>(null);
+const regeneratingStale = ref(false);
+const staleStopRequested = ref(false);
+const staleRegenProgress = ref({ done: 0, total: 0 });
+
+const filteredStaleRows = computed(() => {
+  if (!staleLangFilter.value) return staleRows.value;
+  return staleRows.value.filter((r) => r.language === staleLangFilter.value);
+});
+
+async function toggleStaleBrowser() {
+  staleBrowserOpen.value = !staleBrowserOpen.value;
+  if (staleBrowserOpen.value && staleRows.value.length === 0) {
+    await loadStaleRows();
+  }
+}
+
+async function loadStaleRows() {
+  staleLoading.value = true;
+  staleError.value = '';
+  try {
+    const results = await getVerseAudioStatusList({ status: 'stale', bookId: staleBookFilter.value ?? undefined });
+    staleRows.value = results.map((r) => ({ ...r, localStatus: 'stale' as StaleLocalStatus, localError: null }));
+  } catch (e: unknown) {
+    staleError.value = e instanceof Error ? e.message : 'Failed to load stale audio';
+  } finally {
+    staleLoading.value = false;
+  }
+}
+
+watch(staleBookFilter, () => {
+  if (staleBrowserOpen.value) loadStaleRows();
+});
+
+async function regenerateStaleRow(row: StaleRow) {
+  row.localStatus = 'regenerating';
+  row.localError = null;
+  try {
+    const result = await generateVerseAudio(row.verse_id, row.language, true);
+    row.audio_url = withCacheBust(result.audio_url, result.dt_generated);
+    row.localStatus = result.status === 'ready' ? 'fixed' : 'error';
+    if (result.error_message) row.localError = result.error_message;
+  } catch (e: unknown) {
+    row.localStatus = 'error';
+    row.localError = e instanceof Error ? e.message : 'Regeneration failed';
+  }
+}
+
+async function regenerateAllStale() {
+  regeneratingStale.value = true;
+  staleStopRequested.value = false;
+  const targets = filteredStaleRows.value.filter((r) => r.localStatus === 'stale' || r.localStatus === 'error');
+  staleRegenProgress.value = { done: 0, total: targets.length };
+  for (const row of targets) {
+    if (staleStopRequested.value) break;
+    await regenerateStaleRow(row);
+    staleRegenProgress.value.done++;
+  }
+  regeneratingStale.value = false;
+}
+
+function openStaleVerse(row: StaleRow) {
+  router.push({
+    name: 'book-chapter-verse',
+    params: {
+      bookName: (row.book_name as string).replace(/ /g, '-'),
+      chapterNumber: String(row.chapter_number),
+      ...(row.verse_index != null ? { verseNumber: String(row.verse_index) } : {}),
+    },
+  });
 }
 
 const langLabel = computed(() => (lang.value === 'en' ? 'English' : 'Telugu'));
@@ -822,7 +1033,38 @@ onMounted(loadBooks);
 
 .actions-cell { white-space: nowrap; }
 
+/* Stale Audio Browser */
+.stale-browser {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+
+.stale-browser-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.stale-browser-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.stale-browser-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.ref-cell { white-space: nowrap; }
+.ref-book { font-weight: 600; color: var(--color-foreground); }
+.ref-book.orphaned { color: var(--color-warning); font-style: italic; }
+.ref-loc { color: var(--color-muted-foreground); margin-left: 6px; }
+
 @media (max-width: 640px) {
   .filter-actions { margin-left: 0; }
+  .stale-browser-header { align-items: flex-start; }
 }
 </style>

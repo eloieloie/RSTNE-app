@@ -547,6 +547,8 @@
         
     </div>
 
+    <StrongsPopup :code="strongsCode" @close="strongsCode = null" />
+
     <!-- Verse Picker -->
     <VersePicker
       :is-open="showVersePicker"
@@ -636,12 +638,14 @@ import { getBookById, getAllBooks } from '@/api/books';
 import { getVersesByChapterId } from '@/api/verses';
 import { getChapterVersesWithCrossRefs, type CrossReferenceData } from '@/api/crossReferences';
 import VersePicker from '@/components/VersePicker.vue';
+import StrongsPopup from '@/components/StrongsPopup.vue';
 import VerseSearch from '@/components/VerseSearch.vue';
 import Settings from '@/components/Settings.vue';
 import { BOOKS_DATA } from '@/utils/versePickerData';
 import { generatePaleoBoraImagesForText, stripHtmlKeepPaleo, generateVerseCardImage } from '@/utils/paleoBora';
 import { useBookLanguage } from '@/composables/useBookLanguage';
 import { useAudioLanguage } from '@/composables/useAudioLanguage';
+import { useAudioSpeed } from '@/composables/useAudioSpeed';
 import { useAuth } from '@/composables/useAuth';
 import { updateNote, createNote, linkNoteToVerse, unlinkNoteFromVerse } from '@/api/notes';
 import {
@@ -673,6 +677,8 @@ interface Book {
   book_id: number;
   book_name: string;
   book_abbr?: string | null;
+  hebrew_book_name?: string | null;
+  telugu_book_name?: string | null;
   book_description?: string | null;
   book_header?: string | null;
   book_footer?: string | null;
@@ -750,6 +756,7 @@ const route = useRoute();
 const router = useRouter();
 const { getBookName, getBookAbbr } = useBookLanguage();
 const { audioLang } = useAudioLanguage();
+const { audioSpeed } = useAudioSpeed();
 const allBooks = ref<any[]>([]);
 const bookAbbreviations = ref<Record<string, number>>({});
 const book = ref<Book | null>(null);
@@ -791,6 +798,10 @@ let _audioQueue: string[] = [];
 let _audioVerseIds: number[] = [];
 let _audioQueueIdx = 0;
 
+watch(audioSpeed, (val) => {
+  if (_audioEl) _audioEl.playbackRate = val;
+});
+
 function stopChapterAudio() {
   if (_audioEl) {
     _audioEl.pause();
@@ -816,6 +827,7 @@ function _playNextInQueue() {
     _audioEl.addEventListener('error', () => { _audioQueueIdx++; _playNextInQueue(); });
   }
   _audioEl.src = _audioQueue[_audioQueueIdx];
+  _audioEl.playbackRate = audioSpeed.value;
   _audioEl.play().catch(() => { _audioQueueIdx++; _playNextInQueue(); });
 }
 
@@ -853,6 +865,7 @@ async function _continueToNextChapter() {
       if (ann?.status === 'ready' && ann.audio_url) {
         await new Promise<void>((resolve) => {
           const a = new Audio(ann.audio_url!);
+          a.playbackRate = audioSpeed.value;
           a.addEventListener('ended', () => resolve());
           a.addEventListener('error', () => resolve());
           a.play().catch(() => resolve());
@@ -903,6 +916,7 @@ function resumeChapterAudio(chapterId: number) {
   chapterAudioPaused.value = null;
   chapterAudioPlaying.value = chapterId;
   _audioEl.currentTime = 0;
+  _audioEl.playbackRate = audioSpeed.value;
   _audioEl.play().catch(() => { _audioQueueIdx++; _playNextInQueue(); });
 }
 
@@ -1253,6 +1267,9 @@ const broadcastPanelVerse = computed<{ verse: any; chapterNumber: string } | nul
 });
 
 // Cross-reference tooltip state
+// Strong's code currently shown in the lexicon popup (null = closed).
+const strongsCode = ref<string | null>(null);
+
 const crossRefTooltip = ref<{
   show: boolean;
   x: number;
@@ -2143,6 +2160,15 @@ function formatVerseWithPaleoBora(text: string): string {
     return `<a href="#" class="inline-same-chapter-ref" data-target-verse-index="${verseIndex}">${match}</a>`;
   });
 
+  // Strong's numbers kept in square brackets (e.g. "[H6086]" or "[H6086 H6471]",
+  // see admin → Strong's Codes) become tappable; each opens the lexicon popup.
+  formatted = formatted.replace(/\[((?:[HG]\d{1,4}[a-z]?)(?:[\s,;/]+[HG]\d{1,4}[a-z]?)*)\]/g, (_m, codes: string) => {
+    const linked = codes.replace(/[HG]\d{1,4}[a-z]?/g, (code) =>
+      `<a href="#" class="strongs-ref" data-strongs="${code}" title="Show original word">${code}</a>`
+    );
+    return `<span class="strongs-group">[${linked}]</span>`;
+  });
+
   return formatted;
 }
 
@@ -2231,6 +2257,14 @@ async function handleTooltipVerseRefClick(event: Event) {
 // Handle clicks on inline verse references using event delegation
 async function handleVerseRefClick(event: Event) {
   const target = event.target as HTMLElement;
+
+  // Strong's number — open the original-language word popup.
+  if (target.tagName === 'A' && target.classList.contains('strongs-ref')) {
+    event.preventDefault();
+    event.stopPropagation();
+    strongsCode.value = target.getAttribute('data-strongs');
+    return;
+  }
 
   // Same-chapter forward/back reference — e.g. "(→ v.2)" — smooth-scroll to
   // that verse number within the chapter the click happened in, no tooltip.
@@ -3752,6 +3786,27 @@ defineExpose({ showCrossRefTooltip });
 .cross-ref-more:hover {
   background: #DCFCE7;
   border-color: #059669;
+}
+
+/* Strong's numbers: small superscript, quiet until hovered */
+:deep(.strongs-group) {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+:deep(.strongs-ref) {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dotted currentColor;
+}
+
+:deep(.strongs-ref:hover) {
+  color: var(--color-primary);
+  border-bottom-style: solid;
 }
 
 /* Inline verse references within text */

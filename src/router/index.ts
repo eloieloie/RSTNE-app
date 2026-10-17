@@ -22,6 +22,11 @@ import ModificationRequired from '@/views/admin/ModificationRequired.vue';
 import AudioGenerator from '@/views/admin/AudioGenerator.vue';
 import ManageChapterAnnouncements from '@/views/admin/ManageChapterAnnouncements.vue';
 import PunctuationSuggestions from '@/views/admin/PunctuationSuggestions.vue';
+import PunctuationReview from '@/views/admin/PunctuationReview.vue';
+import StrongsCodes from '@/views/admin/StrongsCodes.vue';
+import TempRangeRefVersesEnglish from '@/views/admin/TempRangeRefVersesEnglish.vue';
+import RangeRefFixes from '@/views/admin/RangeRefFixes.vue';
+import TempRangeRefVersesTelugu from '@/views/admin/TempRangeRefVersesTelugu.vue';
 import FeastsView from '@/views/FeastsView.vue';
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue';
 import TermsAndConditionsView from '@/views/TermsAndConditionsView.vue';
@@ -141,6 +146,38 @@ const router = createRouter({
       path: '/admin/punctuation-suggestions',
       name: 'admin-punctuation-suggestions',
       component: PunctuationSuggestions,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/punctuation-review',
+      name: 'admin-punctuation-review',
+      component: PunctuationReview,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/strongs-codes',
+      name: 'admin-strongs-codes',
+      component: StrongsCodes,
+      meta: { requiresAdmin: true }
+    },
+    // TEMP — remove once the verse-range inline-ref review is done (see
+    // VerseAudioEndpoint::markStaleRangeRefs() and VersesEndpoint::rangeRefVerses()).
+    {
+      path: '/admin/temp-range-ref-verses-english',
+      name: 'admin-temp-range-ref-verses-english',
+      component: TempRangeRefVersesEnglish,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/temp-range-ref-verses-telugu',
+      name: 'admin-temp-range-ref-verses-telugu',
+      component: TempRangeRefVersesTelugu,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/range-ref-fixes',
+      name: 'admin-range-ref-fixes',
+      component: RangeRefFixes,
       meta: { requiresAdmin: true }
     },
     {

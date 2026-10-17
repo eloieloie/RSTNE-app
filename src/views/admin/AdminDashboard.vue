@@ -104,6 +104,46 @@
           Review Suggestions
         </router-link>
       </motion.div>
+
+      <motion.div class="dashboard-card admin-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(10)" :while-hover="hoverLift">
+        <div class="card-icon">✍️</div>
+        <h2>Punctuation Review</h2>
+        <p>Find long verses with little or no punctuation (worst first), edit them in place, and mark the ones that are fine as reviewed — English or Telugu</p>
+        <router-link to="/admin/punctuation-review" class="action-btn admin-btn admin-btn--primary">
+          Review Verses
+        </router-link>
+      </motion.div>
+
+      <motion.div class="dashboard-card admin-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(11)" :while-hover="hoverLift">
+        <div class="card-icon">🩹</div>
+        <h2>Range-Ref Audio Fix (TEMP)</h2>
+        <p>Temporary QA page listing already-generated audio affected by the "#Gene9 11-17" range-ref bug — the "-17" tail used to be spoken/cut off incorrectly. Review and regenerate affected audio here</p>
+        <div class="card-actions">
+          <router-link to="/admin/temp-range-ref-verses-english" class="action-btn admin-btn admin-btn--primary">
+            English Audio
+          </router-link>
+          <router-link to="/admin/temp-range-ref-verses-telugu" class="action-btn admin-btn admin-btn--secondary">
+            Telugu Audio
+          </router-link>
+        </div>
+      </motion.div>
+
+      <motion.div class="dashboard-card admin-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(12)" :while-hover="hoverLift">
+        <div class="card-icon">🔗</div>
+        <h2>Same-Chapter Range-Ref Fixes (TEMP)</h2>
+        <p>Verses where a "(→ v.N)" same-chapter reference is followed by a stray ",M" instead of a proper "N-M" range — review the proposed fix for each and apply individually</p>
+        <router-link to="/admin/range-ref-fixes" class="action-btn admin-btn admin-btn--primary">
+          Review Fixes
+        </router-link>
+      </motion.div>
+      <motion.div class="dashboard-card admin-card" :initial="cardInitial" :animate="{ opacity: 1, y: 0 }" :transition="staggerTransition(13)" :while-hover="hoverLift">
+        <div class="card-icon">🔢</div>
+        <h2>Strong's Codes</h2>
+        <p>Find verses with bare Strong's numbers (H6086, G1557…) and wrap them in [square brackets] so audio generation skips them — English or Telugu</p>
+        <router-link to="/admin/strongs-codes" class="action-btn admin-btn admin-btn--primary">
+          Bracket Codes
+        </router-link>
+      </motion.div>
     </div>
   </div>
 </template>

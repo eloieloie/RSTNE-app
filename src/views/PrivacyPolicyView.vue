@@ -25,9 +25,12 @@
             <li><strong>No tracking</strong> — we do not use analytics, cookies, or tracking pixels.</li>
             <li><strong>Session storage</strong> — book data is cached locally in your browser's
               session storage to improve performance. This data is cleared when you close your browser.</li>
-            <li><strong>Account (optional)</strong> — if you choose to sign in with email/password or
-              Google, we collect your email address, name (if provided by Google), and a unique
-              account ID so we can identify you across sessions and devices.</li>
+            <li><strong>Account (optional)</strong> — if you choose to sign in with email/password,
+              Google, or Apple, we collect your email address, name (if provided by the sign-in
+              method), and a unique account ID so we can identify you across sessions and devices.
+              Signing in with Apple lets you keep your email address private via Apple's "Hide My
+              Email" feature. You can permanently delete your account and all associated data at
+              any time from the app's Settings screen.</li>
             <li><strong>Notes</strong> — if you create notes while signed in, they are linked to your
               account's user ID so they can sync across your devices. If you use the app without
               signing in, notes you create are not linked to any personal identity.</li>
@@ -54,9 +57,9 @@
           <p>
             The app is hosted on Firebase (Google). Firebase may collect standard server logs
             (IP addresses, request timestamps) as part of normal hosting operations. If you choose
-            to sign in, authentication is handled by Firebase Authentication, and signing in with
-            Google uses Google Sign-In. Please refer to Google's Privacy Policy for details on how
-            Firebase and Google handle this data.
+            to sign in, authentication is handled by Firebase Authentication, using either Google
+            Sign-In, Sign in with Apple, or your own email and password. Please refer to Google's
+            and Apple's privacy policies for details on how they handle this data.
           </p>
         </section>
 
