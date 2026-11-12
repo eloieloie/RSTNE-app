@@ -143,21 +143,52 @@
     </div>
 
     <footer class="page-footer">
-      <router-link to="/privacy-policy">Privacy Policy</router-link>
-      <span class="footer-divider">·</span>
-      <router-link to="/terms-and-conditions">Terms &amp; Conditions</router-link>
-      <span class="footer-divider">·</span>
-      <a
-        href="https://play.google.com/store/apps/details?id=com.rstne.app&hl=en"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="play-store-link"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M3.18 23.76c.3.17.65.19.97.07l12.67-7.31-2.79-2.79-10.85 10zm16.55-9.54L16.8 12.5l2.93-1.72-2.93-1.72L3.18.26C2.86.14 2.51.16 2.21.33L13.05 11.17l6.68 3.05zM2.21.33C1.84.56 1.6.97 1.6 1.44v21.12c0 .47.24.88.61 1.11L13.05 12.83 2.21.33zM17.22 9.27l2.51 1.51-2.93 1.72 2.93 1.72-2.51 1.51L14.44 12.5l2.78-3.23z"/>
-        </svg>
-        Get Android App
-      </a>
+      <p class="footer-tagline">Take RSTNE with you</p>
+
+      <div class="store-badges">
+        <a
+          href="https://apps.apple.com/in/app/rstne/id6803943363"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="store-badge"
+          aria-label="Download RSTNE on the App Store"
+        >
+          <svg class="store-badge-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+          </svg>
+          <span class="store-badge-text" aria-hidden="true">
+            <span class="store-badge-small">Download on the</span>
+            <span class="store-badge-large">App Store</span>
+          </span>
+        </a>
+
+        <a
+          href="https://play.google.com/store/apps/details?id=com.rstne.app&amp;hl=en"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="store-badge"
+          aria-label="Get RSTNE on Google Play"
+        >
+          <svg class="store-badge-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#00C3FF" d="M2.5 1.2 13.3 12 2.5 22.8c-.5-.3-.8-.8-.8-1.5V2.7c0-.7.3-1.2.8-1.5z"/>
+            <path fill="#00E676" d="M2.5 1.2c.5-.3 1.1-.3 1.7 0l12.4 7.9L13.3 12 2.5 1.2z"/>
+            <path fill="#FF3D57" d="M2.5 22.8 13.3 12l3.3 2.9-12.4 7.9c-.6.3-1.2.3-1.7 0z"/>
+            <path fill="#FFC400" d="m16.6 9.1 4.2 2.6c.6.4.6 1.2 0 1.6l-4.2 2.6-3.3-2.9 3.3-3.9z"/>
+          </svg>
+          <span class="store-badge-text" aria-hidden="true">
+            <span class="store-badge-small">GET IT ON</span>
+            <span class="store-badge-large">Google Play</span>
+          </span>
+        </a>
+      </div>
+
+      <nav class="footer-links" aria-label="Legal">
+        <router-link to="/privacy-policy">Privacy Policy</router-link>
+        <span class="footer-divider" aria-hidden="true">·</span>
+        <router-link to="/terms-and-conditions">Terms &amp; Conditions</router-link>
+      </nav>
+
+      <p class="footer-copy">&copy; {{ new Date().getFullYear() }} Restoration Scriptures True Name Edition</p>
     </footer>
 
     <div v-if="isBroadcastMode" class="broadcast-fixed-panel" aria-hidden="true"></div>
@@ -643,40 +674,135 @@ onMounted(async () => {
 }
 
 .page-footer {
-  text-align: center;
-  padding: 2rem 0 1rem;
-  font-size: calc(0.85rem * var(--books-font-scale));
-  color: #888;
+  max-width: 1400px;
+  margin: 3rem auto 0;
+  padding: 2rem 1rem 1.5rem;
+  border-top: 1px solid #E8E6E0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 1.1rem;
+  text-align: center;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: calc(0.85rem * var(--books-font-scale));
+  color: #5A5750;
 }
 
-.page-footer a {
+.footer-tagline {
+  margin: 0;
+  font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+  font-size: calc(1rem * var(--books-font-scale));
+  font-weight: 700;
+  color: #52280C;
+  letter-spacing: 0.01em;
+}
+
+.store-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0 1.1rem 0 0.9rem;
+  background: #000;
+  color: #fff;
+  border: 1px solid #A6A6A6;
+  border-radius: 10px;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.store-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.store-badge:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.store-badge:focus-visible {
+  outline: 3px solid #8B4513;
+  outline-offset: 3px;
+}
+
+.store-badge-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.store-badge-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.store-badge-small {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.store-badge-large {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.25rem;
   color: #8B4513;
   text-decoration: none;
 }
 
-.page-footer a:hover {
+.footer-links a:hover {
   text-decoration: underline;
+}
+
+.footer-links a:focus-visible {
+  outline: 2px solid #8B4513;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .footer-divider {
   margin: 0 0.5rem;
-  color: #ccc;
+  color: #A8A59C;
 }
 
-.play-store-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: #1a7f37 !important;
-  font-weight: 600;
+.footer-copy {
+  margin: 0;
+  font-size: calc(0.75rem * var(--books-font-scale));
+  color: #5A5750;
 }
 
-.play-store-link:hover {
-  text-decoration: underline;
+@media (prefers-reduced-motion: reduce) {
+  .store-badge {
+    transition: none;
+  }
+  .store-badge:hover {
+    transform: none;
+  }
 }
 </style>
